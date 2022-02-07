@@ -1,34 +1,17 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
-class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFrontController
+class AdminOmnivaAjaxController extends ModuleAdminController
 {
-
-    private $_module = NULL;
-    public $module = 'omnivaltshipping';
     private $labelsMix = 4;
 
     public function __construct()
     {
-
-        $context = Context::getContext();
-        $cookie = new Cookie ('psAdmin');
-        $employee = new Employee ($cookie->id_employee);
-        $context->employee = $employee;
-        $context->cookie = $cookie;
         if (!Context::getContext()->employee->isLoggedBack()) {
             exit('Restricted.');
         }
 
-        $this->_module = new OmnivaltShipping();
-        $this->module = 'omnivaltshipping';
-
-        $this->parseActions();
         parent::__construct();
-        exit();
+        $this->parseActions();
     }
 
     private function parseActions()
@@ -61,7 +44,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
 
     protected function saveOrderInfo()
     {
-        if (!empty($this->_module->warning)) {
+        if (!empty($this->module->warning)) {
             return false;
         }
         $orderId = Tools::getValue('order_id', null);
@@ -74,9 +57,9 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
         $saveResult = $OrderObj->saveOrderInfo();
 
         if (isset($saveResult['success'])) {
-            $this->_module->changeOrderStatus($orderId, $this->_module->getCustomOrderState());
+            $this->module->changeOrderStatus($orderId, $this->module->getCustomOrderState());
             ob_clean(); // remove possible errors from prestashop
-            echo json_encode($this->_module->l('Saved'));
+            echo json_encode($this->module->l('Saved'));
             exit();
         }
         echo json_encode($saveResult);
@@ -89,7 +72,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
     protected function printLabels($orderId = false)
     {
         if (!($orderId = Tools::getValue('order_id'))) {
-            echo json_encode(array('error' => $this->_module->l('No order ID provided.')));
+            echo json_encode(array('error' => $this->module->l('No order ID provided.')));
             exit();
         }
 
@@ -103,7 +86,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
         $orderInfoObj = new OrderInfo();
         $orderInfo = $orderInfoObj->getOrderInfo($orderId);
         if (empty($orderInfo)) {
-            echo json_encode(array('error' => $this->_module->l('Order info not saved. Please save before generating labels')));
+            echo json_encode(array('error' => $this->module->l('Order info not saved. Please save before generating labels')));
             exit();
         }
 
@@ -117,13 +100,13 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
             $label_status = OmnivaltShipping::getShipmentLabels($status['barcodes'], $orderId);
             if (!$label_status['status']) {
                 $orderInfoObj->saveError($orderId, addslashes($label_status['msg']));
-                $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
+                $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
                 echo json_encode(array('error' => $label_status['msg']));
                 exit();
             }
         } else {
             $orderInfoObj->saveError($orderId, ($status['msg']));
-            $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
+            $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
             echo json_encode(array('error' => $status['msg']));
             exit();
         }
@@ -173,7 +156,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
                         }
                     } else {
                         $orderInfoObj->saveError($orderId, addslashes($status['msg']));
-                        $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
+                        $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
                         if (count($orderIds) > 1) {
                             continue;
                         } else {
@@ -194,12 +177,12 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
                         }
                     } else {
                         $orderInfoObj->saveError($orderId, addslashes($label_status['msg']));
-                        $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
+                        $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
                     }
                     if ($label_url == '')
                         continue;
                 }
-                $this->_module->changeOrderStatus($orderId, $this->_module->getCustomOrderState());
+                $this->module->changeOrderStatus($orderId, $this->module->getCustomOrderState());
                 $pagecount = $pdf->setSourceFile($label_url);
                 if (file_exists($label_url)) {
                     unlink($label_url);
@@ -231,7 +214,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
                     } else if ($this->labelsMix == 3) {
                         $pdf->useTemplate($tplidx, 110, 160, 94.5, 108, false);
                     } else {
-                        echo $this->_module->l('Problems with labels count, please, select one order!!!');
+                        echo $this->module->l('Problems with labels count, please, select one order!!!');
                         exit();
                     }
                     $this->labelsMix++;
@@ -262,7 +245,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
     {
         if (Tools::getValue('type') == 'new') {
             if (Tools::getValue('order_ids') == null) {
-                print $this->_module->l('Here is nothing to print!!!');
+                print $this->module->l('Here is nothing to print!!!');
                 exit();
             }
         }
@@ -332,7 +315,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
                         }
                     } else {
                         $orderInfoObj->saveError($orderId, addslashes($status['msg']));
-                        $this->_module->changeOrderStatus($orderId, $this->_module->getErrorOrderState());
+                        $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
                         if (count($orderIds) > 1) {
                             continue;
                         } else {

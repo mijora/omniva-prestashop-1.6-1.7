@@ -7,10 +7,6 @@ class AdminOmnivaOrdersController extends ModuleAdminController
     public function __construct()
     {
         $this->bootstrap = true;
-        $this->name = 'AdminModList';
-
-        $this->meta_title = $this->l('Omniva orders', 'omnivaltshipping');
-
         parent::__construct();
 
         $this->_carriers = $this->getCarrierIds();
@@ -36,13 +32,11 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
     public function callcarrier()
     {
-        $this->_module = new OmnivaltShipping();
-        $callCarrierReturn = $this->_module->call_omniva();
-        //$callCarrierReturn['status'] =true;
+        $callCarrierReturn = $this->module->call_omniva();
         if ($callCarrierReturn['status'] == true)
-            print'got_request';
+            echo 'got_request';
         else
-            print'got_request_false';
+            echo 'got_request_false';
     }
 
     public function displayAjax()
@@ -114,19 +108,19 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'phone' => Configuration::get('omnivalt_phone'),
             'postcode' => Configuration::get('omnivalt_postcode'),
             'address' => Configuration::get('omnivalt_address'),
-            'carrier_cal_url' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&callCourier=1',
+            'carrier_cal_url' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&callCourier=1',
 
             'skippedOrders' => $this->getSkippedOrders(),
             'newOrders' => $this->getNewOrders(),
-            'orderLink' => $this->context->link->getAdminLink('AdminOrders', true) . '&vieworder',
-            'orderSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&orderSkip=',
-            'cancelSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&cancelSkip=',
+            'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
+            'orderSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&orderSkip=',
+            'cancelSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&cancelSkip=',
             'page' => $page,
-            'manifestLink' => $this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulkmanifests")),
-            'ajaxCall' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&ajax',
+            'manifestLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")),
+            'ajaxCall' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&ajax',
 
-            'manifestAll' => $this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulkmanifestsall")),
-            'labels' => $this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulklabels")),
+            'manifestAll' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifestsall")),
+            'labels' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
             'manifestNum' => strval(Configuration::get('omnivalt_manifest')),
             'total' => $this->_listTotal,
 
@@ -135,9 +129,9 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'pages_nb' => $pagesToShow,
             'prev_p' => (int)$page != 1 ? $page - 1 : 1,
             'next_p' => (int)$page + 1 > $pagesToShow ? $pagesToShow : $page + 1,
-            'requestPage' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&tab=completed',
-            'current_url' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&tab=completed',
-            'requestNb' => $this->context->link->getAdminLink('AdminOmnivaOrders', true) . '&tab=completed',
+            'requestPage' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&tab=completed',
+            'current_url' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&tab=completed',
+            'requestNb' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&tab=completed',
             'p' => $page,
             'n' => $perPage,
             'start' => $startGroup,

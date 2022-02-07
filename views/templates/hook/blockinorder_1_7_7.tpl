@@ -108,7 +108,6 @@ $(document).ready(function(){
         let formData = $("#omnivaltOrderPrintLabelsForm")
             .serialize() + '&' + $.param({
                 ajax: "1",
-                token: "{getAdminToken tab='AdminOrders'}",
                 order_id: "{$order_id}"
             });
 
@@ -144,7 +143,6 @@ $(document).ready(function(){
         var formData = $("#omnivaltOrderSubmitForm")
             .serialize() + '&' + $.param({
                 ajax: "1",
-                token: "{getAdminToken tab='AdminOrders'}",
                 order_id: "{$order_id}",
             });
 

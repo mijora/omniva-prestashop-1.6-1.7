@@ -1,9 +1,13 @@
 <?php
+
 if (!defined('_PS_VERSION_'))
     exit;
 
 class OmnivaltShipping extends CarrierModule
 {
+    const CONTROLLER_OMNIVA_AJAX = 'AdminOmnivaAjax';
+    const CONTROLLER_OMNIVA_ORDERS = 'AdminOmnivaOrders';
+
     protected $_hooks = array(
         'actionCarrierUpdate', //For control change of the carrier's ID (id_carrier), the module must use the updateCarrier hook.
         'displayAdminOrderContentShip',
@@ -79,6 +83,58 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
+    /**
+     * Provides list of Admin controllers info
+     *
+     * @return array BackOffice Admin controllers
+     */
+    private function getModuleTabs()
+    {
+        return [
+            self::CONTROLLER_OMNIVA_AJAX => [
+                'title' => $this->l('Omniva Admin Ajax'),
+                'parent_tab' => null,
+            ],
+            self::CONTROLLER_OMNIVA_ORDERS => [
+                'title' => $this->l('Omniva Orders'),
+                'parent_tab' => 'AdminParentShipping',
+            ],
+        ];
+    }
+
+    /**
+     * Registers module Admin tabs (controllers)
+     */
+    private function registerTabs()
+    {
+        $tabs = $this->getModuleTabs();
+
+        if (empty($tabs)) {
+            return true; // Nothing to register
+        }
+
+        foreach ($tabs as $controller => $tabData) {
+            $tab = new Tab();
+            $tab->active = 1;
+            $tab->class_name = $controller;
+            $tab->name = [];
+            $languages = Language::getLanguages(false);
+
+            foreach ($languages as $language) {
+                $tab->name[$language['id_lang']] = $tabData['title'];
+            }
+
+            $tab->id_parent = Tab::getIdFromClassName($tabData['parent_tab']);
+            $tab->module = $this->name;
+            if (!$tab->save()) {
+                $this->displayError($this->l('Error while creating tab ') . $tabData['title']);
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public function getCustomOrderState()
     {
         $omnivalt_order_state = (int)Configuration::get('omnivalt_order_state');
@@ -143,18 +199,8 @@ class OmnivaltShipping extends CarrierModule
                     return false;
                 }
             }
-            $name = $this->l('Omniva orders');
-            $controllerName = 'AdminOmnivaOrders';
-            $tab_admin_order_id = Tab::getIdFromClassName('AdminParentShipping') ? Tab::getIdFromClassName('AdminParentShipping') : Tab::getIdFromClassName('Shipping');
-            $tab = new Tab();
-            $tab->class_name = $controllerName;
-            $tab->id_parent = $tab_admin_order_id;
-            $tab->module = $this->name;
-            $languages = Language::getLanguages(false);
-            foreach ($languages as $lang) {
-                $tab->name[$lang['id_lang']] = $name;
-            }
-            $tab->save();
+
+            $this->registerTabs();
             Configuration::updateValue('omnivalt_manifest', 1);
             //add new fields
             $new_fields = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_terminal VARCHAR(10) default NULL';
@@ -787,8 +833,8 @@ class OmnivaltShipping extends CarrierModule
       <script type="text/javascript">
         var omnivalt_bulk_labels = "' . $this->l("Print Omnivalt labels") . '";
         var omnivalt_bulk_manifests = "' . $this->l("Print Omnivalt manifests") . '";
-        var omnivalt_admin_action_labels = "' . $this->addHttps($this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulklabels"))) . '";
-        var omnivalt_admin_action_manifests = "' . $this->addHttps($this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulkmanifests"))) . '";
+        var omnivalt_admin_action_labels = "' . $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")) . '";
+        var omnivalt_admin_action_manifests = "' . $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")) . '";
       </script>
       <script type="text/javascript" src="' . (__PS_BASE_URI__) . 'modules/' . $this->name . '/views/js/adminOmnivalt.js"></script>
     ';
@@ -925,7 +971,7 @@ class OmnivaltShipping extends CarrierModule
             self::checkForClass('OrderInfo');
             $orderInfo = new OrderInfo();
             $orderInfo = $orderInfo->getOrderInfo($order->id);
-            $label_url = $this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulklabels", "order_ids" => $order->id));
+            $label_url = $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels", "order_ids" => $order->id));
 
             $error_msg = !empty($orderInfo['error']) ? $orderInfo['error'] : false;
             $omniva_tpl = 'blockinorder.tpl';
@@ -943,25 +989,14 @@ class OmnivaltShipping extends CarrierModule
                 'parcel_terminals' => $this->getTerminalsOptions($terminal_id, $countryCode),
                 'carriers' => $this->getCarriersOptions($cart->id_carrier),
                 'order_id' => (int)$id_order['id_order'],
-                'moduleurl' => $this->addHttps($this->context->link->getModuleLink('omnivaltshipping', 'omnivaltadminajax', array('action' => 'saveorderinfo'))),
-                'printlabelsurl' => $this->addHttps($this->context->link->getModuleLink('omnivaltshipping', 'omnivaltadminajax', array('action' => 'printlabels'))),
+                'moduleurl' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array('action' => 'saveorderinfo')),
+                'printlabelsurl' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array('action' => 'printlabels')),
                 'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
                 'label_url' => $label_url,
                 'error' => $error_msg,
             ));
 
             return $this->display(__FILE__, $omniva_tpl);
-        }
-    }
-
-    private function addHttps($url)
-    {
-        if (empty($_SERVER['HTTPS'])) {
-            return $url;
-        } elseif ($_SERVER['HTTPS'] == "on") {
-            return str_replace('http://', 'https://', $url);
-        } else {
-            return $url;
         }
     }
 
