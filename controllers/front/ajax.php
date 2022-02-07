@@ -10,15 +10,13 @@ class OmnivaltshippingAjaxModuleFrontController extends ModuleFrontController
  
 	public function displayAjax()
 	{
-    $context = Context::getContext();
-    if (isset($_POST['terminal']) && $_POST['terminal'] != '' && isset($context->cookie->id_cart))
-    {
-      $cart = new Cart((int)$context->cookie->id_cart);
-      $cart->setOmnivaltTerminal($_POST['terminal']);
-      die(Tools::jsonEncode('OK'));
-    }
-    die(Tools::jsonEncode('not_changed'));
-    
+        $context = Context::getContext();
+        if ($terminal = Tools::getValue('terminal'))
+        {
+          $context->cart->setOmnivaltTerminal($terminal);
+          die(json_encode('OK'));
+        }
+        die(json_encode('not_changed'));
 	}
  
 }
