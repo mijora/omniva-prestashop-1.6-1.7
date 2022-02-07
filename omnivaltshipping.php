@@ -32,10 +32,10 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '1.1.8';
-        $this->author = 'Omniva.lt';
+        $this->version = '2.0.0';
+        $this->author = 'Mijora';
         $this->need_instance = 0;
-        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => '1.8');
+        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.8');
         $this->bootstrap = true;
 
         parent::__construct();
@@ -68,7 +68,7 @@ class OmnivaltShipping extends CarrierModule
             curl_setopt($curl, CURLOPT_HEADER, false);
             curl_setopt($curl, CURLOPT_FILE, $fp);
             curl_setopt($curl, CURLOPT_TIMEOUT, 60);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
             $data = curl_exec($curl);
             curl_close($curl);
@@ -140,7 +140,7 @@ class OmnivaltShipping extends CarrierModule
         if (parent::install()) {
             foreach ($this->_hooks as $hook) {
                 if (!$this->registerHook($hook)) {
-                    return FALSE;
+                    return false;
                 }
             }
             $name = $this->l('Omniva orders');
@@ -158,31 +158,30 @@ class OmnivaltShipping extends CarrierModule
             Configuration::updateValue('omnivalt_manifest', 1);
             //add new fields
             $new_fields = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_terminal VARCHAR(10) default NULL';
-            DB::getInstance()->Execute($new_fields);
+            Db::getInstance()->execute($new_fields);
             $new_fields2 = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_manifest VARCHAR(10) default NULL';
-            DB::getInstance()->Execute($new_fields2);
+            Db::getInstance()->execute($new_fields2);
             $new_table = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'omnivalt_order_info` (
-          `order_id` int(11) NOT NULL,
-          `packs` int(10) unsigned NOT NULL,
-          `weight` double(10,2) unsigned NOT NULL,
-          `is_cod` tinyint(1) NOT NULL,
-          `cod_amount` decimal(10,2) NOT NULL,
-          `error` VARCHAR(200) default NULL,
-          PRIMARY KEY (`order_id`)
-        ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
-            DB::getInstance()->Execute($new_table);
-            //$new_fields = 'ALTER TABLE `'._DB_PREFIX_ .'omnivalt_order_info` ADD error VARCHAR(200) default NULL';
-            //DB::getInstance()->Execute($new_fields );
-            if (!$this->createCarriers()) { //function for creating new currier
-                return FALSE;
+              `order_id` int(11) NOT NULL,
+              `packs` int(10) unsigned NOT NULL,
+              `weight` double(10,2) unsigned NOT NULL,
+              `is_cod` tinyint(1) NOT NULL,
+              `cod_amount` decimal(10,2) NOT NULL,
+              `error` VARCHAR(200) default NULL,
+              PRIMARY KEY (`order_id`)
+            ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
+            Db::getInstance()->execute($new_table);
+
+            if (!$this->createCarriers()) {
+                return false;
             }
             //install of custom state
             $this->getCustomOrderState();
             $this->getErrorOrderState();
-            return TRUE;
+            return true;
         }
 
-        return FALSE;
+        return false;
     }
 
     protected function createCarriers()
@@ -191,16 +190,15 @@ class OmnivaltShipping extends CarrierModule
             //Create new carrier
             $carrier = new Carrier();
             $carrier->name = $key;
-            $carrier->active = TRUE;
+            $carrier->active = true;
             $carrier->deleted = 0;
-            $carrier->shipping_handling = TRUE;
+            $carrier->shipping_handling = true;
             $carrier->range_behavior = 0;
             $carrier->delay[Configuration::get('PS_LANG_DEFAULT')] = '1-2 business days';
-            $carrier->shipping_external = TRUE;
-            $carrier->is_module = TRUE;
+            $carrier->shipping_external = true;
+            $carrier->is_module = true;
             $carrier->external_module_name = $this->name;
-            $carrier->need_range = TRUE;
-            $carrier->limited_countries = array('lt');
+            $carrier->need_range = true;
             $carrier->url = "https://www.omniva.lt/verslo/siuntos_sekimas?barcode=@";
 
             if ($carrier->add()) {
@@ -249,7 +247,7 @@ class OmnivaltShipping extends CarrierModule
             }
         }
 
-        return TRUE;
+        return true;
     }
 
     protected function deleteCarriers()
@@ -260,41 +258,33 @@ class OmnivaltShipping extends CarrierModule
             $carrier->delete();
         }
 
-        return TRUE;
+        return true;
     }
 
     public function uninstall()
     {
         if (parent::uninstall()) {
-            /*
-            $omnivalt_order_state = (int)Configuration::get('omnivalt_order_state');
-            $order_status = new OrderState((int)$omnivalt_order_state, (int)$this->context->language->id);
-            if ($order_status){
-              $order_status->deleted = true;
-              $order_status->save();
-            }
-            */
             $tab_controller_main_id = TabCore::getIdFromClassName('AdminOmnivaOrders');
             $tab_controller_main = new Tab($tab_controller_main_id);
             $tab_controller_main->delete();
             foreach ($this->_hooks as $hook) {
                 if (!$this->unregisterHook($hook)) {
-                    return FALSE;
+                    return false;
                 }
             }
             //delete new fields
             $new_fields = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` DROP omnivalt_terminal';
-            DB::getInstance()->Execute($new_fields);
+            Db::getInstance()->execute($new_fields);
             $new_fields2 = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` DROP omnivalt_manifest';
-            DB::getInstance()->Execute($new_fields2);
+            Db::getInstance()->execute($new_fields2);
             if (!$this->deleteCarriers()) {
-                return FALSE;
+                return false;
             }
 
-            return TRUE;
+            return true;
         }
 
-        return FALSE;
+        return false;
     }
 
     public function getOrderShippingCost($params, $shipping_cost)
@@ -635,10 +625,7 @@ class OmnivaltShipping extends CarrierModule
 
     private function runPatcher(OmnivaPatcher $patcherInstance)
     {
-        $last_check = Configuration::get('omnivalt_patcher_update');
-
         $patcherInstance->startUpdate(Configuration::get('omnivalt_api_user'), Configuration::get('PS_SHOP_EMAIL'));
-
         Configuration::updateValue('omnivalt_patcher_update', time());
     }
 
@@ -698,7 +685,6 @@ class OmnivaltShipping extends CarrierModule
         $terminals = fread($terminals_file, filesize($terminals_json_file_dir) + 10);
         fclose($terminals_file);
         $terminals = json_decode($terminals, true);
-        $parcel_terminals = '';
         if (is_array($terminals)) {
             $terminalsList = array();
             foreach ($terminals as $terminal) {
@@ -808,19 +794,8 @@ class OmnivaltShipping extends CarrierModule
     ';
     }
 
-    public function returnx()
-    {
-        return '
-      <script type="text/javascript">
-        modules/' . $this->name . '/views/js/adminOmnivalt.js
-      </script>
-    ';
-    }
-
     public function hookHeader($params)
     {
-        //var_dump($this->context->language);
-        //$this->context->language->iso_code
         if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
             $this->context->controller->registerJavascript(
                 'leaflet',
@@ -939,21 +914,20 @@ class OmnivaltShipping extends CarrierModule
     {
         $order = new Order((int)$id_order['id_order']);
         $cart = new Cart((int)$order->id_cart);
-        $return = '';
+
         if ($order->id_carrier == Configuration::get('omnivalt_pt') || $order->id_carrier == Configuration::get('omnivalt_c')) {
             $terminal_id = $cart->omnivalt_terminal;
-            $label_url = '';
 
             $sql = 'SELECT a.*, c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $cart->id_address_delivery . '"';
             $address = Db::getInstance()->getRow($sql);
             $countryCode = $address['iso_code'];
 
             self::checkForClass('OrderInfo');
-            $OrderInfo = new OrderInfo();
-            $OrderInfo = $OrderInfo->getOrderInfo($order->id);
+            $orderInfo = new OrderInfo();
+            $orderInfo = $orderInfo->getOrderInfo($order->id);
             $label_url = $this->context->link->getModuleLink("omnivaltshipping", "omnivaltadminajax", array("action" => "bulklabels", "order_ids" => $order->id));
 
-            $error_msg = !empty($OrderInfo['error']) ? $OrderInfo['error'] : false;
+            $error_msg = !empty($orderInfo['error']) ? $orderInfo['error'] : false;
             $omniva_tpl = 'blockinorder.tpl';
 
             if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
@@ -962,10 +936,10 @@ class OmnivaltShipping extends CarrierModule
             }
 
             $this->smarty->assign(array(
-                'total_weight' => isset($OrderInfo['weight']) ? $OrderInfo['weight'] : $order->getTotalWeight(),
-                'packs' => isset($OrderInfo['packs']) ? $OrderInfo['packs'] : 1,
-                'total_paid_tax_incl' => isset($OrderInfo['cod_amount']) ? $OrderInfo['cod_amount'] : $order->total_paid_tax_incl,
-                'is_cod' => isset($OrderInfo['is_cod']) ? $OrderInfo['is_cod'] : (strpos($order->module, 'cashondelivery') !== false), //($order->module == 'cashondeliveryplus' OR $order->module == 'cashondelivery'),
+                'total_weight' => isset($orderInfo['weight']) ? $orderInfo['weight'] : $order->getTotalWeight(),
+                'packs' => isset($orderInfo['packs']) ? $orderInfo['packs'] : 1,
+                'total_paid_tax_incl' => isset($orderInfo['cod_amount']) ? $orderInfo['cod_amount'] : $order->total_paid_tax_incl,
+                'is_cod' => isset($orderInfo['is_cod']) ? $orderInfo['is_cod'] : (strpos($order->module, 'cashondelivery') !== false), //($order->module == 'cashondeliveryplus' OR $order->module == 'cashondelivery'),
                 'parcel_terminals' => $this->getTerminalsOptions($terminal_id, $countryCode),
                 'carriers' => $this->getCarriersOptions($cart->id_carrier),
                 'order_id' => (int)$id_order['id_order'],
@@ -976,9 +950,7 @@ class OmnivaltShipping extends CarrierModule
                 'error' => $error_msg,
             ));
 
-            $form = $this->display(__FILE__, $omniva_tpl);
-
-            return $form;
+            return $this->display(__FILE__, $omniva_tpl);
         }
     }
 
@@ -1016,11 +988,10 @@ class OmnivaltShipping extends CarrierModule
         $terminal_id = $cart->omnivalt_terminal;
         $sql = 'SELECT a.*, c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $order->id_address_delivery . '"';
         $address = Db::getInstance()->getRow($sql);
-        //return $sql;
-        //return $params['cart']->id_address_delivery;
+
         $send_method = self::getMethod($order->id_carrier);
         $pickup_method = Configuration::get('omnivalt_send_off');
-        $service = "";
+
         switch ($pickup_method . ' ' . $send_method) {
             case 'c pt':
                 $service = "PU";
@@ -1057,14 +1028,13 @@ class OmnivaltShipping extends CarrierModule
             $phones .= '<mobile>' . $address['phone_mobile'] . '</mobile>';
         else
             $phones .= '<mobile>' . $address['phone'] . '</mobile>';
-        $pickStart = Configuration::get('omnivalt_pick_up_time_start') ? Configuration::get('omnivalt_pick_up_time_start') : '8:00';
+
         $pickFinish = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
         $pickDay = date('Y-m-d');
         if (time() > strtotime($pickDay . ' ' . $pickFinish))
             $pickDay = date('Y-m-d', strtotime($pickDay . "+1 days"));
 
         $shop_country = new Country();
-        $shop_country_iso = $shop_country->getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
         $xmlRequest = '
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://service.core.epmx.application.eestipost.ee/xsd">
            <soapenv:Header/>
@@ -1202,7 +1172,7 @@ class OmnivaltShipping extends CarrierModule
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $xmlResponse = curl_exec($ch);
         if ($xmlResponse === false) {
@@ -1280,7 +1250,7 @@ class OmnivaltShipping extends CarrierModule
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $xmlRequest);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             $xmlResponse = curl_exec($ch);
             $debugData['result'] = $xmlResponse;
@@ -1343,11 +1313,11 @@ class OmnivaltShipping extends CarrierModule
         $additionalHeaders = '';
         curl_setopt($process, CURLOPT_URL, $url);
         curl_setopt($process, CURLOPT_HTTPHEADER, array('Content-Type: application/xml', $additionalHeaders));
-        curl_setopt($process, CURLOPT_HEADER, FALSE);
+        curl_setopt($process, CURLOPT_HEADER, false);
         curl_setopt($process, CURLOPT_USERPWD, Configuration::get('omnivalt_api_user') . ":" . Configuration::get('omnivalt_api_pass'));
         curl_setopt($process, CURLOPT_TIMEOUT, 30);
-        curl_setopt($process, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($process, CURLOPT_SSL_VERIFYHOST, FALSE);
+        curl_setopt($process, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($process, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($process, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($process, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         $return = curl_exec($process);

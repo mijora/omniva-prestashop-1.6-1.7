@@ -7,11 +7,6 @@ if (!defined('_PS_VERSION_')) {
 class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFrontController
 {
 
-
-    /**
-     * <p>Exits script with message not logged in message when user is not logged in as admin.</p>
-     */
-
     private $_module = NULL;
     public $module = 'omnivaltshipping';
     private $labelsMix = 4;
@@ -69,7 +64,7 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
         if (!empty($this->_module->warning)) {
             return false;
         }
-        $orderId = Tools::getValue('order_id', NULL);
+        $orderId = Tools::getValue('order_id', null);
         $order = new Order((int)$orderId);
         if (!$order) {
             return false;
@@ -280,7 +275,6 @@ class OmnivaltshippingOmnivaltadminajaxModuleFrontController extends ModuleFront
           WHERE id_cart = (SELECT id_cart FROM " . _DB_PREFIX_ . "orders WHERE id_order = " . $orderIds[$i] . ");";
                 Db::getInstance(_PS_USE_SQL_SLAVE_)->execute($saveManifest);
             }
-            //var_dump($orderIds);
             exit();
         }
         $item = $this->printBulkManifests();

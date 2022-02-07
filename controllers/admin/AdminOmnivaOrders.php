@@ -246,11 +246,11 @@ class AdminOmnivaOrdersController extends ModuleAdminController
     public function installController()
     {
         $new_fields2 = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_manifest VARCHAR(10) default NULL';
-        DB::getInstance()->Execute($new_fields2);
+        Db::getInstance()->execute($new_fields2);
 
         $saveManifest = "UPDATE " . _DB_PREFIX_ . "cart 
 		SET omnivalt_manifest = -1";
-        DB::getInstance()->Execute($saveManifest);
+        Db::getInstance()->execute($saveManifest);
 
         $name = $this->l('Omniva orders');
         $controllerName = 'AdminOmnivaOrders';
