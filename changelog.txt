@@ -1,0 +1,57 @@
+= Unreleased =
+
+# Fixed
+- Default language code select in Checkout page
+- Terminal selection load in OnePage checout page
+
+= 1.1.8 =
+
+# Fixed
+- Broken Omniva information block in Order page in Prestshop 1.7.7+
+
+= 1.1.7 =
+
+# Improved
+- added a ability to change labels printing type
+- bank account number has been made optional
+
+# Fixed
+- empty PDF file when printing single label and error occurs
+- remove always true from admin order
+
+= 1.1.6 =
+
+# Improved
+- created changelog file
+- added a ability to change manifest language
+
+# Fixed
+- fixed terminals list when address is not entered
+- fixed notice message in order page
+- fixed TCPDF error when PDF is generating
+
+= 1.1.5 =
+
+Adds OmnivaPatcher.
+Other improvements.
+
+= 1.1.4 =
+
+Fixed typo in translation.
+API url setting changes to be in line with other modules.
+
+= 1.1.3 =
+
+Updated url for map tile server.
+
+= 1.1.2 =
+
+Various fixes.
+
+= 1.1.1 =
+
+Readed pdf folder, bumped patch version.
+
+= 1.0.8 =
+
+Update header.tpl
