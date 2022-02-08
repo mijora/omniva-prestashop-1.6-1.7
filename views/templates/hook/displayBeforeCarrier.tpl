@@ -32,6 +32,6 @@
         {/literal}
     </style>
 {if $omniva_map != false } 
-  <button type="button" id="show-omniva-map" class="btn btn-basic btn-sm omniva-btn" style = "display: none;">{l s='Show parcel terminals map' mod='omnivaltshipping'} <img src = "{$module_url}sasi.png" title = "{l s='Show parcel terminals map' mod='omnivaltshipping'}"/></button>
+  <button type="button" id="show-omniva-map" class="btn btn-basic btn-sm omniva-btn" style = "display: none;">{l s='Show parcel terminals map' mod='omnivaltshipping'} <img src = "{$module_url}views/img/sasi.png" title = "{l s='Show parcel terminals map' mod='omnivaltshipping'}"/></button>
 {/if}
 </div>

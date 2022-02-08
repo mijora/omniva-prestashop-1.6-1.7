@@ -1,5 +1,11 @@
 var omniva_addrese_change = false;
 (function ( $ ) {
+    var modal = document.getElementById('omnivaLtModal');
+    window.document.onclick = function(event) {
+        if (event.target == modal || event.target.id == 'omnivaLtModal' || event.target.id == 'terminalsModal') {
+            document.getElementById('omnivaLtModal').style.display = "none";
+        }
+    }
     $.fn.omniva = function(options) {
         var settings = $.extend({
             maxShow: 8,
@@ -410,8 +416,8 @@ var omniva_addrese_change = false;
             });
             
           
-            terminalIcon = new Icon({iconUrl: omnivadata.omniva_plugin_url+'sasi.png'});
-            homeIcon = new Icon2({iconUrl: omnivadata.omniva_plugin_url+'locator_img.png'});
+            terminalIcon = new Icon({iconUrl: omniva_img_url + 'sasi.png'});
+            homeIcon = new Icon2({iconUrl: omniva_img_url + 'locator_img.png'});
             
           var locations = omnivaTerminals;
             jQuery.each( locations, function( key, location ) {

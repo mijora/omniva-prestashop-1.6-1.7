@@ -830,6 +830,24 @@ class OmnivaltShipping extends CarrierModule
     public function hookHeader($params)
     {
         if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
+            Media::addJsDef([
+                'omniva_img_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/views/img/',
+                'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
+                'omnivadata' => [
+                    'text_select_terminal' => $this->l('Select terminal'),
+                    'text_search_placeholder' => $this->l('Enter postcode'),
+                    'not_found' => $this->l('Place not found'),
+                    'text_enter_address' => $this->l('Enter postcode/address'),
+                    'text_show_in_map' => $this->l('Show in map'),
+                    'text_show_more' => $this->l('Show more'),
+                    'omniva_plugin_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
+                    'omnivalt_parcel_terminal_error' => $this->l('Please select parcel terminal'),
+                    'omnivaltdelivery_controller' => $this->context->link->getModuleLink('omnivaltshipping', 'ajax'),
+                    'select_terminal' => $this->l('Please select a parcel terminal'),
+                    'omnivaSearch' => $this->l('Enter an address, if you want to find terminals'),
+                ]
+            ]);
+
             $this->context->controller->registerJavascript(
                 'leaflet',
                 'modules/' . $this->name . '/views/js/leaflet.js',
@@ -860,11 +878,6 @@ class OmnivaltShipping extends CarrierModule
                     'priority' => 200,
                 ]
             );
-
-            $this->smarty->assign(array(
-                'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
-                'module_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
-            ));
 
             return $this->display(__FILE__, 'header.tpl');
         }

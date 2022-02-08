@@ -129,7 +129,7 @@
     color: white;
 }
 #map-search-button {
-  background-image:url("../../search-w.png");
+  background-image:url("../img/search-w.png");
   background-repeat: no-repeat;
   background-size: 20px 20px;
   background-position: center center;  
