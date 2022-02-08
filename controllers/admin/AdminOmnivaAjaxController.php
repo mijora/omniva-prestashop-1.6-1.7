@@ -308,7 +308,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrder = new OmnivaOrder($order_id);
                 if(Validate::isLoadedObject($omnivaOrder))
                 {
-                    $omnivaOrder->manifest = null;
+                    $omnivaOrder->manifest = -1;
                     $omnivaOrder->update();
                 }
 

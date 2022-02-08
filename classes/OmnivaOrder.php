@@ -32,7 +32,7 @@ class OmnivaOrder extends ObjectModel
             'packs' =>               ['type' => self::TYPE_INT, 'size' => 10],
             'cod' =>                 ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
             'cod_amount' =>          ['type' => self::TYPE_FLOAT, 'size' => 10],
-            'manifest' =>            ['type' => self::TYPE_STRING, 'size' => 255],
+            'manifest' =>            ['type' => self::TYPE_INT, 'size' => 10],
             'weight' =>              ['type' => self::TYPE_FLOAT, 'size' => 10],
             'error' =>               ['type' => self::TYPE_STRING, 'validate' => 'isBool'],
             'date_add' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],

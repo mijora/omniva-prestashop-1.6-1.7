@@ -1,0 +1,114 @@
+$(document).ready(function () {
+    let omnivaltPanel = $('.omniva-block');
+
+    $('#omniva-carrier').on('change', function () {
+        let action = $(this).val() == omnivalt_terminal_carrier ? 'remove' : 'add';
+        $('.omniva-terminal-block')[action + 'Class']('d-none');
+    });
+    $('#omniva-carrier').trigger('change');
+
+    function disableButton(id, status) {
+        omnivaltPanel[0].querySelector(id).disabled = status;
+    }
+
+    function cleanResponse() {
+        $('.omniva-response')
+            .removeClass(['alert-danger', 'alert-warning', 'alert-success'])
+            .addClass('d-none')
+            .html('');
+    }
+
+    function showResponse(msg, type) {
+        cleanResponse();
+        $('.omniva-response')
+            .removeClass('d-none')
+            .addClass(type)
+            .html(msg);
+    }
+
+    function labelOrderInfo() {
+        disableButton('#omnivaltOrderPrintLabels', true);
+
+        let formData = $("#omnivaltOrderPrintLabelsForm")
+            .serialize() + '&' + $.param({
+            'ajax': "1",
+            'order_id': id_order
+        });
+
+        $.ajax({
+            type: "POST",
+            url: printLabelsUrl,
+            async: false,
+            dataType: "json",
+            data: formData,
+            success: function (res) {
+                disableButton('#omnivaltOrderPrintLabels', false);
+
+                if (typeof res.error !== "undefined") {
+                    showResponse(res.error, 'alert-danger');
+                    return;
+                }
+
+                showResponse(success_add_trans, 'alert-success');
+
+                setTimeout(function () {
+                    window.location.href = location.href
+                }, 1000);
+            },
+            error: function (res) {
+                disableButton('#omnivaltOrderPrintLabels', false);
+            }
+        });
+    }
+
+    function saveOrderInfo() {
+        disableButton('#omnivaltOrderSubmitBtn', true);
+        var formData = $("#omnivaltOrderSubmitForm")
+            .serialize() + '&' + $.param({
+            ajax: "1",
+            order_id: id_order,
+        });
+
+
+        $.ajax({
+            type: "POST",
+            url: moduleUrl,
+            async: false,
+            dataType: "json",
+            data: formData,
+            success: function (res) {
+                disableButton('#omnivaltOrderSubmitBtn', false);
+
+                if (typeof res.error !== "undefined") {
+                    showResponse(res.error, 'alert-danger');
+                    return;
+                }
+
+                showResponse(success_add_trans, 'alert-success');
+
+                $("#omnivalt_print_btn").addClass('d-none');
+            },
+            error: function (res) {
+                disableButton('#omnivaltOrderSubmitBtn', false);
+            }
+        });
+    }
+
+    $("#omnivaltOrderPrintLabels").unbind('click').bind('click', function (e) {
+        disableButton('#omnivaltOrderPrintLabels', true);
+        e.preventDefault();
+        e.stopPropagation();
+        labelOrderInfo();
+
+        return false;
+    });
+
+    $("#omnivaltOrderSubmitBtn").unbind('click').bind('click', function (e) {
+        disableButton('#omnivaltOrderSubmitBtn', true);
+        e.preventDefault();
+        e.stopPropagation();
+        saveOrderInfo();
+
+        return false;
+    });
+});

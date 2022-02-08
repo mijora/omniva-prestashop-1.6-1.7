@@ -21,7 +21,8 @@ class OmnivaltShipping extends CarrierModule
         'orderDetailDisplayed',
         'displayAdminOrder',
         'displayBackOfficeHeader',
-        'actionValidateOrder'
+        'actionValidateOrder',
+        'actionAdminControllerSetMedia'
     );
 
     private static $_carriers = array(
@@ -817,15 +818,13 @@ class OmnivaltShipping extends CarrierModule
 
     public function hookDisplayBackOfficeHeader($params)
     {
-        return '
-      <script type="text/javascript">
-        var omnivalt_bulk_labels = "' . $this->l("Print Omnivalt labels") . '";
-        var omnivalt_bulk_manifests = "' . $this->l("Print Omnivalt manifests") . '";
-        var omnivalt_admin_action_labels = "' . $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")) . '";
-        var omnivalt_admin_action_manifests = "' . $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")) . '";
-      </script>
-      <script type="text/javascript" src="' . (__PS_BASE_URI__) . 'modules/' . $this->name . '/views/js/adminOmnivalt.js"></script>
-    ';
+        Media::addJsDef([
+            'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),
+            'omnivalt_bulk_manifests' => $this->l("Print Omnivalt manifests"),
+            'omnivalt_admin_action_labels' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
+            'omnivalt_admin_action_manifests' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")),
+        ]);
+        $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
     }
 
     public function hookHeader($params)
@@ -936,6 +935,28 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
+    public function hookActionAdminControllerSetMedia($params)
+    {
+        if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore') {
+            {
+                Media::addJsDef([
+                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'printlabels')),
+                    'success_add_trans' => $this->l('Successfully added.'),
+                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
+                    'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
+                ]);
+                if (version_compare(_PS_VERSION_, '1.7.7', '>='))
+                {
+                    $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
+                }
+                else
+                {
+                    $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order.js');
+                }
+            }
+        }
+    }
+
     public function hookDisplayAdminOrder($id_order)
     {
         $order = new Order((int)$id_order['id_order']);
@@ -968,7 +989,6 @@ class OmnivaltShipping extends CarrierModule
                 'order_id' => $order->id,
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
                 'printlabelsurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'printlabels')),
-                'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
                 'label_url' => $label_url,
                 'error' => $error_msg,
             ));

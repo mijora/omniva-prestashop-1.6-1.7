@@ -4,6 +4,24 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 {
     private $_carriers = '';
 
+    public function setMedia($isNewTheme = false)
+    {
+        parent::setMedia($isNewTheme);
+        $this->addJS('modules/' . $this->module->name . '/views/js/omniva-orders.js');
+        Media::addJsDef([
+            'check_orders' => $this->module->l('Check orders'),
+            'carrier_cal_url' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&callCourier=1',
+            'finished_trans' => $this->module->l('Finished.'),
+            'message_sent_trans' => $this->module->l('Message successfully sent.'),
+            'incorrect_response_trans' => $this->module->l('Incorrect response.'),
+            'ajaxCall' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&ajax',
+            'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
+            'labelsLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
+            'labels_trans' => $this->module->l('Labels'),
+            'not_found_trans' => $this->module->l('Nothing found'),
+        ]);
+    }
+
     public function __construct()
     {
         $this->bootstrap = true;
@@ -108,7 +126,6 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'phone' => Configuration::get('omnivalt_phone'),
             'postcode' => Configuration::get('omnivalt_postcode'),
             'address' => Configuration::get('omnivalt_address'),
-            'carrier_cal_url' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&callCourier=1',
 
             'skippedOrders' => $this->getSkippedOrders(),
             'newOrders' => $this->getNewOrders(),
@@ -117,10 +134,9 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'cancelSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&cancelSkip=',
             'page' => $page,
             'manifestLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")),
-            'ajaxCall' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&ajax',
+            'labelsLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
 
             'manifestAll' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifestsall")),
-            'labels' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
             'manifestNum' => strval(Configuration::get('omnivalt_manifest')),
             'total' => $this->_listTotal,
 
@@ -142,7 +158,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
                 'pagination_content' => $this->context->smarty->fetch(_PS_MODULE_DIR_ . 'omnivaltshipping/views/templates/admin/pagination.tpl'),
                 'pagination_file' => _PS_THEME_DIR_ . 'templates/_partials/pagination.tpl',
                 'pagination' => array('items_shown_from' => 1, 'items_shown_to' => 1, 'total_items' => $ordersCount, 'should_be_displayed' => 1, 'pages' => 3)
-            ));
+        ));
         $content = $this->context->smarty->fetch(_PS_MODULE_DIR_ . 'omnivaltshipping/views/templates/admin/omnivaOrders.tpl');
 
         $this->context->smarty->assign(
@@ -160,9 +176,9 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $orders = "SELECT * FROM " . _DB_PREFIX_ . "orders a
 		INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 		LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
-		INNER JOIN " . _DB_PREFIX_ . "cart k ON a.id_cart = k.id_cart AND k.id_carrier IN (" . $this->_carriers . ")
-		WHERE k.omnivalt_manifest IS NOT NULL AND k.omnivalt_manifest<>" . $newOrder . "  AND k.omnivalt_manifest <> -1
-		ORDER BY k.omnivalt_manifest DESC, a.id_order DESC
+		INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
+		WHERE oo.manifest IS NOT NULL AND oo.manifest != " . $newOrder . "  AND oo.manifest != -1
+		ORDER BY oo.manifest DESC, a.id_order DESC
 		LIMIT $perPage OFFSET $from";
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
@@ -173,9 +189,9 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $orders = "SELECT * FROM " . _DB_PREFIX_ . "orders a
 		INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 		LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
-		INNER JOIN " . _DB_PREFIX_ . "cart k ON a.id_cart = k.id_cart AND k.id_carrier IN (" . $this->_carriers . ")
-		WHERE k.omnivalt_manifest IS NOT NULL AND k.omnivalt_manifest = -1
-		ORDER BY k.omnivalt_manifest DESC, a.id_order DESC";
+		INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
+		WHERE oo.manifest IS NOT NULL AND oo.manifest = -1
+		ORDER BY oo.manifest DESC, a.id_order DESC";
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
     }
@@ -186,9 +202,9 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $newOrder = "SELECT *FROM " . _DB_PREFIX_ . "orders a
 		INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 		INNER JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
-		INNER JOIN " . _DB_PREFIX_ . "cart k ON a.id_cart = k.id_cart AND k.id_carrier IN (" . $this->_carriers . ")
-		WHERE k.omnivalt_manifest IS NULL OR k.omnivalt_manifest=" . $newOrderNum . "
-		ORDER BY k.omnivalt_manifest DESC, a.id_order DESC";
+		INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
+		WHERE oo.manifest IS NULL OR oo.manifest=" . $newOrderNum . "
+		ORDER BY oo.manifest DESC, a.id_order DESC";
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($newOrder);
     }
@@ -200,8 +216,8 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $ordersCount = "SELECT COUNT(*) FROM " . _DB_PREFIX_ . "orders a
 				INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 				LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
-				INNER JOIN " . _DB_PREFIX_ . "cart k ON a.id_cart = k.id_cart AND k.id_carrier IN (" . $this->_carriers . ")
-				WHERE k.omnivalt_manifest IS NOT NULL AND k.omnivalt_manifest<>" . $newOrder . " AND k.omnivalt_manifest <> -1
+				INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
+				WHERE oo.manifest IS NOT NULL AND oo.manifest != " . $newOrder . " AND oo.manifest != -1
 				ORDER BY a.id_order DESC";
 
         $rowCount = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($ordersCount);
