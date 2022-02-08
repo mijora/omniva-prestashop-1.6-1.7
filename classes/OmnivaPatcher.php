@@ -18,7 +18,7 @@ class OmnivaPatcher
     const TEMP_PATCH_DIR = 'temp_patch/';
 
     private $current_dir = '';
-    private $patch_dir = 'patches/';
+    private $patch_dir = _PS_MODULE_DIR_ . '/patches/';
     private $patch_file = 'test.patch';
     private $version_file = 'omnivaltshipping.php';
     private $temp_patch_dir;
@@ -37,8 +37,8 @@ class OmnivaPatcher
 
     public function __construct()
     {
-        $this->current_dir = __DIR__ . '/';
-        $this->patch_dir = $this->current_dir . 'patches/';
+        $this->current_dir = __DIR__ . 'OmnivaPatcher.php/';
+        $this->patch_dir = _PS_MODULE_DIR_ . '/patches/';
         $this->logs_path = $this->current_dir;
 
         $this->checkForPatchDir();
@@ -333,8 +333,6 @@ class OmnivaPatcher
                 $json = json_decode($response, true);
             } catch (\Throwable $e) {
                 return false;
-            } catch (\Exception $e) {
-                return false;
             }
 
             return $json;
@@ -479,8 +477,6 @@ class OmnivaPatcher
      */
     private function checkForPatchDir()
     {
-        $this->patch_dir = $this->current_dir . 'patches/';
-
         if (!file_exists($this->patch_dir)) {
             mkdir($this->patch_dir);
         }

@@ -2,3 +2,5 @@
 /patches
 /temp_patch
 **/*.log
+/locations.json
+/config*.xml

@@ -15,7 +15,7 @@
                     <div class="form-row">
                         <div class="form-group col-md-6 col-xs-12">
                             <label for="omniva-packs">{l s="Packets" mod='omnivaltshipping'}:</label>
-                            <input id="omniva-packs" type="text" name="packs" value="1" class="form-control" />
+                            <input id="omniva-packs" type="text" name="packs" value="{$packs}" class="form-control" />
                         </div>
                         <div class="form-group col-md-6 col-xs-12">
                             <label for="omniva-weight">{l s="Weight" mod='omnivaltshipping'}:</label>

@@ -663,38 +663,41 @@ var omnivaltDelivery = {
         });
         $('select[name="omnivalt_parcel_terminal"]').off('change.Omniva').on('change.Omniva', function(e) {
             var terminal = $(this).val();
-            $.ajax({
-                type: 'POST',
-                headers: { "cache-control": "no-cache" },
-                url: omnivaltdelivery_controller,
-                async: true,
-                cache: false,
-                dataType: 'json',
-                data: 'action=saveParcelTerminalDetails'
-                    + '&terminal=' + terminal,
-                success: function(jsonData)
-                {
-                    //console.log(jsonData);
-                },
-                error: function(XMLHttpRequest, textStatus, errorThrown) {
-                    if (textStatus !== 'abort'){
-                        if (!!$.prototype.fancybox)
-                        $.fancybox.open([
-                            {
-                                type: 'inline',
-                                autoScale: true,
-                                minHeight: 30,
-                                content: '<p class="fancybox-error">' + omnivalt_parcel_terminal_error + '</p>'
-                            }],
-                            {
-                                padding: 0
-                            }
-                        );
-                        else
-                            alert(omnivalt_parcel_terminal_error);
+            if(terminal)
+            {
+                $.ajax({
+                    type: 'POST',
+                    headers: { "cache-control": "no-cache" },
+                    url: omnivaltdelivery_controller,
+                    async: true,
+                    cache: false,
+                    dataType: 'json',
+                    data: 'action=saveParcelTerminalDetails'
+                        + '&terminal=' + terminal,
+                    success: function(jsonData)
+                    {
+                        //console.log(jsonData);
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        if (textStatus !== 'abort'){
+                            if (!!$.prototype.fancybox)
+                                $.fancybox.open([
+                                        {
+                                            type: 'inline',
+                                            autoScale: true,
+                                            minHeight: 30,
+                                            content: '<p class="fancybox-error">' + omnivalt_parcel_terminal_error + '</p>'
+                                        }],
+                                    {
+                                        padding: 0
+                                    }
+                                );
+                            else
+                                alert(omnivalt_parcel_terminal_error);
+                        }
                     }
-                }
-            });
+                });
+            }
         });
     },
     validate : function() {

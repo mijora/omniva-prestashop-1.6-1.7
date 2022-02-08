@@ -3,6 +3,11 @@
 if (!defined('_PS_VERSION_'))
     exit;
 
+require_once __DIR__ . "/classes/OmnivaDb.php";
+require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
+require_once __DIR__ . "/classes/OmnivaOrder.php";
+require_once __DIR__ . "/classes/OmnivaPatcher.php";
+
 class OmnivaltShipping extends CarrierModule
 {
     const CONTROLLER_OMNIVA_AJAX = 'AdminOmnivaAjax';
@@ -13,15 +18,10 @@ class OmnivaltShipping extends CarrierModule
         'displayAdminOrderContentShip',
         'displayBeforeCarrier',
         'header',
-        'actionCarrierProcess',
         'orderDetailDisplayed',
         'displayAdminOrder',
         'displayBackOfficeHeader',
-    );
-
-    private static $_classMap = array(
-        'OmnivaPatcher' => 'omnivapatcher.php',
-        'OrderInfo' => 'classes/OrderInfo.php',
+        'actionValidateOrder'
     );
 
     private static $_carriers = array(
@@ -200,27 +200,18 @@ class OmnivaltShipping extends CarrierModule
                 }
             }
 
+            if (!$this->createDbTables()) {
+                $this->_errors[] = $this->l('Failed to create tables.');
+                return false;
+            }
+
             $this->registerTabs();
             Configuration::updateValue('omnivalt_manifest', 1);
-            //add new fields
-            $new_fields = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_terminal VARCHAR(10) default NULL';
-            Db::getInstance()->execute($new_fields);
-            $new_fields2 = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_manifest VARCHAR(10) default NULL';
-            Db::getInstance()->execute($new_fields2);
-            $new_table = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'omnivalt_order_info` (
-              `order_id` int(11) NOT NULL,
-              `packs` int(10) unsigned NOT NULL,
-              `weight` double(10,2) unsigned NOT NULL,
-              `is_cod` tinyint(1) NOT NULL,
-              `cod_amount` decimal(10,2) NOT NULL,
-              `error` VARCHAR(200) default NULL,
-              PRIMARY KEY (`order_id`)
-            ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
-            Db::getInstance()->execute($new_table);
 
             if (!$this->createCarriers()) {
                 return false;
             }
+
             //install of custom state
             $this->getCustomOrderState();
             $this->getErrorOrderState();
@@ -307,22 +298,48 @@ class OmnivaltShipping extends CarrierModule
         return true;
     }
 
+    /**
+     * Deletes module Admin controllers
+     * Used for module uninstall
+     *
+     * @return bool Module Admin controllers deleted successfully
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
+     */
+    private function deleteTabs()
+    {
+        $tabs = $this->getModuleTabs();
+
+        if (empty($tabs)) {
+            return true; // Nothing to remove
+        }
+
+        foreach (array_keys($tabs) as $controller) {
+            $idTab = (int) Tab::getIdFromClassName($controller);
+            $tab = new Tab((int) $idTab);
+
+            if (!Validate::isLoadedObject($tab)) {
+                continue; // Nothing to remove
+            }
+
+            if (!$tab->delete()) {
+                $this->displayError($this->l('Error while uninstalling tab') . ' ' . $tab->name);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function uninstall()
     {
         if (parent::uninstall()) {
-            $tab_controller_main_id = TabCore::getIdFromClassName('AdminOmnivaOrders');
-            $tab_controller_main = new Tab($tab_controller_main_id);
-            $tab_controller_main->delete();
-            foreach ($this->_hooks as $hook) {
-                if (!$this->unregisterHook($hook)) {
-                    return false;
-                }
-            }
-            //delete new fields
-            $new_fields = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` DROP omnivalt_terminal';
-            Db::getInstance()->execute($new_fields);
-            $new_fields2 = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` DROP omnivalt_manifest';
-            Db::getInstance()->execute($new_fields2);
+
+            $cDb = new OmnivaDb();
+            $cDb->deleteTables();
+            $this->deleteTabs();
+
             if (!$this->deleteCarriers()) {
                 return false;
             }
@@ -364,8 +381,6 @@ class OmnivaltShipping extends CarrierModule
     {
 
         if (Tools::isSubmit('patch' . $this->name)) {
-            self::checkForClass('OmnivaPatcher');
-
             $patcher = new OmnivaPatcher();
             $this->runPatcher($patcher);
         }
@@ -597,8 +612,6 @@ class OmnivaltShipping extends CarrierModule
             )
         );
 
-        self::checkForClass('OmnivaPatcher');
-
         $patcher = new OmnivaPatcher();
 
         $installed_patches = $patcher->getInstalledPatches();
@@ -746,26 +759,6 @@ class OmnivaltShipping extends CarrierModule
         return $terminalsList;
     }
 
-    public static function getTranslate($string, $iso_lang = 'lt', $source = '', $js = false)
-    {
-        $mainClass = new OmnivaltShipping();
-        if (empty($source)) $source = $mainClass->name;
-        $file = dirname(__FILE__) . '/translations/' . $iso_lang . '.php';
-        if (!file_exists($file)) return $string;
-        include($file);
-        $key = md5(str_replace('\'', '\\\'', $string));
-        $current_key = strtolower('<{' . $mainClass->name . '}' . _THEME_NAME_ . '>' . $source) . '_' . $key;
-        $default_key = strtolower('<{' . $mainClass->name . '}prestashop>' . $source) . '_' . $key;
-        $ret = $string;
-        if (isset($_MODULE[$current_key]))
-            $ret = stripslashes($_MODULE[$current_key]);
-        elseif (isset($_MODULE[$default_key]))
-            $ret = stripslashes($_MODULE[$default_key]);
-        if ($js)
-            $ret = addslashes($ret);
-        return $ret;
-    }
-
     public static function getTerminalAddress($code)
     {
         $terminals_json_file_dir = dirname(__file__) . "/locations.json";
@@ -802,27 +795,22 @@ class OmnivaltShipping extends CarrierModule
     public function hookDisplayBeforeCarrier($params)
     {
         $selected = '';
-        if (isset($params['cookie']->id_cart) && $params['cookie']->id_cart) {
-            $cart_sql = "SELECT omnivalt_terminal FROM " . _DB_PREFIX_ . "cart WHERE id_cart = " . $params['cookie']->id_cart . " AND omnivalt_terminal <> '' AND omnivalt_terminal IS NOT NULL";
-            $selected = Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($cart_sql);
+        if (isset($params['cart']->id)) {
+            $omnivaCart = new OmnivaCartTerminal($params['cart']->id);
+            $selected = $omnivaCart->id_terminal;
         }
-        $sql = 'SELECT a.*, c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $params['cart']->id_address_delivery . '"';
-        $address = Db::getInstance()->getRow($sql);
-
-        $language = new Language(Configuration::get('PS_LANG_DEFAULT'));
-        $address['iso_code'] = (!empty($address['iso_code'])) ? $address['iso_code'] : strtoupper($language->iso_code);
-        $address['postcode'] = (isset($address['postcode'])) ? $address['postcode'] : '';
+        $address = new Address($params['cart']->id_address_delivery);
+        $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
 
         $showMap = Configuration::get('omnivalt_map');
         $this->context->smarty->assign(array(
-
             'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
-            'parcel_terminals' => $this->getTerminalsOptions($selected, $address['iso_code']),
-            'terminals_list' => $this->getTerminalForMap($selected, $address['iso_code']),
-            'omniva_current_country' => $address['iso_code'],
-            'omniva_postcode' => $address['postcode'],
+            'parcel_terminals' => $this->getTerminalsOptions($selected, $iso_code),
+            'terminals_list' => $this->getTerminalForMap($selected, $iso_code),
+            'omniva_current_country' => $iso_code,
+            'omniva_postcode' => $address->postcode ?: '',
             'omniva_map' => $showMap,
-            'module_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
+            'module_url' => $this->_path,
         ));
         return $this->display(__file__, 'displayBeforeCarrier.tpl');
     }
@@ -880,13 +868,6 @@ class OmnivaltShipping extends CarrierModule
             ));
 
             return $this->display(__FILE__, 'header.tpl');
-        }
-    }
-
-    public function hookActionCarrierProcess($params)
-    {
-        if (($terminal_id = Tools::getValue('omnivalt_parcel_terminal')) && $params['cart']->id_carrier == Configuration::get('omnivalt_pt')) {
-            $params['cart']->omnivalt_terminal = $terminal_id;
         }
     }
 
@@ -952,28 +933,24 @@ class OmnivaltShipping extends CarrierModule
             $history->id_employee = (int)$this->context->employee->id;
             $history->changeIdOrderState((int)$status, $order);
             $history->add();
-            //$history->addWithemail(true); // broken in 1.7.6
         }
     }
 
     public function hookDisplayAdminOrder($id_order)
     {
         $order = new Order((int)$id_order['id_order']);
-        $cart = new Cart((int)$order->id_cart);
+        $cart = new OmnivaCartTerminal($order->id_cart);
 
         if ($order->id_carrier == Configuration::get('omnivalt_pt') || $order->id_carrier == Configuration::get('omnivalt_c')) {
-            $terminal_id = $cart->omnivalt_terminal;
+            $id_terminal = $cart->id_terminal;
 
-            $sql = 'SELECT a.*, c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $cart->id_address_delivery . '"';
-            $address = Db::getInstance()->getRow($sql);
-            $countryCode = $address['iso_code'];
+            $address = new Address($order->id_address_delivery);
+            $countryCode = Country::getIsoById($address->id_country);
 
-            self::checkForClass('OrderInfo');
-            $orderInfo = new OrderInfo();
-            $orderInfo = $orderInfo->getOrderInfo($order->id);
+            $omnivaOrder = new OmnivaOrder($order->id);
             $label_url = $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels", "order_ids" => $order->id));
 
-            $error_msg = !empty($orderInfo['error']) ? $orderInfo['error'] : false;
+            $error_msg = $omnivaOrder->error ?: false;
             $omniva_tpl = 'blockinorder.tpl';
 
             if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
@@ -982,15 +959,15 @@ class OmnivaltShipping extends CarrierModule
             }
 
             $this->smarty->assign(array(
-                'total_weight' => isset($orderInfo['weight']) ? $orderInfo['weight'] : $order->getTotalWeight(),
-                'packs' => isset($orderInfo['packs']) ? $orderInfo['packs'] : 1,
-                'total_paid_tax_incl' => isset($orderInfo['cod_amount']) ? $orderInfo['cod_amount'] : $order->total_paid_tax_incl,
-                'is_cod' => isset($orderInfo['is_cod']) ? $orderInfo['is_cod'] : (strpos($order->module, 'cashondelivery') !== false), //($order->module == 'cashondeliveryplus' OR $order->module == 'cashondelivery'),
-                'parcel_terminals' => $this->getTerminalsOptions($terminal_id, $countryCode),
-                'carriers' => $this->getCarriersOptions($cart->id_carrier),
-                'order_id' => (int)$id_order['id_order'],
-                'moduleurl' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array('action' => 'saveorderinfo')),
-                'printlabelsurl' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array('action' => 'printlabels')),
+                'total_weight' => $omnivaOrder->weight,
+                'packs' => $omnivaOrder->packs,
+                'total_paid_tax_incl' => $omnivaOrder->cod_amount,
+                'is_cod' => $omnivaOrder->cod,
+                'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode),
+                'carriers' => $this->getCarriersOptions($order->id_carrier),
+                'order_id' => $order->id,
+                'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
+                'printlabelsurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'printlabels')),
                 'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
                 'label_url' => $label_url,
                 'error' => $error_msg,
@@ -1015,12 +992,11 @@ class OmnivaltShipping extends CarrierModule
 
     public static function get_tracking_number($id_order, $onload = false)
     {
-        self::checkForClass('OrderInfo');
         $orderInfo = new OrderInfo();
         $orderInfo = $orderInfo->getOrderInfo($id_order);
         $order = new Order($id_order);
-        $cart = new Cart((int)$order->id_cart);
-        $terminal_id = $cart->omnivalt_terminal;
+        $cart = new OmnivaCartTerminal($order->id_cart);
+        $terminal_id = $cart->id_terminal;
         $sql = 'SELECT a.*, c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $order->id_address_delivery . '"';
         $address = Db::getInstance()->getRow($sql);
 
@@ -1471,12 +1447,112 @@ class OmnivaltShipping extends CarrierModule
         return '';
     }
 
-    public static function checkForClass($className)
+    /**
+     * Create module database tables
+     */
+    public function createDbTables()
     {
-        if (!class_exists($className)) {
-            if (isset(self::$_classMap[$className])) {
-                require_once dirname(__FILE__) . '/' . self::$_classMap[$className];
-            }
+        try {
+            $cDb = new OmnivaDb();
+
+            $result = $cDb->createTables();
+        } catch (Exception $e) {
+            $result = false;
         }
+        return $result;
+    }
+
+    public function hookActionValidateOrder($params)
+    {
+        $order = $params['order'];
+        $cart = $params['cart'];
+        $carrier = new Carrier($order->id_carrier);
+        $carrier_reference = $carrier->id_reference;
+        if($carrier->external_module_name == $this->name)
+        {
+            $omnivaOrder = new OmnivaOrder();
+            $omnivaOrder->force_id = true;
+            $omnivaOrder->packs = 1;
+            $omnivaOrder->id = $order->id;
+            $omnivaOrder->weight = $order->getTotalWeight();
+            $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
+            $omnivaOrder->add();
+        }
+    }
+
+    /**
+     * Re calculate shipping cost. Cloned from 1.7, as 1.6 does not have this.
+     *
+     * @return object $order
+     */
+    public function refreshShippingCost($order)
+    {
+        if (empty($order->id)) {
+            return false;
+        }
+
+        if (!Configuration::get('PS_ORDER_RECALCULATE_SHIPPING')) {
+            return $order;
+        }
+
+        $fake_cart = new Cart((int) $order->id_cart);
+        $new_cart = $fake_cart->duplicate();
+        $new_cart = $new_cart['cart'];
+
+        // assign order id_address_delivery to cart
+        $new_cart->id_address_delivery = (int) $order->id_address_delivery;
+
+        // assign id_carrier
+        $new_cart->id_carrier = (int) $order->id_carrier;
+
+        //remove all products : cart (maybe change in the meantime)
+        foreach ($new_cart->getProducts() as $product) {
+            $new_cart->deleteProduct((int) $product['id_product'], (int) $product['id_product_attribute']);
+        }
+
+        // add real order products
+        foreach ($order->getProducts() as $product) {
+            $new_cart->updateQty(
+                $product['product_quantity'],
+                (int) $product['product_id'],
+                null,
+                false,
+                'up',
+                0,
+                null,
+                true,
+                true
+            ); // - skipAvailabilityCheckOutOfStock
+        }
+
+        // get new shipping cost
+        $base_total_shipping_tax_incl = (float) $new_cart->getPackageShippingCost((int) $new_cart->id_carrier, true, null);
+        $base_total_shipping_tax_excl = (float) $new_cart->getPackageShippingCost((int) $new_cart->id_carrier, false, null);
+
+        // calculate diff price, then apply new order totals
+        $diff_shipping_tax_incl = $order->total_shipping_tax_incl - $base_total_shipping_tax_incl;
+        $diff_shipping_tax_excl = $order->total_shipping_tax_excl - $base_total_shipping_tax_excl;
+
+        $order->total_shipping_tax_excl -= $diff_shipping_tax_excl;
+        $order->total_shipping_tax_incl -= $diff_shipping_tax_incl;
+        $order->total_shipping = $order->total_shipping_tax_incl;
+        $order->total_paid_tax_excl -= $diff_shipping_tax_excl;
+        $order->total_paid_tax_incl -= $diff_shipping_tax_incl;
+        $order->total_paid = $order->total_paid_tax_incl;
+        $order->update();
+
+        // save order_carrier prices, we'll save order right after this in update() method
+        $orderCarrierId = (int) $order->getIdOrderCarrier();
+        if ($orderCarrierId > 0) {
+            $order_carrier = new OrderCarrier($orderCarrierId);
+            $order_carrier->shipping_cost_tax_excl = $order->total_shipping_tax_excl;
+            $order_carrier->shipping_cost_tax_incl = $order->total_shipping_tax_incl;
+            $order_carrier->update();
+        }
+
+        // remove fake cart
+        $new_cart->delete();
+
+        return $order;
     }
 }
