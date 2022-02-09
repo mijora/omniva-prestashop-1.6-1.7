@@ -833,6 +833,7 @@ class OmnivaltShipping extends CarrierModule
             Media::addJsDef([
                 'omniva_img_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/views/img/',
                 'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
+                'omnivaltdelivery_controller' => $this->context->link->getModuleLink('omnivaltshipping', 'ajax'),
                 'omnivadata' => [
                     'text_select_terminal' => $this->l('Select terminal'),
                     'text_search_placeholder' => $this->l('Enter postcode'),
@@ -842,7 +843,6 @@ class OmnivaltShipping extends CarrierModule
                     'text_show_more' => $this->l('Show more'),
                     'omniva_plugin_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
                     'omnivalt_parcel_terminal_error' => $this->l('Please select parcel terminal'),
-                    'omnivaltdelivery_controller' => $this->context->link->getModuleLink('omnivaltshipping', 'ajax'),
                     'select_terminal' => $this->l('Please select a parcel terminal'),
                     'omnivaSearch' => $this->l('Enter an address, if you want to find terminals'),
                 ]
