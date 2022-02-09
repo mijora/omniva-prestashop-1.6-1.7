@@ -138,13 +138,13 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
         $order = new Order($orderId);
         $omnivaOrder = new OmnivaOrder($orderId);
-        if (empty($orderInfo)) {
+        if (!Validate::isLoadedObject($omnivaOrder)) {
             echo json_encode(array('error' => $this->module->l('Order info not saved. Please save before generating labels')));
             exit();
         }
 
-        $status = OmnivaltShipping::get_tracking_number($orderId);
-        if ($status['status']) {
+        $status = $this->module->api->createShipment($orderId);
+        if (isset($status['barcodes']) && !empty($status['barcodes'])) {
             $order->setWsShippingNumber($status['barcodes'][0]);
             $order->save();
             $this->setOmnivaOrder($orderId);
@@ -198,8 +198,8 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $track_number = $order->getWsShippingNumber();
                 if ($track_number == '') {
 
-                    $status = OmnivaltShipping::get_tracking_number($orderId);
-                    if ($status['status']) {
+                    $status = $this->module->api->createShipment($orderId);
+                    if (isset($status['barcodes']) && !empty($status['barcodes'])) {
                         $order->setWsShippingNumber($status['barcodes'][0]);
                         $order->save();
                         $this->setOmnivaOrder($orderId);
@@ -350,8 +350,8 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                     continue;
                 $track_number = $order->getWsShippingNumber();
                 if ($track_number == '') {
-                    $status = OmnivaltShipping::get_tracking_number($orderId);
-                    if ($status['status']) {
+                    $status = $this->module->api->createShipment($orderId);
+                    if (isset($status['barcodes']) && !empty($status['barcodes'])) {
                         $order->setWsShippingNumber($status['barcodes'][0]);
                         $order->save();
                         $track_number = $status['barcodes'][0];

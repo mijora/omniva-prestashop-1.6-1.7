@@ -6,14 +6,18 @@ if (!defined('_PS_VERSION_'))
 require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
+
 require_once __DIR__ . "/classes/OmnivaPatcher.php";
 require_once __DIR__ . "/classes/OmnivaHelper.php";
+require_once __DIR__ . "/classes/OmnivaApi.php";
 
 require_once __DIR__ . '/vendor/autoload.php';
 
 class OmnivaltShipping extends CarrierModule
 {
     public $helper;
+
+    public $api;
 
     const CONTROLLER_OMNIVA_AJAX = 'AdminOmnivaAjax';
     const CONTROLLER_OMNIVA_ORDERS = 'AdminOmnivaOrders';
@@ -54,6 +58,7 @@ class OmnivaltShipping extends CarrierModule
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
         $this->helper = new OmnivaHelper();
+        $this->api = new OmnivaApi();
         if (!Configuration::get('omnivalt_api_url'))
             $this->warning = $this->l('Please set up module');
         if (!Configuration::get('omnivalt_locations_update') || (Configuration::get('omnivalt_locations_update') + 24 * 3600) < time() || !file_exists(dirname(__file__) . "/locations.json")) {
@@ -882,26 +887,7 @@ class OmnivaltShipping extends CarrierModule
         return $data;
     }
 
-    protected static function cod($order, $cod = 0, $amount = 0)
-    {
-        $company = Configuration::get('omnivalt_company');
-        $bank_account = Configuration::get('omnivalt_bank_account');
-        if ($cod && empty($bank_account)) die('Empty bank account in Omniva module settings');
-
-        //if($order->module == 'cashondelivery' && $cod) {
-        if ($cod) {
-            return '<monetary_values>
-        <cod_receiver>' . $company . '</cod_receiver>
-        <values code="item_value" amount="' . $amount . '"/>
-      </monetary_values>
-      <account>' . $bank_account . '</account>
-      <reference_number>' . self::getReferenceNumber($order->id) . '</reference_number>';
-        } else {
-            return '';
-        }
-    }
-
-    protected static function getReferenceNumber($order_number)
+    public static function getReferenceNumber($order_number)
     {
         $order_number = (string)$order_number;
         $kaal = array(7, 3, 1);
@@ -987,124 +973,6 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, $omniva_tpl);
         }
-    }
-
-    private static function getMethod($order_carrier_id = false)
-    {
-        if (!$order_carrier_id)
-            return '';
-        $terminals = self::getCarrierIds(['omnivalt_pt']);
-        $couriers = self::getCarrierIds(['omnivalt_c']);
-        if (in_array((int)$order_carrier_id, $terminals, true))
-            return 'pt';
-        if (in_array((int)$order_carrier_id, $couriers, true))
-            return 'c';
-        return '';
-    }
-
-    public static function get_tracking_number($id_order, $onload = false)
-    {
-        $orderInfo = new OrderInfo();
-        $orderInfo = $orderInfo->getOrderInfo($id_order);
-        $order = new Order($id_order);
-        $cart = new OmnivaCartTerminal($order->id_cart);
-        $terminal_id = $cart->id_terminal;
-        $sql = 'SELECT a.*, c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $order->id_address_delivery . '"';
-        $address = Db::getInstance()->getRow($sql);
-
-        $send_method = self::getMethod($order->id_carrier);
-        $pickup_method = Configuration::get('omnivalt_send_off');
-
-        switch ($pickup_method . ' ' . $send_method) {
-            case 'c pt':
-                $service = "PU";
-                break;
-            case 'c c':
-                $service = "QH";
-                break;
-            case 'pt c':
-                $service = "PK";
-                break;
-            case 'pt pt':
-                $service = "PA";
-                break;
-            default:
-                $service = "";
-                break;
-        }
-        $parcel_terminal = "";
-        if ($send_method == "pt")
-            $parcel_terminal = 'offloadPostcode="' . $terminal_id . '" ';
-        $additionalService = '';
-        if ($service == "PA" || $service == "PU")
-            $additionalService .= '<option code="ST" />';
-        if ($orderInfo['is_cod'])
-            $additionalService .= '<option code="BP" />';
-
-        if ($additionalService) {
-            $additionalService = '<add_service>' . $additionalService . '</add_service>';
-        }
-        $phones = '';
-        if ($address['phone'])
-            $phones .= '<phone>' . $address['phone'] . '</phone>';
-        if ($address['phone_mobile'])
-            $phones .= '<mobile>' . $address['phone_mobile'] . '</mobile>';
-        else
-            $phones .= '<mobile>' . $address['phone'] . '</mobile>';
-
-        $pickFinish = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
-        $pickDay = date('Y-m-d');
-        if (time() > strtotime($pickDay . ' ' . $pickFinish))
-            $pickDay = date('Y-m-d', strtotime($pickDay . "+1 days"));
-
-        $shop_country = new Country();
-        $xmlRequest = '
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://service.core.epmx.application.eestipost.ee/xsd">
-           <soapenv:Header/>
-           <soapenv:Body>
-              <xsd:businessToClientMsgRequest>
-                 <partner>' . Configuration::get('omnivalt_api_user') . '</partner>
-                 <interchange msg_type="info11">
-                    <header file_id="' . \Date('YmdHms') . '" sender_cd="' . Configuration::get('omnivalt_api_user') . '" >                
-                    </header>
-                    <item_list>
-                      ';
-        for ($i = 0; $i < $orderInfo['packs']; $i++) :
-            $xmlRequest .= '
-                       <item service="' . $service . '" >
-                          ' . $additionalService . '
-                          <measures weight="' . $orderInfo['weight'] . '" />
-                          ' . self::cod($order, $orderInfo['is_cod'], $orderInfo['cod_amount']) . '
-                          <receiverAddressee >
-                             <person_name>' . $address['firstname'] . ' ' . $address['lastname'] . '</person_name>
-                            ' . $phones;
-            // if ( $send_method != 'pt'):
-            $xmlRequest .= '
-                             <address postcode="' . $address['postcode'] . '" ' . $parcel_terminal . ' deliverypoint="' . $address['city'] . '" country="' . $address['iso_code'] . '" street="' . str_replace('"', "'", $address['address1']) . '" />';
-            /* else:
-                              $xmlRequest .= '
-                                   <address '.$parcel_terminal.' />';
-
-                            endif; */
-            $xmlRequest .= ' 
-                         </receiverAddressee>
-                          <!--Optional:-->
-                          <returnAddressee>
-                             <person_name>' . Configuration::get('omnivalt_company') . '</person_name>
-                             <!--Optional:-->
-                             <phone>' . Configuration::get('omnivalt_phone') . '</phone>
-                             <address postcode="' . Configuration::get('omnivalt_postcode') . '" deliverypoint="' . Configuration::get('omnivalt_city') . '" country="' . Configuration::get('omnivalt_countrycode') . '" street="' . Configuration::get('omnivalt_address') . '" />
-                          
-                          </returnAddressee>';
-            $xmlRequest .= '</item>';
-        endfor;
-        $xmlRequest .= '
-                    </item_list>
-                 </interchange>
-              </xsd:businessToClientMsgRequest>
-           </soapenv:Body>
-        </soapenv:Envelope>';
-        return self::api_request($xmlRequest);
     }
 
     public static function call_omniva()
