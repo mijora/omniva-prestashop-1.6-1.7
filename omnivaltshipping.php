@@ -7,9 +7,14 @@ require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
 require_once __DIR__ . "/classes/OmnivaPatcher.php";
+require_once __DIR__ . "/classes/OmnivaHelper.php";
+
+require_once __DIR__ . '/vendor/autoload.php';
 
 class OmnivaltShipping extends CarrierModule
 {
+    public $helper;
+
     const CONTROLLER_OMNIVA_AJAX = 'AdminOmnivaAjax';
     const CONTROLLER_OMNIVA_ORDERS = 'AdminOmnivaOrders';
 
@@ -31,8 +36,6 @@ class OmnivaltShipping extends CarrierModule
         'Courier' => 'omnivalt_c',
     );
 
-    private $texts = array();
-
     public function __construct()
     {
         $this->name = 'omnivaltshipping';
@@ -48,37 +51,13 @@ class OmnivaltShipping extends CarrierModule
         $this->displayName = $this->l('Omniva Shipping');
         $this->description = $this->l('Shipping module for Omniva carrier');
 
-        $this->texts = array(
-            $this->l('Sender address'),
-            $this->l('No.'),
-            $this->l('Shipment number'),
-            $this->l('Date'),
-            $this->l('Amount'),
-            $this->l('Weight (kg)'),
-            $this->l('Recipient address'),
-            $this->l('Courier name, surname, signature'),
-            $this->l('Sender name, surname, signature'),
-        );
-
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
+        $this->helper = new OmnivaHelper();
         if (!Configuration::get('omnivalt_api_url'))
             $this->warning = $this->l('Please set up module');
         if (!Configuration::get('omnivalt_locations_update') || (Configuration::get('omnivalt_locations_update') + 24 * 3600) < time() || !file_exists(dirname(__file__) . "/locations.json")) {
-            $url = 'https://www.omniva.ee/locations.json';
-            $fp = fopen(dirname(__file__) . "/locations.json", "w");
-            $curl = curl_init();
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_HEADER, false);
-            curl_setopt($curl, CURLOPT_FILE, $fp);
-            curl_setopt($curl, CURLOPT_TIMEOUT, 60);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-            $data = curl_exec($curl);
-            curl_close($curl);
-            fclose($fp);
-            if ($data !== false) {
+            if ($this->helper->updateTerminals()) {
                 Configuration::updateValue('omnivalt_locations_update', time());
             }
         }
