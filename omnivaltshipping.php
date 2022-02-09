@@ -947,7 +947,7 @@ class OmnivaltShipping extends CarrierModule
             $countryCode = Country::getIsoById($address->id_country);
 
             $omnivaOrder = new OmnivaOrder($order->id);
-            $label_url = $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels", "order_ids" => $order->id));
+            $label_url = $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array("action" => "bulklabels", "order_ids" => $order->id));
 
             $error_msg = $omnivaOrder->error ?: false;
             $omniva_tpl = 'blockinorder.tpl';
@@ -1174,14 +1174,15 @@ class OmnivaltShipping extends CarrierModule
     public function hookOrderDetailDisplayed($params)
     {
         $carrier_ids = self::getCarrierIds();
-        if ($params['order']->getWsShippingNumber() && (in_array($params['order']->id_carrier, $carrier_ids))) {
-            $sql = 'SELECT c.iso_code FROM ' . _DB_PREFIX_ . 'address AS a LEFT JOIN ' . _DB_PREFIX_ . 'country AS c ON c.id_country = a.id_country WHERE id_address="' . $params['order']->id_address_delivery . '"';
-            $address = Db::getInstance()->getRow($sql);
-            $tracking_info = $this->getTracking(array($params['order']->getWsShippingNumber()));
+        $order = $params['order'];
+        if ($order->getWsShippingNumber() && (in_array($order->id_carrier, $carrier_ids))) {
+            $address = new Address($order->id_address_delivery);
+            $iso_code = Country::getIsoById($address->id_country);
+            $tracking_info = $this->getTracking(array($order->getWsShippingNumber()));
             $this->context->smarty->assign(array(
                 'tracking_info' => $tracking_info,
-                'tracking_number' => $params['order']->getWsShippingNumber(),
-                'country_code' => $address['iso_code'],
+                'tracking_number' => $order->getWsShippingNumber(),
+                'country_code' => $iso_code,
             ));
             $this->context->controller->registerJavascript(
                 'omnivalt',
