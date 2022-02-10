@@ -12,7 +12,7 @@ $(document).ready(function () {
         $("#omnivaltOrderPrintLabels").attr('disabled', 'disabled');
         var formData = $("#omnivaltOrderPrintLabelsForm").serialize() + '&' + $.param({
             ajax: "1",
-            order_id: id_order,
+            'id_order': id_order,
         });
 
 

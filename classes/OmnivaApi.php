@@ -74,11 +74,12 @@ class OmnivaApi
             {
                 $package = new Package();
                 $package->setService($service);
+                $additionalServiceObj = [];
                 foreach ($additionalServices as $additionalServiceCode)
                 {
-                    $additionalService = (new AdditionalService())->setServiceCode($additionalServiceCode);
-                    $package->setAdditionalServices([$additionalService]);
+                    $additionalServiceObj[] = (new AdditionalService())->setServiceCode($additionalServiceCode);
                 }
+                $package->setAdditionalServices($additionalServiceObj);
 
                 $measures = new Measures();
                 $measures->setWeight($omnivaOrder->weight);
@@ -108,6 +109,8 @@ class OmnivaApi
                     ->setStreet($orderAdress->address1);
                 if ($send_method == "pt" && $id_terminal)
                     $receiverAddress->setOffloadPostcode($id_terminal);
+                else
+                    $receiverAddress->setOffloadPostcode($orderAdress->postcode);
                 $receiverContact
                     ->setAddress($receiverAddress)
                     ->setEmail($customer->email)
@@ -164,6 +167,23 @@ class OmnivaApi
 
         $omnivaOrder = new OmnivaOrder($id_order);
         $tracking_numbers = json_decode($omnivaOrder->tracking_numbers);
+        $label->downloadLabels($tracking_numbers);
+    }
+
+    public function getBulkLabels($order_ids)
+    {
+        $label = new Label();
+        $label->setAuth($this->username, $this->password);
+
+        $tracking_numbers = [];
+        foreach ($order_ids as $id_order)
+        {
+            $omnivaOrder = new OmnivaOrder($id_order);
+            if(Validate::isLoadedObject($omnivaOrder))
+            {
+                $tracking_numbers = array_merge($tracking_numbers, json_decode($omnivaOrder->tracking_numbers));
+            }
+        }
         $label->downloadLabels($tracking_numbers);
     }
 

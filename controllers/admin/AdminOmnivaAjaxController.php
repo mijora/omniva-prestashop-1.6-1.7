@@ -22,16 +22,13 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             case 'saveorderinfo':
                 $this->saveOrderInfo();
                 break;
-            case 'masssaveorderinfo':
-                $this->massSaveorderinfo();
-                break;
             case 'generateLabels':
                 $this->generateLabels();
                 break;
             case 'printLabels':
                 $this->printOrderLabels();
                 break;
-            case 'bulklabels':
+            case 'bulkPrintLabels':
                 $this->printBulkLabels();
                 break;
             case 'bulkmanifests':
@@ -122,7 +119,6 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
 
         if ($result) {
-            $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
             die(json_encode($this->module->l('Order info successfully saved')));
         } else {
             die(json_encode($this->module->l('Order info successfully saved')));
@@ -156,6 +152,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             $omnivaOrder->error = '';
             $omnivaOrder->tracking_numbers = json_encode($status['barcodes']);
             $omnivaOrder->update();
+            $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
             die(json_encode(['success' => $this->module->l('Successfully generated labels.')]));
         }
         else
@@ -192,112 +189,16 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
     protected function printBulkLabels()
     {
-        require_once(_PS_MODULE_DIR_ . 'omnivaltshipping/tcpdf/tcpdf.php');
-        require_once(_PS_MODULE_DIR_ . 'omnivaltshipping/fpdi/autoload.php');
-        $orderIds = trim($_REQUEST['order_ids'], ',');
-        $orderIds = explode(',', $orderIds);
-        OmnivaltShipping::checkForClass('OrderInfo');
-        $object = '';
-        $pdf = new \setasign\Fpdi\TcpdfFpdi('P');
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        if (is_array($orderIds)) {
-            $carrier_ids = OmnivaltShipping::getCarrierIds();
-            foreach ($orderIds as $orderId) {
-                $orderInfoObj = new OrderInfo();
-                $orderInfo = $orderInfoObj->getOrderInfo($orderId);
-                if (empty($orderInfo)) {
-                    $OrderObj = new OrderInfo();
-                    $saveResult = $OrderObj->saveOrderInfo($orderId);
-                    $orderInfo = $orderInfoObj->getOrderInfo($orderId);
-                }
-
-                if (empty($orderInfo))
-                    continue;
-                $order = new Order((int)$orderId);
-                if (!in_array($order->id_carrier, $carrier_ids))
-                    continue;
-                $track_number = $order->getWsShippingNumber();
-                if ($track_number == '') {
-
-                    $status = $this->module->api->createShipment($orderId);
-                    if (isset($status['barcodes']) && !empty($status['barcodes'])) {
-                        $order->setWsShippingNumber($status['barcodes'][0]);
-                        $order->save();
-                        $this->setOmnivaOrder($orderId);
-
-                        $track_number = $status['barcodes'][0];
-                        if (file_exists(_PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf')) {
-                            unlink(_PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf');
-                        }
-                    } else {
-                        $orderInfoObj->saveError($orderId, addslashes($status['msg']));
-                        $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
-                        if (count($orderIds) > 1) {
-                            continue;
-                        } else {
-                            echo $status['msg'];
-                            exit();
-                        }
-                    }
-                }
-                $label_url = '';
-                if (file_exists(_PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf')) {
-                    $label_url = _PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf';
-                }
-                if ($label_url == '') {
-                    $label_status = OmnivaltShipping::getShipmentLabels(array($track_number), $orderId);
-                    if ($label_status['status']) {
-                        if (file_exists(_PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf')) {
-                            $label_url = _PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf';
-                        }
-                    } else {
-                        $orderInfoObj->saveError($orderId, addslashes($label_status['msg']));
-                        $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
-                    }
-                    if ($label_url == '')
-                        continue;
-                }
-                $this->module->changeOrderStatus($orderId, $this->module->getCustomOrderState());
-                $pagecount = $pdf->setSourceFile($label_url);
-                if (file_exists($label_url)) {
-                    unlink($label_url);
-                }
-
-                $print_type = Configuration::get('omnivalt_print_type');
-                if ($print_type === 'single') {
-                    for ($i = 1; $i <= $pagecount; $i++) {
-                        $tplidx = $pdf->ImportPage($i);
-                        $s = $pdf->getTemplatesize($tplidx);
-                        $pdf->AddPage('P', array($s['width'], $s['height']));
-                        $pdf->useTemplate($tplidx);
-                    }
-                } else {
-                    $newPG = array(0, 4, 8, 12, 16, 20, 24, 28, 32);
-                    if ($this->labelsMix >= 4) {
-                        $pdf->AddPage();
-                        $page = 1;
-                        $templateId = $pdf->importPage($page);
-                        $this->labelsMix = 0;
-                    }
-                    $tplidx = $pdf->ImportPage(1);
-                    if ($this->labelsMix == 0) {
-                        $pdf->useTemplate($tplidx, 5, 15, 94.5, 108, false);
-                    } else if ($this->labelsMix == 1) {
-                        $pdf->useTemplate($tplidx, 110, 15, 94.5, 108, false);
-                    } else if ($this->labelsMix == 2) {
-                        $pdf->useTemplate($tplidx, 5, 160, 94.5, 108, false);
-                    } else if ($this->labelsMix == 3) {
-                        $pdf->useTemplate($tplidx, 110, 160, 94.5, 108, false);
-                    } else {
-                        echo $this->module->l('Problems with labels count, please, select one order!!!');
-                        exit();
-                    }
-                    $this->labelsMix++;
-                }
-            }
+        $order_ids = explode(',', Tools::getValue('order_ids'));
+        if (empty($order_ids))
+        {
+            die(json_encode(['error' => $this->module->l('No order ID\'s provided.')]));
         }
-        $pdf->Output('Omnivalt_labels.pdf', 'I');
+
+        if(!$this->module->api->getBulkLabels($order_ids))
+        {
+            die(json_encode(['error' => 'Could not fetch labels from the API.']));
+        }
     }
 
     public function setOmnivaOrder($id_order = 0)

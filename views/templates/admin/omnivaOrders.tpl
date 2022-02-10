@@ -62,7 +62,7 @@
                             <td>{$i.date_upd}</td>
                             <td>{$i.total_paid}</td>
                             <td>
-                                <a href="{$labelsLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs"
+                                <a href="{$labelsLink}&id_order={$i.id_order}" class="btn btn-success btn-xs"
                                    target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
                                 <!--<a href="{$manifestLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Manifest' mod='omnivaltshipping'}</a>-->
                                 {if $i.tracking_number == null}
@@ -79,7 +79,7 @@
                 <a href="{$manifestAll}&order_ids={$result}&type=new" data-url="{$manifestAll}&type=new&order_ids="
                    class="btn btn-default btn-xs action-call"
                    target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                <a href="{$labelsLink}&order_ids={$result}" data-url="{$labelsLink}&order_ids="
+                <a href="{$bulkLabelsLink}&order_ids={$result}"
                    class="btn btn-default btn-xs action-call" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
                 <br/>
                 <hr/>

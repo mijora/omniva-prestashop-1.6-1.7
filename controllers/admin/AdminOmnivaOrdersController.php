@@ -17,6 +17,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'ajaxCall' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&ajax',
             'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
             'labelsLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
+            'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "bulkPrintLabels"]),
             'labels_trans' => $this->module->l('Labels'),
             'not_found_trans' => $this->module->l('Nothing found'),
         ]);
@@ -33,9 +34,6 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             exit();
         } else if (Tools::getValue('cancelSkip') != null) {
             $this->cancelSkip();
-            exit();
-        } else if (Tools::getValue('installCntrAdminDone') != null) {
-            $this->installController();
             exit();
         } else if (Tools::getValue('callCourier')) {
             $this->callCarrier();
@@ -134,7 +132,8 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'cancelSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&cancelSkip=',
             'page' => $page,
             'manifestLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")),
-            'labelsLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
+            'labelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "printLabels"]),
+            'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "bulkPrintLabels"]),
 
             'manifestAll' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifestsall")),
             'manifestNum' => strval(Configuration::get('omnivalt_manifest')),
@@ -251,40 +250,5 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             }
         }
         Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOmnivaOrders'));
-    }
-
-    public function installController()
-    {
-        $new_fields2 = 'ALTER TABLE `' . _DB_PREFIX_ . 'cart` ADD omnivalt_manifest VARCHAR(10) default NULL';
-        Db::getInstance()->execute($new_fields2);
-
-        $saveManifest = "UPDATE " . _DB_PREFIX_ . "cart 
-		SET omnivalt_manifest = -1";
-        Db::getInstance()->execute($saveManifest);
-
-        $name = $this->l('Omniva orders');
-        $controllerName = 'AdminOmnivaOrders';
-        $tab_admin_order_id = Tab::getIdFromClassName('AdminShipping') ? Tab::getIdFromClassName('AdminShipping') : Tab::getIdFromClassName('Shipping');
-        $tab = new Tab();
-        $tab->class_name = $controllerName;
-        $tab->id_parent = $tab_admin_order_id;
-        $tab->module = $this->name;
-        $languages = Language::getLanguages(false);
-        foreach ($languages as $lang) {
-            $tab->name[$lang['id_lang']] = $name;
-        }
-        $tab->save();
-
-        Configuration::updateValue('omnivalt_manifest', 1);
-
-    }
-
-    protected function l($string, $class = null, $addslashes = false, $htmlentities = true)
-    {
-        if (_PS_VERSION_ >= '1.7') {
-            return Context::getContext()->getTranslator()->trans($string);
-        } else {
-            return parent::l($string, $class, $addslashes, $htmlentities);
-        }
     }
 }

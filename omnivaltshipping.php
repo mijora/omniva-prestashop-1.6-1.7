@@ -918,9 +918,9 @@ class OmnivaltShipping extends CarrierModule
         if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore') {
             {
                 Media::addJsDef([
-                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'generateLabels')),
+                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'generateLabels']),
                     'success_add_trans' => $this->l('Successfully added.'),
-                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
+                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'saveorderinfo']),
                     'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
                 ]);
                 if (version_compare(_PS_VERSION_, '1.7.7', '>='))

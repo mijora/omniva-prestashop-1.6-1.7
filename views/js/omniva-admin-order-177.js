@@ -32,7 +32,7 @@ $(document).ready(function () {
         let formData = $("#omnivaltOrderPrintLabelsForm")
             .serialize() + '&' + $.param({
             'ajax': "1",
-            'order_id': id_order
+            'id_order': id_order
         });
 
         $.ajax({

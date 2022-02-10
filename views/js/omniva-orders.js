@@ -9,15 +9,15 @@ $(document).ready(() => {
     });
 
     $('.action-call').on('click', function (e) {
-        var ids = '';
+        var ids = [];
         $('.selected-orders:checked').each(function () {
-            ids += "," + $(this).val();
+            ids.push($(this).val());
         });
-        if (ids == "") {
+        if (ids.length == 0) {
             alert(check_orders);
             return false;
         } else {
-            $(this).attr('href', $(this).data('url') + ids);
+            $(this).attr('href', `${bulkLabelsLink}&order_ids=${ids.join(',')}`);
         }
 
     });
