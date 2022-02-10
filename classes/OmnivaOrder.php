@@ -43,4 +43,16 @@ class OmnivaOrder extends ObjectModel
         ],
     ];
 
+    public static function getCurrentManifestOrders()
+    {
+        $query = (new DbQuery())
+            ->select("id")
+            ->from(self::$definition['table'])
+            ->where('manifest = ' . (int) Configuration::get('omnivalt_manifest'));
+
+        return array_map(function($order) {
+            return $order['id'];
+        }, Db::getInstance()->executeS($query));
+    }
+
 }

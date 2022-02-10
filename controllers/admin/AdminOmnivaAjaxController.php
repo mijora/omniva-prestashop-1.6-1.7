@@ -32,7 +32,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $this->printBulkLabels();
                 break;
             case 'bulkmanifests':
-                $this->printBulkManifests();
+                $this->module->api->getManifest();
                 break;
             case 'bulkmanifestsall':
                 $this->saveManifest();
@@ -239,120 +239,5 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
         $this->printBulkManifests();
 
-    }
-
-    protected function printBulkManifests()
-    {
-        $cookie = $this->context->cookie;
-        require_once(_PS_MODULE_DIR_ . 'omnivaltshipping/tcpdf/tcpdf.php');
-
-        $lang = Configuration::get('omnivalt_manifest_lang');
-        if (empty($lang)) $lang = 'en';
-        $orderIds = trim($_REQUEST['order_ids'], ',');
-        $orderIds = explode(',', $orderIds);
-        OmnivaltShipping::checkForClass('OrderInfo');
-        $orderInfoObj = new OrderInfo();
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        $pdf->AddPage();
-        $order_table = '';
-        $count = 1;
-        if (is_array($orderIds)) {
-            $carrier_ids = OmnivaltShipping::getCarrierIds();
-            $carrier_terminal_ids = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
-            foreach ($orderIds as $orderId) {
-                if (!$orderId)
-                    continue;
-                $orderInfo = new OmnivaOrder($orderId);
-                if (!Validate::isLoadedObject($orderInfo))
-                    continue;
-                $order = new Order((int)$orderId);
-                if (!in_array($order->id_carrier, $carrier_ids))
-                    continue;
-                $track_number = $order->getWsShippingNumber();
-                if ($track_number == '') {
-                    $status = $this->module->api->createShipment($orderId);
-                    if (isset($status['barcodes']) && !empty($status['barcodes'])) {
-                        $order->setWsShippingNumber($status['barcodes'][0]);
-                        $order->save();
-                        $track_number = $status['barcodes'][0];
-                        if (file_exists(_PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf')) {
-                            unlink(_PS_MODULE_DIR_ . 'omnivaltshipping/pdf/' . $order->id . '.pdf');
-                        }
-                    } else {
-                        $orderInfoObj->saveError($orderId, addslashes($status['msg']));
-                        $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
-                        if (count($orderIds) > 1) {
-                            continue;
-                        } else {
-                            echo $status['msg'];
-                            exit();
-                        }
-                    }
-                }
-                $this->setOmnivaOrder($orderId);
-                $pt_address = '';
-                if (in_array($order->id_carrier, $carrier_terminal_ids)) {
-                    $cart = new OmnivaCartTerminal($order->id_cart);
-                    $pt_address = OmnivaltShipping::getTerminalAddress($cart->id_terminal);
-                }
-
-                $address = new Address($order->id_address_delivery);
-                $client_address = $address->firstname . ' ' . $address->lastname . ', ' . $address->address1 . ', ' . $address->postcode . ', ' . $address->city . ' ' . $address->country;
-                if ($pt_address != '')
-                    $client_address = '';
-                $order_table .= '<tr><td width = "40" align="right">' . $count . '.</td><td>' . $track_number . '</td><td width = "60">' . date('Y-m-d') . '</td><td width = "40">' . $orderInfo['packs'] . '</td><td width = "60">' . ($orderInfo['packs'] * $orderInfo['weight']) . '</td><td width = "210">' . $client_address . $pt_address . '</td></tr>';
-                $count++;
-                //make order shipped after creating manifest
-                $history = new OrderHistory();
-                $history->id_order = (int)$orderId;
-                $history->id_employee = (int)$cookie->id_employee;
-                $history->changeIdOrderState((int)Configuration::get('PS_OS_SHIPPING'), $order);
-                $history->add();
-
-            }
-        }
-        $pdf->SetFont('freeserif', '', 14);
-        $id_lang = $cookie->id_lang;
-
-        $shop_country = new Country(Country::getByIso(Configuration::get('omnivalt_countrycode')));
-
-        $shop_addr = '<table cellspacing="0" cellpadding="1" border="0"><tr><td>' . date('Y-m-d H:i:s') . '</td><td>' . OmnivaltShipping::getTranslate('Sender address', $lang) . ':<br/>' . Configuration::get('omnivalt_company') . '<br/>' . Configuration::get('omnivalt_address') . ', ' . Configuration::get('omnivalt_postcode') . '<br/>' . Configuration::get('omnivalt_city') . ', ' . $shop_country->name[$id_lang] . '<br/></td></tr></table>';
-
-        $pdf->writeHTML($shop_addr, true, false, false, false, '');
-        $tbl = '
-        <table cellspacing="0" cellpadding="4" border="1">
-          <thead>
-            <tr>
-              <th width = "40" align="right">' . OmnivaltShipping::getTranslate('No.', $lang) . '</th>
-              <th>' . OmnivaltShipping::getTranslate('Shipment number', $lang) . '</th>
-              <th width = "60">' . OmnivaltShipping::getTranslate('Date', $lang) . '</th>
-              <th width = "40">' . OmnivaltShipping::getTranslate('Amount', $lang) . '</th>
-              <th width = "60">' . OmnivaltShipping::getTranslate('Weight (kg)', $lang) . '</th>
-              <th width = "210">' . OmnivaltShipping::getTranslate('Recipient address', $lang) . '</th>
-            </tr>
-          </thead>
-          <tbody>
-            ' . $order_table . '
-          </tbody>
-        </table><br/><br/>
-        ';
-        $pdf->SetFont('freeserif', '', 9);
-        $pdf->writeHTML($tbl, true, false, false, false, '');
-        $pdf->SetFont('freeserif', '', 14);
-        $sign = OmnivaltShipping::getTranslate('Courier name, surname, signature', $lang) . ' ________________________________________________<br/><br/>';
-        $sign .= OmnivaltShipping::getTranslate('Sender name, surname, signature', $lang) . ' ________________________________________________';
-        $pdf->writeHTML($sign, true, false, false, false, '');
-        $pdf->Output('Omnivalt_manifest.pdf', 'I');
-
-
-        if (Tools::getValue('type') == 'new') {
-
-            $current = intval(Configuration::get('omnivalt_manifest'));
-            $current++;
-            Configuration::updateValue('omnivalt_manifest', $current);
-        }
     }
 }

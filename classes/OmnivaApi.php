@@ -10,6 +10,8 @@ use Mijora\Omniva\Shipment\Package\Package;
 use Mijora\Omniva\Shipment\Shipment;
 use Mijora\Omniva\Shipment\ShipmentHeader;
 use Mijora\Omniva\Shipment\Label;
+use Mijora\Omniva\Shipment\Manifest;
+use Mijora\Omniva\Shipment\Order;
 
 class OmnivaApi
 {
@@ -25,7 +27,7 @@ class OmnivaApi
 
     public function createShipment($id_order)
     {
-        $order = new Order($id_order);
+        $order = new \Order($id_order);
         $customer = new Customer($order->id_customer);
         $omnivaOrder = new OmnivaOrder($id_order);
         $orderAdress = new \Address($order->id_address_delivery);
@@ -129,19 +131,7 @@ class OmnivaApi
                 }
                 $package->setReceiverContact($receiverContact);
 
-                // Sender contact data
-                $senderContact = new Contact();
-                $senderAddress = new Address();
-                $senderAddress
-                    ->setCountry(Configuration::get('omnivalt_countrycode'))
-                    ->setPostcode(Configuration::get('omnivalt_postcode'))
-                    ->setDeliverypoint(Configuration::get('omnivalt_city'))
-                    ->setStreet(Configuration::get('omnivalt_address'));
-                $senderContact
-                    ->setAddress($senderAddress)
-                    ->setMobile(Configuration::get('omnivalt_phone'))
-                    ->setPersonName(Configuration::get('omnivalt_company'));
-                $package->setSenderContact($senderContact);
+                $package->setSenderContact($this->getSenderContact());
 
                 $packages[] = $package;
             }
@@ -158,6 +148,23 @@ class OmnivaApi
                 . str_replace("\n", "<br>\n", $e->getMessage()) . "<br>\n"
                 . str_replace("\n", "<br>\n", $e->getTraceAsString());
         }
+    }
+
+    private function getSenderContact()
+    {
+        $senderContact = new Contact();
+        $senderAddress = new Address();
+        $senderAddress
+            ->setCountry(Configuration::get('omnivalt_countrycode'))
+            ->setPostcode(Configuration::get('omnivalt_postcode'))
+            ->setDeliverypoint(Configuration::get('omnivalt_city'))
+            ->setStreet(Configuration::get('omnivalt_address'));
+        $senderContact
+            ->setAddress($senderAddress)
+            ->setMobile(Configuration::get('omnivalt_phone'))
+            ->setPersonName(Configuration::get('omnivalt_company'));
+
+        return $senderContact;
     }
 
     public function getOrderLabels($id_order)
@@ -185,6 +192,48 @@ class OmnivaApi
             }
         }
         $label->downloadLabels($tracking_numbers);
+    }
+
+    public function getManifest()
+    {
+        $manifest = new Manifest();
+        $manifest->setSender($this->getSenderContact());
+
+        $omnivaOrderIds = OmnivaOrder::getCurrentManifestOrders();
+        foreach ($omnivaOrderIds as $omnivaOrderId)
+        {
+            $omnivaOrder = new OmnivaOrder($omnivaOrderId);
+            if(Validate::isLoadedObject($omnivaOrder))
+            {
+                $terminal_address = '';
+                $order = new \Order($omnivaOrderId);
+                $cartTerminal = new OmnivaCartTerminal($order->id_cart);
+                if(Validate::isLoadedObject($cartTerminal))
+                {
+                    $terminal_address = OmnivaltShipping::getTerminalAddress($cartTerminal->id_terminal);
+                }
+
+                $address = new \Address($order->id_address_delivery);
+                $client_address = $address->firstname . ' ' . $address->lastname . ', ' . $address->address1 . ', ' . $address->postcode . ', ' . $address->city . ' ' . $address->country;
+
+                $barcodes = json_decode($omnivaOrder->manifest);
+                if(!empty($barcodes))
+                {
+                    $num_packages = count($barcodes);
+                    foreach ($barcodes as $barcode)
+                    {
+                        $order = new Order();
+                        $order->setTracking($barcode);
+                        $order->setQuantity(1);
+                        $order->setWeight($omnivaOrder->weight / $num_packages);
+                        $order->setReceiver($terminal_address ?: $client_address);
+                        $manifest->addOrder($order);
+                    }
+                }
+            }
+        }
+
+        $manifest->downloadManifest();
     }
 
     private function getMethod($order_carrier_id = false)
