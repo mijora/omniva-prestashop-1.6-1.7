@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS `_DB_PREFIX_omniva_order` (
     `manifest` varchar(255),
     `weight` float(10),
     `error` varchar(255),
+    `tracking_numbers` varchar(512),
     `date_add` datetime NOT NULL,
     `date_upd` datetime NOT NULL,
     PRIMARY KEY (`id`)

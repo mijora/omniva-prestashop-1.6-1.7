@@ -64,12 +64,10 @@
                 <div class="omniva-response alert d-none" role="alert"></div>
             </div>
             <div class="card-footer omniva-footer d-flex justify-content-between">
-                <form method="POST" action="{$printlabelsurl}" id="omnivaltOrderPrintLabelsForm" target="_blank">
+                <form method="POST" action="{$generateLabelsUrl}" id="omnivaltOrderPrintLabelsForm" target="_blank">
                     <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels" class="btn btn-default"><i class="material-icons">tag</i> {l s="Generate label" mod='omnivaltshipping'}</button>
                 </form>
-                {if $label_url != ''}
-                    <a href="{$label_url}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print label" mod='omnivaltshipping'}</a>
-                {/if}
+                <a href="{$printLabelsUrl}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
             </div>
         </div>
     </div>

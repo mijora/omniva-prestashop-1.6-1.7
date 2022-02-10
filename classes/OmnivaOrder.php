@@ -14,6 +14,8 @@ class OmnivaOrder extends ObjectModel
 
     public $weight;
 
+    public $tracking_numbers;
+
     public $error;
 
     /** @var string Object creation date */
@@ -34,7 +36,8 @@ class OmnivaOrder extends ObjectModel
             'cod_amount' =>          ['type' => self::TYPE_FLOAT, 'size' => 10],
             'manifest' =>            ['type' => self::TYPE_INT, 'size' => 10],
             'weight' =>              ['type' => self::TYPE_FLOAT, 'size' => 10],
-            'error' =>               ['type' => self::TYPE_STRING, 'validate' => 'isBool'],
+            'tracking_numbers' =>    ['type' => self::TYPE_STRING, 'size' => 512],
+            'error' =>               ['type' => self::TYPE_STRING, 'size' => 256],
             'date_add' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
             'date_upd' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
         ],

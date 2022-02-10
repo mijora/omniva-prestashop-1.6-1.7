@@ -67,7 +67,7 @@
                             <i class="icon-save"></i> {l s="Save"}
                         </button>
                     </form>
-                    <form method="POST" action="{$printlabelsurl}" id="omnivaltOrderPrintLabelsForm" target="_blank"
+                    <form method="POST" action="{$generateLabelsUrl}" id="omnivaltOrderPrintLabelsForm" target="_blank"
                           style="display:inlne-block; margin:5px;">
                         <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels"
                                 class="btn btn-default">

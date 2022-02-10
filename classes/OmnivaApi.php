@@ -9,9 +9,20 @@ use Mijora\Omniva\Shipment\Package\Cod;
 use Mijora\Omniva\Shipment\Package\Package;
 use Mijora\Omniva\Shipment\Shipment;
 use Mijora\Omniva\Shipment\ShipmentHeader;
+use Mijora\Omniva\Shipment\Label;
 
 class OmnivaApi
 {
+    private $username;
+
+    private $password;
+
+    public function __construct($username, $password)
+    {
+        $this->username = $username;
+        $this->password = $password;
+    }
+
     public function createShipment($id_order)
     {
         $order = new Order($id_order);
@@ -26,7 +37,7 @@ class OmnivaApi
 
             $shipmentHeader = new ShipmentHeader();
             $shipmentHeader
-                ->setSenderCd(Configuration::get('omnivalt_api_user'))
+                ->setSenderCd($this->username)
                 ->setFileId(date('Ymdhis'));
             $shipment->setShipmentHeader($shipmentHeader);
 
@@ -135,7 +146,7 @@ class OmnivaApi
             $shipment->setPackages($packages);
 
             //set auth data
-            $shipment->setAuth(Configuration::get('omnivalt_api_user'), Configuration::get('omnivalt_api_pass'));
+            $shipment->setAuth($this->username, $this->password);
 
             return $shipment->registerShipment();
 
@@ -144,6 +155,16 @@ class OmnivaApi
                 . str_replace("\n", "<br>\n", $e->getMessage()) . "<br>\n"
                 . str_replace("\n", "<br>\n", $e->getTraceAsString());
         }
+    }
+
+    public function getOrderLabels($id_order)
+    {
+        $label = new Label();
+        $label->setAuth($this->username, $this->password);
+
+        $omnivaOrder = new OmnivaOrder($id_order);
+        $tracking_numbers = json_decode($omnivaOrder->tracking_numbers);
+        $label->downloadLabels($tracking_numbers);
     }
 
     private function getMethod($order_carrier_id = false)

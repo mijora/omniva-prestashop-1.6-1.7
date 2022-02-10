@@ -58,7 +58,7 @@ class OmnivaltShipping extends CarrierModule
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
         $this->helper = new OmnivaHelper();
-        $this->api = new OmnivaApi();
+        $this->api = new OmnivaApi(Configuration::get('omnivalt_api_user'), Configuration::get('omnivalt_api_pass'));
         if (!Configuration::get('omnivalt_api_url'))
             $this->warning = $this->l('Please set up module');
         if (!Configuration::get('omnivalt_locations_update') || (Configuration::get('omnivalt_locations_update') + 24 * 3600) < time() || !file_exists(dirname(__file__) . "/locations.json")) {
@@ -918,7 +918,7 @@ class OmnivaltShipping extends CarrierModule
         if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore') {
             {
                 Media::addJsDef([
-                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'printlabels')),
+                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'generateLabels')),
                     'success_add_trans' => $this->l('Successfully added.'),
                     'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
                     'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
@@ -947,7 +947,7 @@ class OmnivaltShipping extends CarrierModule
             $countryCode = Country::getIsoById($address->id_country);
 
             $omnivaOrder = new OmnivaOrder($order->id);
-            $label_url = $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array("action" => "bulklabels", "order_ids" => $order->id));
+            $printLabelsUrl = $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "printLabels", "id_order" => $order->id]);
 
             $error_msg = $omnivaOrder->error ?: false;
             $omniva_tpl = 'blockinorder.tpl';
@@ -966,8 +966,8 @@ class OmnivaltShipping extends CarrierModule
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
-                'printlabelsurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'printlabels')),
-                'label_url' => $label_url,
+                'generateLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'generateLabels')),
+                'printLabelsUrl' => $printLabelsUrl,
                 'error' => $error_msg,
             ));
 
@@ -1098,75 +1098,6 @@ class OmnivaltShipping extends CarrierModule
             if (!empty($barcodes))
                 return array('status' => true, 'barcodes' => $barcodes);
             $errors[] = 'No saved barcodes received';
-            return array('status' => false, 'msg' => implode('. ', $errors));
-        }
-    }
-
-    public static function getShipmentLabels($barcodes, $order_id = 0)
-    {
-        $errors = array();
-        $barcodeXML = '';
-        foreach ($barcodes as $barcode) {
-            $barcodeXML .= '<barcode>' . $barcode . '</barcode>';
-        }
-        $xmlRequest = '
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://service.core.epmx.application.eestipost.ee/xsd">
-           <soapenv:Header/>
-           <soapenv:Body>
-              <xsd:addrcardMsgRequest>
-                 <partner>' . Configuration::get('omnivalt_api_user') . '</partner>
-                 <sendAddressCardTo>response</sendAddressCardTo>
-                 <barcodes>
-                    ' . $barcodeXML . '
-                 </barcodes>
-              </xsd:addrcardMsgRequest>
-           </soapenv:Body>
-        </soapenv:Envelope>';
-        //echo $xmlRequest;
-        try {
-            $url = Configuration::get('omnivalt_api_url') . "/epmx/services/messagesService.wsdl";
-            $headers = array(
-                "Content-type: text/xml;charset=\"utf-8\"",
-                "Accept: text/xml",
-                "Cache-Control: no-cache",
-                "Pragma: no-cache",
-                "Content-length: " . strlen($xmlRequest),
-            );
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_USERPWD, Configuration::get('omnivalt_api_user') . ":" . Configuration::get('omnivalt_api_pass'));
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $xmlRequest);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            $xmlResponse = curl_exec($ch);
-            $debugData['result'] = $xmlResponse;
-        } catch (\Exception $e) {
-            $errors[] = $e->getMessage() . ' ' . $e->getCode();
-            $xmlResponse = '';
-        }
-        $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
-        $xml = simplexml_load_string($xmlResponse);
-        if (!is_object($xml)) {
-            $errors[] = self::l('Response is in the wrong format');
-        }
-        if (is_object($xml) && is_object($xml->Body->addrcardMsgResponse->successAddressCards->addressCardData->barcode)) {
-            $shippingLabelContent = (string)$xml->Body->addrcardMsgResponse->successAddressCards->addressCardData->fileData;
-            file_put_contents(_PS_MODULE_DIR_ . "/omnivaltshipping/pdf/" . $order_id . '.pdf', base64_decode($shippingLabelContent));
-        } else {
-            $errors[] = 'No label received from webservice';
-        }
-
-        if (!empty($errors)) {
-            return array('status' => false, 'msg' => implode('. ', $errors));
-        } else {
-            if (!empty($barcodes))
-                return array('status' => true);
-            $errors[] = self::l('No saved barcodes received');
             return array('status' => false, 'msg' => implode('. ', $errors));
         }
     }
@@ -1346,9 +1277,7 @@ class OmnivaltShipping extends CarrierModule
     public function hookActionValidateOrder($params)
     {
         $order = $params['order'];
-        $cart = $params['cart'];
         $carrier = new Carrier($order->id_carrier);
-        $carrier_reference = $carrier->id_reference;
         if($carrier->external_module_name == $this->name)
         {
             $omnivaOrder = new OmnivaOrder();

@@ -25,8 +25,11 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             case 'masssaveorderinfo':
                 $this->massSaveorderinfo();
                 break;
-            case 'printlabels':
-                $this->printLabels();
+            case 'generateLabels':
+                $this->generateLabels();
+                break;
+            case 'printLabels':
+                $this->printOrderLabels();
                 break;
             case 'bulklabels':
                 $this->printBulkLabels();
@@ -127,45 +130,64 @@ class AdminOmnivaAjaxController extends ModuleAdminController
     }
 
     /**
-     * Call API to get label PDF.
+     * Call API to get register shipment.
      */
-    protected function printLabels($orderId = false)
+    protected function generateLabels()
     {
-        if (!($orderId = (int) Tools::getValue('order_id'))) {
-            echo json_encode(array('error' => $this->module->l('No order ID provided.')));
-            exit();
+        if (!($id_order = (int) Tools::getValue('id_order'))) {
+            die(json_encode(['error' => $this->module->l('No order ID provided.')]));
         }
 
-        $order = new Order($orderId);
-        $omnivaOrder = new OmnivaOrder($orderId);
+        $order = new Order($id_order);
+        $omnivaOrder = new OmnivaOrder($id_order);
         if (!Validate::isLoadedObject($omnivaOrder)) {
-            echo json_encode(array('error' => $this->module->l('Order info not saved. Please save before generating labels')));
-            exit();
+            die(json_encode(['error' => 'Order info not saved. Please save before generating labels']));
         }
 
-        $status = $this->module->api->createShipment($orderId);
-        if (isset($status['barcodes']) && !empty($status['barcodes'])) {
+        $status = $this->module->api->createShipment($id_order);
+        if (isset($status['barcodes']) && !empty($status['barcodes']))
+        {
             $order->setWsShippingNumber($status['barcodes'][0]);
-            $order->save();
-            $this->setOmnivaOrder($orderId);
-            echo json_encode($status['barcodes']);
-            $label_status = OmnivaltShipping::getShipmentLabels($status['barcodes'], $orderId);
-            if (!$label_status['status']) {
-                $omnivaOrder->error = addslashes($label_status['msg']);
-                $omnivaOrder->update();
-                $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
-                echo json_encode(array('error' => $label_status['msg']));
-                exit();
+            $order->update();
+            if(!$omnivaOrder->manifest)
+            {
+                $omnivaOrder->manifest = (int) Configuration::get('omnivalt_manifest');
             }
-        } else {
+            $omnivaOrder->error = '';
+            $omnivaOrder->tracking_numbers = json_encode($status['barcodes']);
+            $omnivaOrder->update();
+            die(json_encode(['success' => $this->module->l('Successfully generated labels.')]));
+        }
+        else
+        {
             $omnivaOrder->error = $status['msg'];
             $omnivaOrder->update();
-            $this->module->changeOrderStatus($orderId, $this->module->getErrorOrderState());
-            echo json_encode(array('error' => $status['msg']));
-            exit();
+            $this->module->changeOrderStatus($id_order, $this->module->getErrorOrderState());
+            echo
+            die(json_encode(['error' => $status['msg']]));
         }
-        $omnivaOrder->error = '';
-        $omnivaOrder->update();
+    }
+
+    /**
+     * Call API to print all labels for one order.
+     */
+    protected function printOrderLabels()
+    {
+        if (!($id_order = (int) Tools::getValue('id_order')))
+        {
+            die(json_encode(['error' => $this->module->l('No order ID provided.')]));
+        }
+
+        $omnivaOrder = new OmnivaOrder($id_order);
+        if (!Validate::isLoadedObject($omnivaOrder))
+        {
+            die(json_encode(['error' => 'Could not load order info.']));
+        }
+
+        if(!$this->module->api->getOrderLabels($id_order))
+        {
+            die(json_encode(['error' => 'Could not fetch labels from the API.']));
+        }
     }
 
     protected function printBulkLabels()
