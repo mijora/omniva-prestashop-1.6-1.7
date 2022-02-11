@@ -1,7 +1,7 @@
 <tr class="nodrag nodrop">
     {if isset($select_all) && $select_all}
         <th width='5%'>
-            <span class="title_box"><input type="checkbox" id="select-all"/></span>
+            <span class="title_box"><input type="checkbox" class="select-all"/></span>
         </th>
     {/if}
     <th width='5%'>

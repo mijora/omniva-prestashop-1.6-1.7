@@ -82,8 +82,7 @@
                             <td>{$order.date_upd}</td>
                             <td>{$order.total_paid}</td>
                             <td>
-                                <a href="{$cancelSkip}{$order.id_order}"
-                                   class="btn btn-danger btn-xs">{l s='Add to manifest' mod='omnivaltshipping'}</a>
+                                <a href="{$cancelSkip}{$order.id_order}" class="btn btn-danger btn-xs">{l s='Add to manifest' mod='omnivaltshipping'}</a>
                             </td>
                         </tr>
                     {/foreach}
@@ -115,28 +114,22 @@
                 {if (isset($manifestOrd) && $order.manifest != $manifestOrd) || $newPage == null}
                     {assign var=newPage value=true}
                     </table>
-                    {if $myId !=0}
-                        <br/>
-                        <a id="print-manifest" href="" class="btn btn-default btn-xs" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                        <a id="print-labels" href="" class="btn btn-default btn-xs"  target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
-                        <br>
-                        {assign var=result value=''}
-                    {/if}
                     <br>
                     <table class="table order">
                         <thead>
-                            {include file="./_partials/orders_table_header.tpl"}
+                            {include file="./_partials/orders_table_header.tpl" select_all=true}
                         </thead>
                         <tbody>
                     {/if}
                         <tr>
+                            <td><input type="checkbox" class="selected-orders" value="{$order.id_order}"/></td>
                             <td>{$order.id_order}</td>
                             <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
                             <td>{$order.tracking_number}</td>
                             <td>{$order.date_upd}</td>
                             <td>{$order.total_paid}</td>
                             <td>
-                                <a href="{$labelsLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
+                                <a href="{$labelsLink}&id_order={$order.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
                             </td>
                             {$result = "{$result},{$order.id_order}"}
                             {$manifestOrd = $order.manifest}
@@ -147,8 +140,7 @@
                             </tbody>
                         </table>
                         <br>
-                        <a id="print-manifest" href="" class="btn btn-default btn-xs" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                        <a id="print-labels" href="" class="btn btn-default btn-xs" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a><br>
+                        <a id="print-labels" href="" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a><br>
                         <div class="text-center">
                             {$pagination_content}
                         </div>

@@ -393,14 +393,6 @@ class OmnivaltShipping extends CarrierModule
         return $output . $this->displayForm();
     }
 
-    public function cod_options()
-    {
-        return array(
-            array('id_option' => '0', 'name' => $this->l('No')),
-            array('id_option' => '1', 'name' => $this->l('Yes')),
-        );
-    }
-
     public function displayForm()
     {
         $default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
@@ -749,9 +741,8 @@ class OmnivaltShipping extends CarrierModule
         $terminals = fread($terminals_file, filesize($terminals_json_file_dir) + 10);
         fclose($terminals_file);
         $terminals = json_decode($terminals, true);
-        $parcel_terminals = '';
+
         if (is_array($terminals)) {
-            $grouped_options = array();
             foreach ($terminals as $terminal) {
                 if ($terminal['ZIP'] == $code) {
                     return $terminal['NAME'] . ', ' . $terminal['A2_NAME'] . ', ' . $terminal['A0_NAME'];
@@ -970,72 +961,6 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, $omniva_tpl);
         }
-    }
-
-    public static function call_omniva()
-    {
-        $service = "QH";
-        $additionalService = '';
-
-        if ($additionalService) {
-            $additionalService = '<add_service>' . $additionalService . '</add_service>';
-        }
-        $phones = '';
-        $phones .= '<mobile>' . Configuration::get('omnivalt_phone') . '</mobile>';
-        $pickStart = Configuration::get('omnivalt_pick_up_time_start') ? Configuration::get('omnivalt_pick_up_time_start') : '8:00';
-        $pickFinish = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
-        $pickDay = date('Y-m-d');
-        if (time() > strtotime($pickDay . ' ' . $pickFinish))
-            $pickDay = date('Y-m-d', strtotime($pickDay . "+1 days"));
-
-        $shop_country = new Country();
-        $shop_country_iso = $shop_country->getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
-        $xmlRequest = '
-        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://service.core.epmx.application.eestipost.ee/xsd">
-           <soapenv:Header/>
-           <soapenv:Body>
-              <xsd:businessToClientMsgRequest>
-                 <partner>' . Configuration::get('omnivalt_api_user') . '</partner>
-                 <interchange msg_type="info11">
-                    <header file_id="' . \Date('YmdHms') . '" sender_cd="' . Configuration::get('omnivalt_api_user') . '" >                
-                    </header>
-                    <item_list>
-                      ';
-        for ($i = 0; $i < 1; $i++) :
-            $xmlRequest .= '
-                       <item service="' . $service . '" >
-                          ' . $additionalService . '
-                          <measures weight="1" />
-                          <receiverAddressee >
-                             <person_name>' . Configuration::get('omnivalt_company') . '</person_name>
-                            ' . $phones . '
-                             <address postcode="' . Configuration::get('omnivalt_postcode') . '" deliverypoint="' . Configuration::get('omnivalt_city') . '" country="' . Configuration::get('omnivalt_countrycode') . '" street="' . Configuration::get('omnivalt_address') . '" />
-                          </receiverAddressee>
-                          <!--Optional:-->
-                          <returnAddressee>
-                             <person_name>' . Configuration::get('omnivalt_company') . '</person_name>
-                             <!--Optional:-->
-                             <phone>' . Configuration::get('omnivalt_phone') . '</phone>
-                             <address postcode="' . Configuration::get('omnivalt_postcode') . '" deliverypoint="' . Configuration::get('omnivalt_city') . '" country="' . Configuration::get('omnivalt_countrycode') . '" street="' . Configuration::get('omnivalt_address') . '" />
-                          
-                          </returnAddressee>';
-            $xmlRequest .= '
-                          <onloadAddressee>
-                             <person_name>' . Configuration::get('omnivalt_company') . '</person_name>
-                             <!--Optional:-->
-                             <phone>' . Configuration::get('omnivalt_phone') . '</phone>
-                             <address postcode="' . Configuration::get('omnivalt_postcode') . '" deliverypoint="' . Configuration::get('omnivalt_city') . '" country="' . Configuration::get('omnivalt_countrycode') . '" street="' . Configuration::get('omnivalt_address') . '" />
-                            <pick_up_time start="' . date("c", strtotime($pickDay . ' ' . $pickStart)) . '" finish="' . date("c", strtotime($pickDay . ' ' . $pickFinish)) . '"/>
-                          </onloadAddressee>';
-            $xmlRequest .= '</item>';
-        endfor;
-        $xmlRequest .= '
-                    </item_list>
-                 </interchange>
-              </xsd:businessToClientMsgRequest>
-           </soapenv:Body>
-        </soapenv:Envelope>';
-        return self::api_request($xmlRequest);
     }
 
     public function hookOrderDetailDisplayed($params)

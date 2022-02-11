@@ -3,14 +3,14 @@ $(document).ready(() => {
     $('.pagination_next b').hide();
     $('.pagination_previous b').hide();
 
-    $('#select-all').on('click', function () {
+    $('.select-all').on('click', function () {
         let checked = $(this).prop('checked');
-        $('.selected-orders').prop('checked', checked);
+        $(this).closest('table').find('.selected-orders').prop('checked', checked);
     });
 
     $('.action-call').on('click', function (e) {
         let ids = [];
-        $('.selected-orders:checked').each(function () {
+        $(this).closest('.tab-pane').find('.selected-orders:checked').each(function () {
             ids.push($(this).val());
         });
         if (ids.length == 0 && this.id == 'print-labels') {
@@ -33,7 +33,7 @@ $(document).ready(() => {
                 $('#alertList').empty();
             },
             success: function (data) {
-                if (data == 'got_request') {
+                if (data == '1') {
                     $('#alertList').append(
                         `<div class="alert alert-success" id="remove2">
                             <strong>${finished_trans}</strong>${message_sent_trans}
@@ -42,7 +42,7 @@ $(document).ready(() => {
                 } else {
                     $('#alertList').append(
                         `<div class="alert alert-danger" id="remove2">
-                                incorrect_response_trans
+                                ${incorrect_response_trans}
                         </div>`
                     );
                 }

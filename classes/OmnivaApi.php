@@ -1,6 +1,7 @@
 <?php
 
 use Mijora\Omniva\OmnivaException;
+use Mijora\Omniva\Shipment\CallCourier;
 use Mijora\Omniva\Shipment\Package\AdditionalService;
 use Mijora\Omniva\Shipment\Package\Address;
 use Mijora\Omniva\Shipment\Package\Contact;
@@ -234,6 +235,7 @@ class OmnivaApi
             }
         }
 
+        Configuration::updateValue('omnivalt_manifest', ((int) Configuration::get('omnivalt_manifest')) + 1);
         $manifest->downloadManifest();
     }
 
@@ -243,6 +245,15 @@ class OmnivaApi
         $this->setAuth($tracking);
 
         return $tracking->getTracking($tracking_numbers);
+    }
+
+    public function callCarrier()
+    {
+        $call = new CallCourier();
+        $this->setAuth($call);
+        $call->setSender($this->getSenderContact());
+
+         return $call->callCourier();
     }
 
     private function setAuth($object)

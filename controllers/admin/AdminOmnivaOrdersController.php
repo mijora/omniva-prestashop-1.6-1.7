@@ -31,28 +31,18 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $this->_carriers = $this->getCarrierIds();
         if (Tools::getValue('orderSkip') != null) {
             $this->skipOrder();
-            exit();
+            die();
         } else if (Tools::getValue('cancelSkip') != null) {
             $this->cancelSkip();
-            exit();
+            die();
         } else if (Tools::getValue('callCourier')) {
-            $this->callCarrier();
-            exit();
+            die($this->module->api->callCarrier());
         }
     }
 
     private function getCarrierIds()
     {
         return implode(',', OmnivaltShipping::getCarrierIds());
-    }
-
-    public function callcarrier()
-    {
-        $callCarrierReturn = $this->module->call_omniva();
-        if ($callCarrierReturn['status'] == true)
-            echo 'got_request';
-        else
-            echo 'got_request_false';
     }
 
     public function displayAjax()
@@ -214,7 +204,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 				INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 				LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
 				INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
-				WHERE oo.manifest IS NOT NULL AND oo.manifest != " . $newOrder . " AND oo.manifest != -1
+				WHERE oo.manifest != 0 AND oo.manifest != " . $newOrder . " AND oo.manifest != -1
 				ORDER BY a.id_order DESC";
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($ordersCount);
