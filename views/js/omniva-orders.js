@@ -4,12 +4,12 @@ $(document).ready(() => {
     $('.pagination_previous b').hide();
 
     $('#select-all').on('click', function () {
-        var checked = $(this).prop('checked');
+        let checked = $(this).prop('checked');
         $('.selected-orders').prop('checked', checked);
     });
 
     $('.action-call').on('click', function (e) {
-        var ids = [];
+        let ids = [];
         $('.selected-orders:checked').each(function () {
             ids.push($(this).val());
         });
@@ -17,7 +17,8 @@ $(document).ready(() => {
             alert(check_orders);
             return false;
         } else {
-            $(this).attr('href', `${bulkLabelsLink}&order_ids=${ids.join(',')}`);
+            let link = this.id == 'print-labels' ? bulkLabelsLink : manifestLink;
+            $(this).attr('href', `${link}&order_ids=${ids.join(',')}`);
         }
 
     });

@@ -53,34 +53,32 @@
                     </thead>
                     <tbody>
                     {assign var=result value=''}
-                    {foreach from=$newOrders key=myId item=i}
+                    {foreach $newOrders as $order}
                         <tr>
-                            <td><input type="checkbox" class="selected-orders" value="{$i.id_order}"/></td>
-                            <td>{$i.id_order}</td>
-                            <td><a href="{$orderLink}&id_order={$i.id_order}">{$i.firstname} {$i.lastname}</td>
-                            <td>{$i.tracking_number}</td>
-                            <td>{$i.date_upd}</td>
-                            <td>{$i.total_paid}</td>
+                            <td><input type="checkbox" class="selected-orders" value="{$order.id_order}"/></td>
+                            <td>{$order.id_order}</td>
+                            <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
                             <td>
-                                <a href="{$labelsLink}&id_order={$i.id_order}" class="btn btn-success btn-xs"
-                                   target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
-                                <!--<a href="{$manifestLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Manifest' mod='omnivaltshipping'}</a>-->
-                                {if $i.tracking_number == null}
-                                    <a href="{$orderSkip}{$i.id_order}"
-                                       class="btn btn-danger btn-xs">{l s='Skip' mod='omnivaltshipping'}</a>
+                                {if $order.tracking_numbers}
+                                    {implode(', ', json_decode($order.tracking_numbers))}
                                 {/if}
                             </td>
-                            {$result = "{$result},{$i.id_order}"}
-                            {$manifest = $i.manifest}
+                            <td>{$order.date_upd}</td>
+                            <td>{$order.total_paid}</td>
+                            <td>
+                                <a href="{$labelsLink}&id_order={$order.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
+                                {if $order.tracking_numbers == null}
+                                    <a href="{$orderSkip}{$order.id_order}" class="btn btn-danger btn-xs">{l s='Skip' mod='omnivaltshipping'}</a>
+                                {/if}
+                            </td>
+                            {$result = "{$result},{$order.id_order}"}
+                            {$manifest = $order.manifest}
                         </tr>
                     {/foreach}
                     </tbody>
                 </table>
-                <a href="{$manifestAll}&order_ids={$result}&type=new" data-url="{$manifestAll}&type=new&order_ids="
-                   class="btn btn-default btn-xs action-call"
-                   target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                <a href="{$bulkLabelsLink}&order_ids={$result}"
-                   class="btn btn-default btn-xs action-call" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
+                <a id="print-manifest" href="{$manifestAll}&order_ids={$result}&type=new" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
+                <a id="print-labels" href="{$bulkLabelsLink}&order_ids={$result}" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
                 <br/>
                 <hr/>
                 <br/>
@@ -88,7 +86,7 @@
                 <p class="text-center">{l s='Užsakymų nėra' mod='omnivaltshipping'}</p>
             {/if}
         </div>
-        <!--/New Orders -- Skipped Orders -->
+
         <!--/New Orders -- Skipped Orders -->
         <div class="tab-pane" id="tab-data">
             {if $skippedOrders != null}
@@ -135,8 +133,9 @@
                 <br/>
                 <hr/>
                 <br/>
-            {else}<p class="text-center">
-                {l s='Užsakymų nėra' mod='omnivaltshipping'}
+            {else}
+                <p class="text-center">
+                    {l s='Užsakymų nėra' mod='omnivaltshipping'}
                 </p>
             {/if}
         </div>
@@ -154,7 +153,7 @@
             {assign var=newPage value=null}
             {assign var=result value=''}
             {foreach from=$orders key=myId item=i}
-                {if (isset($manifestOrd) && $i.manifest != $manifestOrd) OR $newPage ==null}
+                {if (isset($manifestOrd) && $i.manifest != $manifestOrd) || $newPage == null}
                     {assign var=newPage value=true}
                     </table>
                     {if $myId !=0}
@@ -201,12 +200,11 @@
                             <td>
                                 <a href="{$labelsLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs"
                                    target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
-                                {* $i.manifest *}
                             </td>
                             {$result = "{$result},{$i.id_order}"}
                             {$manifestOrd = $i.manifest}
                         </tr>
-                    {/foreach}
+                {/foreach}
                     {/if}
                     {if $orders != null}
                             </tbody>

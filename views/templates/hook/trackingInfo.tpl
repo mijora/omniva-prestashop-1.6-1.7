@@ -14,24 +14,24 @@
 *}
 <div class="box">
 <div class="row">
-    {foreach $tracking_info as $number=>$info}
+    {foreach $tracking_info as $number => $info}
         <div class="col-xs-12 col-sm-6">
             <h3 class="page-subheading">{l s='Tracking information' mod='omnivaltshipping'} - {$number}</h3>
             <div class="table_block table-responsive">
                 <table class="table table-bordered">
                     <thead>
                         <tr>
-                            <th class="item">{l s='Date' mod='omnivaltshipping'}</th>
                             <th class="last_item">{l s='Event' mod='omnivaltshipping'}</th>
-                            <th class="last_item">{l s='Place' mod='omnivaltshipping'}</th>
+                            <th class="last_item">{l s='State' mod='omnivaltshipping'}</th>
+                            <th class="item">{l s='Date' mod='omnivaltshipping'}</th>
                         </tr>
                     </thead>
                     <tbody>
-                    {foreach $info['progressdetail'] as $event}
+                    {foreach $info as $event}
                         <tr>
-                            <td>{date_format($event['deliverydate'], 'Y-m-d H:i:s')}</td>
-                            <td>{$event['activity']}</td>
-                            <td>{$event['deliverylocation']}</td>
+                            <td>{$event['event']}</td>
+                            <td>{$event['state']}</td>
+                            <td>{date_format($event['date'], 'Y-m-d H:i:s')}</td>
                         </tr>
                     {/foreach}
                     </tbody>

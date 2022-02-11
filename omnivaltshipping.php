@@ -337,9 +337,7 @@ class OmnivaltShipping extends CarrierModule
 
     public function getOrderShippingCost($params, $shipping_cost)
     {
-        //if ($params->id_carrier == (int)(Configuration::get('omnivalt_pt')) || $params->id_carrier == (int)(Configuration::get('omnivalt_c')))
         return $shipping_cost;
-        return false; // carrier is not known
     }
 
     public function getOrderShippingCostExternal($params)
@@ -766,7 +764,6 @@ class OmnivaltShipping extends CarrierModule
     private function getCarriersOptions($selected = '')
     {
         $carriers = '';
-        //$carriers .= '<option value = "">'.$this->l('Select carrier').'</option>';
         foreach (self::$_carriers as $key => $value) {
             $tmp_carrier_id = Configuration::get($value);
             $carrier = new Carrier($tmp_carrier_id);
@@ -1041,80 +1038,20 @@ class OmnivaltShipping extends CarrierModule
         return self::api_request($xmlRequest);
     }
 
-    public static function api_request($request)
-    {
-        $barcodes = array();;
-        $errors = array();
-        $url = Configuration::get('omnivalt_api_url') . "/epmx/services/messagesService.wsdl";
-
-        $headers = array(
-            "Content-type: text/xml;charset=\"utf-8\"",
-            "Accept: text/xml",
-            "Cache-Control: no-cache",
-            "Pragma: no-cache",
-            "Content-length: " . strlen($request),
-        );
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_USERPWD, Configuration::get('omnivalt_api_user') . ":" . Configuration::get('omnivalt_api_pass'));
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $request);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        $xmlResponse = curl_exec($ch);
-        if ($xmlResponse === false) {
-            $errors[] = curl_error($ch);
-        } else {
-            $errorTitle = '';
-            if (strlen(trim($xmlResponse)) > 0) {
-                //echo $xmlResponse; exit;
-                $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
-                $xml = simplexml_load_string($xmlResponse);
-                if (!is_object($xml)) {
-                    $errors[] = $this->l('Response is in the wrong format');
-                }
-                if (is_object($xml) && is_object($xml->Body->businessToClientMsgResponse->faultyPacketInfo->barcodeInfo)) {
-                    foreach ($xml->Body->businessToClientMsgResponse->faultyPacketInfo->barcodeInfo as $data) {
-                        $errors[] = $data->clientItemId . ' - ' . $data->barcode . ' - ' . $data->message;
-                    }
-                }
-                if (empty($errors)) {
-                    if (is_object($xml) && is_object($xml->Body->businessToClientMsgResponse->savedPacketInfo->barcodeInfo)) {
-                        foreach ($xml->Body->businessToClientMsgResponse->savedPacketInfo->barcodeInfo as $data) {
-                            $barcodes[] = (string)$data->barcode;
-                        }
-                    }
-                }
-            }
-        }
-        // }
-        if (!empty($errors)) {
-            return array('status' => false, 'msg' => implode('. ', $errors));
-        } else {
-            if (!empty($barcodes))
-                return array('status' => true, 'barcodes' => $barcodes);
-            $errors[] = 'No saved barcodes received';
-            return array('status' => false, 'msg' => implode('. ', $errors));
-        }
-    }
-
     public function hookOrderDetailDisplayed($params)
     {
-        $carrier_ids = self::getCarrierIds();
         $order = $params['order'];
-        if ($order->getWsShippingNumber() && (in_array($order->id_carrier, $carrier_ids))) {
+        $omnivaOrder = new OmnivaOrder($order->id);
+        if (Validate::isLoadedObject($omnivaOrder) && $omnivaOrder->tracking_numbers)
+        {
             $address = new Address($order->id_address_delivery);
             $iso_code = Country::getIsoById($address->id_country);
-            $tracking_info = $this->getTracking(array($order->getWsShippingNumber()));
-            $this->context->smarty->assign(array(
+            $tracking_info = $this->api->getTracking(json_decode($omnivaOrder->tracking_numbers));
+            $this->context->smarty->assign([
                 'tracking_info' => $tracking_info,
                 'tracking_number' => $order->getWsShippingNumber(),
                 'country_code' => $iso_code,
-            ));
+            ]);
             $this->context->controller->registerJavascript(
                 'omnivalt',
                 'modules/' . $this->name . '/views/js/trackingURL.js',
@@ -1126,136 +1063,6 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__file__, 'trackingInfo.tpl');
         }
-        return '';
-    }
-
-    public function getTracking($tracking)
-    {
-        $url = str_ireplace('epmx/services/messagesService.wsdl', '', Configuration::get('omnivalt_api_url')) . 'epteavitus/events/from/' . date("c", strtotime("-1 week +1 day")) . '/for-client-code/' . Configuration::get('omnivalt_api_user');
-        $process = curl_init();
-        $additionalHeaders = '';
-        curl_setopt($process, CURLOPT_URL, $url);
-        curl_setopt($process, CURLOPT_HTTPHEADER, array('Content-Type: application/xml', $additionalHeaders));
-        curl_setopt($process, CURLOPT_HEADER, false);
-        curl_setopt($process, CURLOPT_USERPWD, Configuration::get('omnivalt_api_user') . ":" . Configuration::get('omnivalt_api_pass'));
-        curl_setopt($process, CURLOPT_TIMEOUT, 30);
-        curl_setopt($process, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($process, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($process, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($process, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-        $return = curl_exec($process);
-        curl_close($process);
-        if ($process === false) {
-            return false;
-        }
-        return $this->parseXmlTrackingResponse($tracking, $return);
-    }
-
-    public function parseXmlTrackingResponse($trackings, $response)
-    {
-        $errors = array();
-        $resultArr = array();
-
-        if (strlen(trim($response)) > 0) {
-            $xml = simplexml_load_string($response);
-            if (!is_object($xml)) {
-                $errors[] = $this->l('Response is in the wrong format');
-            }
-            //$this->_debug($xml);
-            if (is_object($xml) && is_object($xml->event)) {
-                foreach ($xml->event as $awbinfo) {
-                    $awbinfoData = [];
-
-                    $trackNum = isset($awbinfo->packetCode) ? (string)$awbinfo->packetCode : '';
-
-                    if (!in_array($trackNum, $trackings))
-                        continue;
-                    //$this->_debug($awbinfo);
-                    $packageProgress = [];
-                    if (isset($resultArr[$trackNum]['progressdetail']))
-                        $packageProgress = $resultArr[$trackNum]['progressdetail'];
-
-                    $shipmentEventArray = [];
-                    $shipmentEventArray['activity'] = $this->getEventCode((string)$awbinfo->eventCode);
-
-                    $shipmentEventArray['deliverydate'] = DateTime::createFromFormat('U', strtotime($awbinfo->eventDate));
-                    $shipmentEventArray['deliverylocation'] = $awbinfo->eventSource;
-                    $packageProgress[] = $shipmentEventArray;
-
-                    $awbinfoData['progressdetail'] = $packageProgress;
-
-                    $resultArr[$trackNum] = $awbinfoData;
-                }
-            }
-        }
-
-        if (!empty($errors)) {
-            return false;
-        }
-        return $resultArr;
-    }
-
-    public function getEventCode($code)
-    {
-        $tracking = [
-            'PACKET_EVENT_IPS_C' => $this->l("Shipment from country of departure"),
-            'PACKET_EVENT_FROM_CONTAINER' => $this->l("Arrival to post office"),
-            'PACKET_EVENT_IPS_D' => $this->l("Arrival to destination country"),
-            'PACKET_EVENT_SAVED' => $this->l("Saving"),
-            'PACKET_EVENT_DELIVERY_CANCELLED' => $this->l("Cancelling of delivery"),
-            'PACKET_EVENT_IN_POSTOFFICE' => $this->l("Arrival to Omniva"),
-            'PACKET_EVENT_IPS_E' => $this->l("Customs clearance"),
-            'PACKET_EVENT_DELIVERED' => $this->l("Delivery"),
-            'PACKET_EVENT_FROM_WAYBILL_LIST' => $this->l("Arrival to post office"),
-            'PACKET_EVENT_IPS_A' => $this->l("Acceptance of packet from client"),
-            'PACKET_EVENT_IPS_H' => $this->l("Delivery attempt"),
-            'PACKET_EVENT_DELIVERING_TRY' => $this->l("Delivery attempt"),
-            'PACKET_EVENT_DELIVERY_CALL' => $this->l("Preliminary calling"),
-            'PACKET_EVENT_IPS_G' => $this->l("Arrival to destination post office"),
-            'PACKET_EVENT_ON_ROUTE_LIST' => $this->l("Dispatching"),
-            'PACKET_EVENT_IN_CONTAINER' => $this->l("Dispatching"),
-            'PACKET_EVENT_PICKED_UP_WITH_SCAN' => $this->l("Acceptance of packet from client"),
-            'PACKET_EVENT_RETURN' => $this->l("Returning"),
-            'PACKET_EVENT_SEND_REC_SMS_NOTIF' => $this->l("SMS to receiver"),
-            'PACKET_EVENT_ARRIVED_EXCESS' => $this->l("Arrival to post office"),
-            'PACKET_EVENT_IPS_I' => $this->l("Delivery"),
-            'PACKET_EVENT_ON_DELIVERY_LIST' => $this->l("Handover to courier"),
-            'PACKET_EVENT_PICKED_UP_QUANTITATIVELY' => $this->l("Acceptance of packet from client"),
-            'PACKET_EVENT_SEND_REC_EMAIL_NOTIF' => $this->l("E-MAIL to receiver"),
-            'PACKET_EVENT_FROM_DELIVERY_LIST' => $this->l("Arrival to post office"),
-            'PACKET_EVENT_OPENING_CONTAINER' => $this->l("Arrival to post office"),
-            'PACKET_EVENT_REDIRECTION' => $this->l("Redirection"),
-            'PACKET_EVENT_IN_DEST_POSTOFFICE' => $this->l("Arrival to receiver's post office"),
-            'PACKET_EVENT_STORING' => $this->l("Storing"),
-            'PACKET_EVENT_IPS_EDD' => $this->l("Item into sorting centre"),
-            'PACKET_EVENT_IPS_EDC' => $this->l("Item returned from customs"),
-            'PACKET_EVENT_IPS_EDB' => $this->l("Item presented to customs"),
-            'PACKET_EVENT_IPS_EDA' => $this->l("Held at inward OE"),
-            'PACKET_STATE_BEING_TRANSPORTED' => $this->l("Being transported"),
-            'PACKET_STATE_CANCELLED' => $this->l("Cancelled"),
-            'PACKET_STATE_CONFIRMED' => $this->l("Confirmed"),
-            'PACKET_STATE_DELETED' => $this->l("Deleted"),
-            'PACKET_STATE_DELIVERED' => $this->l("Delivered"),
-            'PACKET_STATE_DELIVERED_POSTOFFICE' => $this->l("Arrived at post office"),
-            'PACKET_STATE_HANDED_OVER_TO_COURIER' => $this->l("Transmitted to courier"),
-            'PACKET_STATE_HANDED_OVER_TO_PO' => $this->l("Re-addressed to post office"),
-            'PACKET_STATE_IN_CONTAINER' => $this->l("In container"),
-            'PACKET_STATE_IN_WAREHOUSE' => $this->l("At warehouse"),
-            'PACKET_STATE_ON_COURIER' => $this->l("At delivery"),
-            'PACKET_STATE_ON_HANDOVER_LIST' => $this->l("In transition sheet"),
-            'PACKET_STATE_ON_HOLD' => $this->l("Waiting"),
-            'PACKET_STATE_REGISTERED' => $this->l("Registered"),
-            'PACKET_STATE_SAVED' => $this->l("Saved"),
-            'PACKET_STATE_SORTED' => $this->l("Sorted"),
-            'PACKET_STATE_UNCONFIRMED' => $this->l("Unconfirmed"),
-            'PACKET_STATE_UNCONFIRMED_NO_TARRIF' => $this->l("Unconfirmed (No tariff)"),
-            'PACKET_STATE_WAITING_COURIER' => $this->l("Awaiting collection"),
-            'PACKET_STATE_WAITING_TRANSPORT' => $this->l("In delivery list"),
-            'PACKET_STATE_WAITING_UNARRIVED' => $this->l("Waiting, hasn't arrived"),
-            'PACKET_STATE_WRITTEN_OFF' => $this->l("Written off"),
-        ];
-        if (isset($tracking[$code]))
-            return $tracking[$code];
         return '';
     }
 

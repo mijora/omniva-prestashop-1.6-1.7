@@ -12,6 +12,7 @@ use Mijora\Omniva\Shipment\ShipmentHeader;
 use Mijora\Omniva\Shipment\Label;
 use Mijora\Omniva\Shipment\Manifest;
 use Mijora\Omniva\Shipment\Order;
+use Mijora\Omniva\Shipment\Tracking;
 
 class OmnivaApi
 {
@@ -139,7 +140,7 @@ class OmnivaApi
             $shipment->setPackages($packages);
 
             //set auth data
-            $shipment->setAuth($this->username, $this->password);
+            $this->setAuth($shipment);
 
             return $shipment->registerShipment();
 
@@ -170,7 +171,7 @@ class OmnivaApi
     public function getOrderLabels($id_order)
     {
         $label = new Label();
-        $label->setAuth($this->username, $this->password);
+        $this->setAuth($label);
 
         $omnivaOrder = new OmnivaOrder($id_order);
         $tracking_numbers = json_decode($omnivaOrder->tracking_numbers);
@@ -180,7 +181,7 @@ class OmnivaApi
     public function getBulkLabels($order_ids)
     {
         $label = new Label();
-        $label->setAuth($this->username, $this->password);
+        $this->setAuth($label);
 
         $tracking_numbers = [];
         foreach ($order_ids as $id_order)
@@ -216,7 +217,7 @@ class OmnivaApi
                 $address = new \Address($order->id_address_delivery);
                 $client_address = $address->firstname . ' ' . $address->lastname . ', ' . $address->address1 . ', ' . $address->postcode . ', ' . $address->city . ' ' . $address->country;
 
-                $barcodes = json_decode($omnivaOrder->manifest);
+                $barcodes = json_decode($omnivaOrder->tracking_numbers);
                 if(!empty($barcodes))
                 {
                     $num_packages = count($barcodes);
@@ -234,6 +235,20 @@ class OmnivaApi
         }
 
         $manifest->downloadManifest();
+    }
+
+    public function getTracking($tracking_numbers)
+    {
+        $tracking = new Tracking();
+        $this->setAuth($tracking);
+
+        return $tracking->getTracking($tracking_numbers);
+    }
+
+    private function setAuth($object)
+    {
+        if(method_exists($object, 'setAuth'))
+            $object->setAuth($this->username, $this->password);
     }
 
     private function getMethod($order_carrier_id = false)

@@ -31,7 +31,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             case 'bulkPrintLabels':
                 $this->printBulkLabels();
                 break;
-            case 'bulkmanifests':
+            case 'printManifest':
                 $this->module->api->getManifest();
                 break;
             case 'bulkmanifestsall':

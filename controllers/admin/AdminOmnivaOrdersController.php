@@ -10,13 +10,14 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $this->addJS('modules/' . $this->module->name . '/views/js/omniva-orders.js');
         Media::addJsDef([
             'check_orders' => $this->module->l('Check orders'),
-            'carrier_cal_url' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&callCourier=1',
+            'carrier_cal_url' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&callCourier=1',
             'finished_trans' => $this->module->l('Finished.'),
             'message_sent_trans' => $this->module->l('Message successfully sent.'),
             'incorrect_response_trans' => $this->module->l('Incorrect response.'),
-            'ajaxCall' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&ajax',
+            'ajaxCall' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&ajax',
             'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
             'labelsLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
+            'manifestLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], array("action" => "printManifest")),
             'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "bulkPrintLabels"]),
             'labels_trans' => $this->module->l('Labels'),
             'not_found_trans' => $this->module->l('Nothing found'),
@@ -117,8 +118,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         }
 
         $this->context->smarty->assign(array(
-            'content2' => 'dsdd',
-            'orders' => $this->getOrders($page - 1, $perPage, $ordersCount),
+            'orders' => $this->getOrders($page - 1, $perPage),
 
             'sender' => Configuration::get('omnivalt_company'),
             'phone' => Configuration::get('omnivalt_phone'),
@@ -128,10 +128,10 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'skippedOrders' => $this->getSkippedOrders(),
             'newOrders' => $this->getNewOrders(),
             'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
-            'orderSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&orderSkip=',
-            'cancelSkip' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&cancelSkip=',
+            'orderSkip' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&orderSkip=',
+            'cancelSkip' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&cancelSkip=',
             'page' => $page,
-            'manifestLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")),
+            'manifestLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], array("action" => "printManifest")),
             'labelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "printLabels"]),
             'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "bulkPrintLabels"]),
 
@@ -144,9 +144,9 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'pages_nb' => $pagesToShow,
             'prev_p' => (int)$page != 1 ? $page - 1 : 1,
             'next_p' => (int)$page + 1 > $pagesToShow ? $pagesToShow : $page + 1,
-            'requestPage' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&tab=completed',
-            'current_url' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&tab=completed',
-            'requestNb' => $this->context->link->getAdminLink('AdminOmnivaOrders') . '&tab=completed',
+            'requestPage' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&tab=completed',
+            'current_url' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&tab=completed',
+            'requestNb' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&tab=completed',
             'p' => $page,
             'n' => $perPage,
             'start' => $startGroup,
@@ -168,15 +168,15 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
     }
 
-    public function getOrders($page = 1, $perPage = 10, $total = 0)
+    public function getOrders($page = 1, $perPage = 10)
     {
-        $newOrder = intval(Configuration::get('omnivalt_manifest'));
+        $newOrder = (int) Configuration::get('omnivalt_manifest');
         $from = $page * $perPage;
         $orders = "SELECT * FROM " . _DB_PREFIX_ . "orders a
 		INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 		LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
 		INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
-		WHERE oo.manifest IS NOT NULL AND oo.manifest != " . $newOrder . "  AND oo.manifest != -1
+		WHERE oo.manifest != 0 AND oo.manifest != " . $newOrder . "  AND oo.manifest != -1
 		ORDER BY oo.manifest DESC, a.id_order DESC
 		LIMIT $perPage OFFSET $from";
 
@@ -197,12 +197,12 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
     public function getNewOrders()
     {
-        $newOrderNum = intval(Configuration::get('omnivalt_manifest'));
-        $newOrder = "SELECT *FROM " . _DB_PREFIX_ . "orders a
+        $newOrderNum = (int) Configuration::get('omnivalt_manifest');
+        $newOrder = "SELECT * FROM " . _DB_PREFIX_ . "orders a
 		INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 		INNER JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
 		INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
-		WHERE oo.manifest IS NULL OR oo.manifest=" . $newOrderNum . "
+		WHERE oo.manifest = 0 OR oo.manifest=" . $newOrderNum . "
 		ORDER BY oo.manifest DESC, a.id_order DESC";
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($newOrder);
@@ -210,7 +210,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
     public function ordersNumb()
     {
-        $newOrder = intval(Configuration::get('omnivalt_manifest'));
+        $newOrder = (int) Configuration::get('omnivalt_manifest');
 
         $ordersCount = "SELECT COUNT(*) FROM " . _DB_PREFIX_ . "orders a
 				INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
@@ -219,8 +219,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 				WHERE oo.manifest IS NOT NULL AND oo.manifest != " . $newOrder . " AND oo.manifest != -1
 				ORDER BY a.id_order DESC";
 
-        $rowCount = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($ordersCount);
-        return intval($rowCount[0]["COUNT(*)"]);
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue($ordersCount);
     }
 
     public function skipOrder()
@@ -234,7 +233,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
                 Db::getInstance(_PS_USE_SQL_SLAVE_)->execute($saveManifest);
             }
         }
-        Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOmnivaOrders'));
+        Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
 
     }
 
@@ -249,6 +248,6 @@ class AdminOmnivaOrdersController extends ModuleAdminController
                 Db::getInstance(_PS_USE_SQL_SLAVE_)->execute($saveManifest);
             }
         }
-        Tools::redirectAdmin(Context::getContext()->link->getAdminLink('AdminOmnivaOrders'));
+        Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
     }
 }
