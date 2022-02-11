@@ -187,7 +187,7 @@ class OmnivaApi
         foreach ($order_ids as $id_order)
         {
             $omnivaOrder = new OmnivaOrder($id_order);
-            if(Validate::isLoadedObject($omnivaOrder))
+            if(Validate::isLoadedObject($omnivaOrder) && $omnivaOrder->tracking_numbers)
             {
                 $tracking_numbers = array_merge($tracking_numbers, json_decode($omnivaOrder->tracking_numbers));
             }

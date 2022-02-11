@@ -9,9 +9,9 @@
     <div class="panel-heading">
         <h4>{l s='Omniva orders' mod='omnivaltshipping'} ({$manifestNum})</h4>
     </div>
-    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal"
-            title="{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}" style="position:absolute; right:10px"><i
-                class="fa fa fa-send-o"></i>{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}</button>
+    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal" title="{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}" style="position:absolute; right:10px">
+        <i class="fa fa fa-send-o"></i>{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}
+    </button>
 
 
     <ul class="nav nav-tabs">
@@ -27,29 +27,7 @@
                 <h4 style="display: inline:block;vertical-align: baseline;">{l s='New orders' mod='omnivaltshipping'}</h4>
                 <table class="table order">
                     <thead>
-                    <tr class="nodrag nodrop">
-                        <th width='5%'>
-                            <span class="title_box"><input type="checkbox" id="select-all"/></span>
-                        </th>
-                        <th width='5%'>
-                            <span class="title_box active">{l s='Id' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Customer' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Tracking' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Update date' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Total' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Labels' mod='omnivaltshipping'}</span>
-                        </th>
-                    </tr>
+                        {include file="./_partials/orders_table_header.tpl" select_all=true}
                     </thead>
                     <tbody>
                     {assign var=result value=''}
@@ -66,9 +44,10 @@
                             <td>{$order.date_upd}</td>
                             <td>{$order.total_paid}</td>
                             <td>
-                                <a href="{$labelsLink}&id_order={$order.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
                                 {if $order.tracking_numbers == null}
                                     <a href="{$orderSkip}{$order.id_order}" class="btn btn-danger btn-xs">{l s='Skip' mod='omnivaltshipping'}</a>
+                                {else}
+                                    <a href="{$labelsLink}&id_order={$order.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
                                 {/if}
                             </td>
                             {$result = "{$result},{$order.id_order}"}
@@ -77,9 +56,8 @@
                     {/foreach}
                     </tbody>
                 </table>
-                <a id="print-manifest" href="{$manifestAll}&order_ids={$result}&type=new" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                <a id="print-labels" href="{$bulkLabelsLink}&order_ids={$result}" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
-                <br/>
+                <a id="print-manifest" href="" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
+                <a id="print-labels" href="" class="btn btn-default btn-xs action-call" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
                 <hr/>
                 <br/>
             {else}
@@ -93,37 +71,18 @@
                 <h4 style="display: inline:block;vertical-align: baseline;">{l s='Skipped orders' mod='omnivaltshipping'}</h4>
                 <table class="table order">
                     <thead>
-                    <tr class="nodrag nodrop">
-                        <th width='5%'>
-                            <span class="title_box active">{l s='Id' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Customer' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Tracking' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Update date' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Total' mod='omnivaltshipping'}</span>
-                        </th>
-                        <th width='15%'>
-                            <span class="title_box">{l s='Labels' mod='omnivaltshipping'}</span>
-                        </th>
-                    </tr>
+                        {include file="./_partials/orders_table_header.tpl"}
                     </thead>
                     <tbody>
-                    {foreach from=$skippedOrders key=myId item=i}
+                    {foreach $skippedOrders as $order}
                         <tr>
-                            <td>{$i.id_order}</td>
-                            <td><a href="{$orderLink}&id_order={$i.id_order}">{$i.firstname} {$i.lastname}</td>
-                            <td>{$i.tracking_number}</td>
-                            <td>{$i.date_upd}</td>
-                            <td>{$i.total_paid}</td>
+                            <td>{$order.id_order}</td>
+                            <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
+                            <td>{$order.tracking_number}</td>
+                            <td>{$order.date_upd}</td>
+                            <td>{$order.total_paid}</td>
                             <td>
-                                <a href="{$cancelSkip}{$i.id_order}"
+                                <a href="{$cancelSkip}{$order.id_order}"
                                    class="btn btn-danger btn-xs">{l s='Add to manifest' mod='omnivaltshipping'}</a>
                             </td>
                         </tr>
@@ -152,57 +111,35 @@
             <h4>{l s='Generated' mod='omnivaltshipping'}</h4>
             {assign var=newPage value=null}
             {assign var=result value=''}
-            {foreach from=$orders key=myId item=i}
-                {if (isset($manifestOrd) && $i.manifest != $manifestOrd) || $newPage == null}
+            {foreach $orders as $order}
+                {if (isset($manifestOrd) && $order.manifest != $manifestOrd) || $newPage == null}
                     {assign var=newPage value=true}
                     </table>
                     {if $myId !=0}
                         <br/>
-                        <a href="{$manifestAll}&order_ids={$result}" class="btn btn-default btn-xs"
-                           target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                        <a href="{$labelsLink}&order_ids={$result}" class="btn btn-default btn-xs"
-                           target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
+                        <a id="print-manifest" href="" class="btn btn-default btn-xs" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
+                        <a id="print-labels" href="" class="btn btn-default btn-xs"  target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
                         <br>
                         {assign var=result value=''}
                     {/if}
                     <br>
                     <table class="table order">
                         <thead>
-                        <tr class="nodrag nodrop">
-                            <th width='5%'>
-                                <span class="title_box active">{l s='Id' mod='omnivaltshipping'}</span>
-                            </th>
-                            <th width='15%'>
-                                <span class="title_box">{l s='Customer' mod='omnivaltshipping'}</span>
-                            </th>
-                            <th width='15%'>
-                                <span class="title_box">{l s='Tracking' mod='omnivaltshipping'}</span>
-                            </th>
-                            <th width='15%'>
-                                <span class="title_box">{l s='Update date' mod='omnivaltshipping'}</span>
-                            </th>
-                            <th width='15%'>
-                                <span class="title_box">{l s='Total' mod='omnivaltshipping'}</span>
-                            </th>
-                            <th width='15%'>
-                                <span class="title_box">{l s='Labels' mod='omnivaltshipping'}</span>
-                            </th>
-                        </tr>
+                            {include file="./_partials/orders_table_header.tpl"}
                         </thead>
                         <tbody>
                     {/if}
                         <tr>
-                            <td>{$i.id_order}</td>
-                            <td><a href="{$orderLink}&id_order={$i.id_order}">{$i.firstname} {$i.lastname}</td>
-                            <td>{$i.tracking_number}</td>
-                            <td>{$i.date_upd}</td>
-                            <td>{$i.total_paid}</td>
+                            <td>{$order.id_order}</td>
+                            <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
+                            <td>{$order.tracking_number}</td>
+                            <td>{$order.date_upd}</td>
+                            <td>{$order.total_paid}</td>
                             <td>
-                                <a href="{$labelsLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs"
-                                   target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
+                                <a href="{$labelsLink}&order_ids={$i.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
                             </td>
-                            {$result = "{$result},{$i.id_order}"}
-                            {$manifestOrd = $i.manifest}
+                            {$result = "{$result},{$order.id_order}"}
+                            {$manifestOrd = $order.manifest}
                         </tr>
                 {/foreach}
                     {/if}
@@ -210,10 +147,8 @@
                             </tbody>
                         </table>
                         <br>
-                        <a href="{$manifestAll}&order_ids={$result}" class="btn btn-default btn-xs"
-                           target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
-                        <a href="{$labelsLink}&order_ids={$result}" class="btn btn-default btn-xs"
-                           target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a><br>
+                        <a id="print-manifest" href="" class="btn btn-default btn-xs" target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
+                        <a id="print-labels" href="" class="btn btn-default btn-xs" target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a><br>
                         <div class="text-center">
                             {$pagination_content}
                         </div>
@@ -224,26 +159,7 @@
         <div class="tab-pane" id="tab-search">
             <table class="table">
                 <thead>
-                <tr class="nodrag nodrop">
-                    <th width='5%'>
-                        <span class="title_box active">{l s='Id' mod='omnivaltshipping'}</span>
-                    </th>
-                    <th width='15%'>
-                        <span class="title_box">{l s='Customer' mod='omnivaltshipping'}</span>
-                    </th>
-                    <th width='15%'>
-                        <span class="title_box">{l s='Tracking' mod='omnivaltshipping'}</span>
-                    </th>
-                    <th width='15%'>
-                        <span class="title_box">{l s='Update date' mod='omnivaltshipping'}</span>
-                    </th>
-                    <th width='15%'>
-                        <span class="title_box">{l s='Total' mod='omnivaltshipping'}</span>
-                    </th>
-                    <th width='15%'>
-                        <span class="title_box">{l s='Labels' mod='omnivaltshipping'}</span>
-                    </th>
-                </tr>
+                    {include file="./_partials/orders_table_header.tpl"}
                 <tr class="nodrag nodrop filter row_hover">
                     <th class="text-center"></th>
                     <th class="text-center">
@@ -288,7 +204,6 @@
             <!-- Modal content-->
             <div class="modal-content">
                 <form class="form-horizontal">
-
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                         <h4 class="modal-title">{l s='Baigiamoji siunta, kurjerio iškvietimas.' mod='omnivaltshipping'}</h4>
@@ -299,19 +214,16 @@
                             <br/>
                             <strong>{l s='Adresą ir kontaktinius duomenis' mod='omnivaltshipping'}</strong> {l s='galima keisti Omnivalt modulio nustatymuose.' mod='omnivaltshipping'}
                         </div>
-                        <h4>{l s='Siunčiami duomenys' mod='omnivaltshipping'}
-                            <h4>
-                                <b>{l s='Siuntėjas:' mod='omnivaltshipping'}</b> {$sender}<br>
-                                <b>{l s='Telefonas:' mod='omnivaltshipping'}</b> {$phone}<br>
-                                <b>{l s='Pašto kodas:' mod='omnivaltshipping'}</b> {$postcode}<br>
-                                <b>{l s='Adresas:' mod='omnivaltshipping'}</b> {$address}<br><br>
-                                <div id="alertList"></div>
+                        <h4>{l s='Siunčiami duomenys' mod='omnivaltshipping'}</h4>
+                        <b>{l s='Siuntėjas:' mod='omnivaltshipping'}</b> {$sender}<br>
+                        <b>{l s='Telefonas:' mod='omnivaltshipping'}</b> {$phone}<br>
+                        <b>{l s='Pašto kodas:' mod='omnivaltshipping'}</b> {$postcode}<br>
+                        <b>{l s='Adresas:' mod='omnivaltshipping'}</b> {$address}<br><br>
+                        <div id="alertList"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="requestOmnivaltQourier"
-                                class="btn btn-default">{l s='Siųsti' mod='omnivaltshipping'}</button>
-                        <button type="button" class="btn btn-default"
-                                data-dismiss="modal">{l s='Atšaukti' mod='omnivaltshipping'}</button>
+                        <button type="submit" id="requestOmnivaltQourier" class="btn btn-default">{l s='Siųsti' mod='omnivaltshipping'}</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{l s='Atšaukti' mod='omnivaltshipping'}</button>
                     </div>
                 </form>
             </div>

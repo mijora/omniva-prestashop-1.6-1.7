@@ -13,7 +13,7 @@ $(document).ready(() => {
         $('.selected-orders:checked').each(function () {
             ids.push($(this).val());
         });
-        if (ids.length == 0) {
+        if (ids.length == 0 && this.id == 'print-labels') {
             alert(check_orders);
             return false;
         } else {
@@ -96,13 +96,12 @@ $(document).ready(() => {
                                 <td>${data['tracking_number']}</a></td>
                                 <td>${data['date_add']}</td>
                                 <td>${data['total_paid_tax_incl']}</td>
-                                <td><a href='${labelsLink}&order_ids=${data['id_order']}' class='btn btn-default btn-xs' target='_blank'>${labels_trans}</a></td>
+                                <td><a href='${bulkLabelsLink}&order_ids=${data['id_order']}' class='btn btn-default btn-xs' target='_blank'>${labels_trans}</a></td>
                             </tr>`
                         );
                     }
                 } else
                     $('#searchTable').append(`<tr><td colspan='6'>${not_found_trans}</td>`);
-
             },
             error: function (xhr, ajaxOptions, thrownError) {
             }

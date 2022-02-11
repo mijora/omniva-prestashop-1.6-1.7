@@ -9,15 +9,14 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         parent::setMedia($isNewTheme);
         $this->addJS('modules/' . $this->module->name . '/views/js/omniva-orders.js');
         Media::addJsDef([
-            'check_orders' => $this->module->l('Check orders'),
+            'check_orders' => $this->module->l('Please select orders'),
             'carrier_cal_url' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&callCourier=1',
             'finished_trans' => $this->module->l('Finished.'),
             'message_sent_trans' => $this->module->l('Message successfully sent.'),
             'incorrect_response_trans' => $this->module->l('Incorrect response.'),
             'ajaxCall' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&ajax',
             'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
-            'labelsLink' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
-            'manifestLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], array("action" => "printManifest")),
+            'manifestLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "printManifest"]),
             'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "bulkPrintLabels"]),
             'labels_trans' => $this->module->l('Labels'),
             'not_found_trans' => $this->module->l('Nothing found'),
@@ -64,7 +63,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $where = '';
 
         if ($tracking != '' and $tracking != null and $tracking != 'undefined')
-            $where .= ' AND oc.tracking_number LIKE "%' . $tracking . '%" ';
+            $where .= ' AND oo.tracking_numbers LIKE "%' . $tracking . '%" ';
 
         if ($customer != '' and $customer != null and $customer != 'undefined')
             $where .= ' AND CONCAT(oh.firstname, " ",oh.lastname) LIKE "%' . $customer . '%" ';
@@ -74,19 +73,19 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
 
         if ($where == '')
-            die(Tools::jsonEncode(array(array())));
+            die(json_encode([]));
 
 
-        $orders = "SELECT a.id_order, oc.date_add, a.date_upd, a.total_paid_tax_incl, CONCAT(oh.firstname, '',oh.lastname) as full_name, oc.tracking_number  FROM " . _DB_PREFIX_ . "orders a
+        $orders = "SELECT a.id_order, oc.date_add, a.date_upd, a.total_paid_tax_incl, CONCAT(oh.firstname, ' ',oh.lastname) as full_name, oc.tracking_number
+            FROM " . _DB_PREFIX_ . "orders a
 			INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 			LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
-			 JOIN " . _DB_PREFIX_ . "cart k ON a.id_cart = k.id_cart AND k.id_carrier IN (" . $this->_carriers . ")
-			 Where oc.tracking_number IS NOT NULL AND oc.tracking_number <>'' " . $where . " 
-			 ORDER BY k.omnivalt_manifest DESC, a.id_order DESC
-			LIMIT 20";
+			JOIN " . _DB_PREFIX_ . "omniva_order oo ON a.id_order = oo.id AND a.id_carrier IN (" . $this->_carriers . ")
+			WHERE oo.tracking_numbers IS NOT NULL AND oo.tracking_numbers != '' " . $where . " 
+			ORDER BY oo.manifest DESC, a.id_order DESC";
 
         $searchResponse = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
-        die(Tools::jsonEncode($searchResponse));
+        die(json_encode($searchResponse));
     }
 
     public function initContent()
@@ -135,7 +134,6 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'labelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "printLabels"]),
             'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "bulkPrintLabels"]),
 
-            'manifestAll' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifestsall")),
             'manifestNum' => strval(Configuration::get('omnivalt_manifest')),
             'total' => $this->_listTotal,
 
@@ -225,12 +223,13 @@ class AdminOmnivaOrdersController extends ModuleAdminController
     public function skipOrder()
     {
         if (Tools::getValue('orderSkip')) {
-            $orderIds = intval(Tools::getValue('orderSkip'));
-            if ($orderIds > 0) {
-                $saveManifest = "UPDATE " . _DB_PREFIX_ . "cart 
-			SET omnivalt_manifest = -1
-			WHERE id_cart = (SELECT id_cart FROM " . _DB_PREFIX_ . "orders WHERE id_order = " . $orderIds . ");";
-                Db::getInstance(_PS_USE_SQL_SLAVE_)->execute($saveManifest);
+            $id_order = (int) Tools::getValue('orderSkip');
+            $omnivaOrder = new OmnivaOrder($id_order);
+
+            if(Validate::isLoadedObject($omnivaOrder))
+            {
+                $omnivaOrder->manifest = -1;
+                $omnivaOrder->update();
             }
         }
         Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
@@ -240,12 +239,13 @@ class AdminOmnivaOrdersController extends ModuleAdminController
     public function cancelSkip()
     {
         if (Tools::getValue('cancelSkip')) {
-            $orderIds = intval(Tools::getValue('cancelSkip'));
-            if ($orderIds > 0) {
-                $saveManifest = "UPDATE " . _DB_PREFIX_ . "cart 
-			SET omnivalt_manifest = null
-			WHERE id_cart = (SELECT id_cart FROM " . _DB_PREFIX_ . "orders WHERE id_order = " . $orderIds . ");";
-                Db::getInstance(_PS_USE_SQL_SLAVE_)->execute($saveManifest);
+            $id_order = (int) Tools::getValue('cancelSkip');
+            $omnivaOrder = new OmnivaOrder($id_order);
+
+            if(Validate::isLoadedObject($omnivaOrder))
+            {
+                $omnivaOrder->manifest = 0;
+                $omnivaOrder->update();
             }
         }
         Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
