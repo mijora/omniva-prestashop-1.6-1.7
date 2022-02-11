@@ -15,7 +15,6 @@ $(document).ready(function () {
             'id_order': id_order,
         });
 
-
         $.ajax({
             type: "POST",
             url: printLabelsUrl,
@@ -23,7 +22,6 @@ $(document).ready(function () {
             dataType: "json",
             data: formData,
             success: function (res) {
-                //disable the inputs
                 if (typeof res.error !== "undefined") {
                     $("#omnivaltOrderSubmitForm").find('.response').html('<div class="alert alert-danger">' + res.error + '</div>');
                     $("#omnivaltOrderPrintLabels").removeAttr('disabled');

@@ -758,7 +758,7 @@ class OmnivaltShipping extends CarrierModule
         foreach (self::$_carriers as $key => $value) {
             $tmp_carrier_id = Configuration::get($value);
             $carrier = new Carrier($tmp_carrier_id);
-            if ($carrier->active || 1 == 1) {
+            if ($carrier->active) {
                 $carriers .= '<option value = "' . Configuration::get($value) . '" ' . (Configuration::get($value) == $selected ? 'selected' : '') . '>' . $this->l($key) . '</option>';
             }
         }
@@ -908,7 +908,7 @@ class OmnivaltShipping extends CarrierModule
                 Media::addJsDef([
                     'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'generateLabels']),
                     'success_add_trans' => $this->l('Successfully added.'),
-                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'saveorderinfo']),
+                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'saveOrderInfo']),
                     'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
                 ]);
                 if (version_compare(_PS_VERSION_, '1.7.7', '>='))
@@ -953,9 +953,10 @@ class OmnivaltShipping extends CarrierModule
                 'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
-                'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveorderinfo')),
+                'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveOrderInfo')),
                 'generateLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'generateLabels')),
                 'printLabelsUrl' => $printLabelsUrl,
+                'is_tracked' => count(json_decode($omnivaOrder->tracking_numbers)) > 0,
                 'error' => $error_msg,
             ));
 

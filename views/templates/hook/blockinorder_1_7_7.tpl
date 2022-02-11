@@ -67,7 +67,9 @@
                 <form method="POST" action="{$generateLabelsUrl}" id="omnivaltOrderPrintLabelsForm" target="_blank">
                     <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels" class="btn btn-default"><i class="material-icons">tag</i> {l s="Generate label" mod='omnivaltshipping'}</button>
                 </form>
-                <a href="{$printLabelsUrl}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
+                {if $is_tracked}
+                    <a href="{$printLabelsUrl}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
+                {/if}
             </div>
         </div>
     </div>

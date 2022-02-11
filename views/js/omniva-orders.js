@@ -29,17 +29,29 @@ $(document).ready(() => {
         $.ajax({
             url: carrier_cal_url,
             type: 'get',
+            dataType: 'json',
             beforeSend: function () {
                 $('#alertList').empty();
             },
             success: function (data) {
-                if (data == '1') {
+                if (data == '1')
+                {
                     $('#alertList').append(
                         `<div class="alert alert-success" id="remove2">
                             <strong>${finished_trans}</strong>${message_sent_trans}
                         </div>`
                     );
-                } else {
+                }
+                else if(typeof data.error !== 'undefined')
+                {
+                    $('#alertList').append(
+                        `<div class="alert alert-danger" id="remove2">
+                                ${data.error}
+                        </div>`
+                    );
+                }
+                else
+                {
                     $('#alertList').append(
                         `<div class="alert alert-danger" id="remove2">
                                 ${incorrect_response_trans}
@@ -93,7 +105,7 @@ $(document).ready(() => {
                             <tr>
                                 <td class='left'>${data['id_order']}</td>
                                 <td><a href='${orderLink}&id_order=${data['id_order']}' target='_blank'>${data['full_name']}</a></td>
-                                <td>${data['tracking_number']}</a></td>
+                                <td>${data['tracking_numbers']}</a></td>
                                 <td>${data['date_add']}</td>
                                 <td>${data['total_paid_tax_incl']}</td>
                                 <td><a href='${bulkLabelsLink}&order_ids=${data['id_order']}' class='btn btn-default btn-xs' target='_blank'>${labels_trans}</a></td>

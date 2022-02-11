@@ -66,15 +66,19 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             die(json_encode([]));
 
 
-        $orders = "SELECT a.id_order, oc.date_add, a.date_upd, a.total_paid_tax_incl, CONCAT(oh.firstname, ' ',oh.lastname) as full_name, oc.tracking_number
+        $orders = "SELECT a.id_order, oc.date_add, a.date_upd, a.total_paid_tax_incl, CONCAT(oh.firstname, ' ',oh.lastname) as full_name, oo.tracking_numbers
             FROM " . _DB_PREFIX_ . "orders a
 			INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
 			LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
 			JOIN " . _DB_PREFIX_ . "omniva_order oo ON a.id_order = oo.id AND a.id_carrier IN (" . $this->_carriers . ")
 			WHERE oo.tracking_numbers IS NOT NULL AND oo.tracking_numbers != '' " . $where . " 
 			ORDER BY oo.manifest DESC, a.id_order DESC";
-
         $searchResponse = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
+
+        array_walk($searchResponse, function(&$value, $key) {
+            $value['tracking_numbers'] = implode(', ', json_decode($value['tracking_numbers']));
+        });
+
         die(json_encode($searchResponse));
     }
 

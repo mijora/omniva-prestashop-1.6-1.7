@@ -146,9 +146,7 @@ class OmnivaApi
             return $shipment->registerShipment();
 
         } catch (OmnivaException $e) {
-            echo "\n<br>Exception:<br>\n"
-                . str_replace("\n", "<br>\n", $e->getMessage()) . "<br>\n"
-                . str_replace("\n", "<br>\n", $e->getTraceAsString());
+            return ['msg' => $e->getMessage()];
         }
     }
 
@@ -253,7 +251,13 @@ class OmnivaApi
         $this->setAuth($call);
         $call->setSender($this->getSenderContact());
 
-         return $call->callCourier();
+        try {
+            return $call->callCourier();
+        }
+        catch (OmnivaException $e)
+        {
+            return json_encode(['error' => $e->getMessage()]);
+        }
     }
 
     private function setAuth($object)

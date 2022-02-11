@@ -17,7 +17,7 @@
                                     {l s="Packets" mod='omnivaltshipping'}:
                                 </span>
                                 <span>
-                                    <input type="text" name="packs" value="1"/>
+                                    <input type="text" name="packs" value="{$packs}"/>
                                 </span>
                             </div>
                             <div class="field-row">
@@ -74,10 +74,9 @@
                             <i class="icon-tag"></i> {l s="Generate label" mod='omnivaltshipping'}
                         </button>
                     </form>
-                    {if $label_url != ''}
-                        <a href="{$label_url}" target="_blank" id="omnivalt_print_btn"
-                           style="display:inlne-block; margin:5px;" class="btn btn-default" mod='omnivaltshipping'>
-                            <i class="icon-print"></i> {l s="Print label" mod='omnivaltshipping'}
+                    {if $is_tracked}
+                        <a href="{$printLabelsUrl}" target="_blank" id="omnivalt_print_btn" style="display:inlne-block; margin:5px;" class="btn btn-default">
+                            <i class="icon-print"></i> {l s="Print labels" mod='omnivaltshipping'}
                         </a>
                     {/if}
                 </div>

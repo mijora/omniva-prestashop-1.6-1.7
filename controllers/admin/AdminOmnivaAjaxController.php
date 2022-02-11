@@ -19,7 +19,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         $action = Tools::getValue('action');
 
         switch ($action) {
-            case 'saveorderinfo':
+            case 'saveOrderInfo':
                 $this->saveOrderInfo();
                 break;
             case 'generateLabels':
@@ -60,16 +60,16 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
         // Validate fields.
         if ($packs == NULL || !is_numeric($packs) || (int)$packs < 1) {
-            return array('error' => 'Bad packs number.');
+            die(json_encode(['error' => 'Bad packs number.']));
         }
         if ($weight == NULL || !Validate::isFloat($weight) || $weight <= 0) {
-            return array('error' => 'Bad weight.');
+            die(json_encode(['error' => 'Bad weight.']));
         }
         if ($isCod != '0' && $isCod != '1') {
-            return array('error' => 'Bad COD value.');
+            die(json_encode(['error' => 'Bad COD value.']));
         }
         if ($isCod == '1' && ($codAmount == '' || !Validate::isFloat($codAmount))) {
-            return array('error' => 'Bad COD amount.');
+            die(json_encode(['error' => 'Bad COD amount.']));
         }
 
         if (!$isCod) {
@@ -78,7 +78,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
         $order = new Order($id_order);
         if (!Validate::isLoadedObject($order)) {
-            return array('error' => 'Could not find order.');
+            die(json_encode(['error' => 'Could not find order.']));
         }
 
         if(Tools::isSubmit('parcel_terminal') && ($id_terminal = (int) Tools::getValue('parcel_terminal')))
@@ -105,7 +105,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
         if($result = $omnivaOrder->save())
         {
-            $selected_carrier = Carrier::getCarrierByReference($carrier);
+            $selected_carrier = new Carrier($carrier);
             $order = new Order($id_order);
             $order_carrier = new OrderCarrier($order->getIdOrderCarrier());
             if ($selected_carrier->id != $order_carrier->id_carrier) {
@@ -119,9 +119,9 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
 
         if ($result) {
-            die(json_encode($this->module->l('Order info successfully saved')));
+            die(json_encode($this->module->l('Order info successfully saved.')));
         } else {
-            die(json_encode($this->module->l('Order info successfully saved')));
+            die(json_encode(['error' => $this->module->l('Order info could not be saved.')]));
         }
     }
 
