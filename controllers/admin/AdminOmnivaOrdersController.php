@@ -126,6 +126,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'page' => $page,
             'manifestLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . "&action=printManifest",
             'labelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . "&action=printLabels",
+            'generateLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . '&action=generateLabels&redirect=1&id_order=',
             'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . "&action=bulkPrintLabels",
 
             'manifestNum' => strval(Configuration::get('omnivalt_manifest')),

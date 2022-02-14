@@ -152,6 +152,8 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             $omnivaOrder->tracking_numbers = json_encode($status['barcodes']);
             $omnivaOrder->update();
             $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
+            if(Tools::getValue('redirect'))
+                Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
             die(json_encode(['success' => $this->module->l('Successfully generated labels.')]));
         }
         else

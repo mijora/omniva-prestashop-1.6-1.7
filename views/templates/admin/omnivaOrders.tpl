@@ -45,6 +45,7 @@
                             <td>{$order.total_paid}</td>
                             <td>
                                 {if $order.tracking_numbers == null}
+                                    <a href="{$generateLabelsLink}{$order.id_order}" class="btn btn-info btn-xs">{l s='Generate Labels' mod='omnivaltshipping'}</a>
                                     <a href="{$orderSkip}{$order.id_order}" class="btn btn-danger btn-xs">{l s='Skip' mod='omnivaltshipping'}</a>
                                 {else}
                                     <a href="{$labelsLink}&id_order={$order.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
