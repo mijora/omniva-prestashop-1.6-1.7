@@ -1,4 +1,4 @@
-﻿$(document).ready(function ($) {
+﻿$(document).ready(function () {
     if (help_class_name == 'AdminOrders') {
         var bulk_dropdown = $('.bulk-actions ul.dropdown-menu');
         bulk_dropdown.append('<li><a href="#" onclick="sendOmnivaltBulkAction($(this).closest(\'form\').get(0), \'' + omnivalt_admin_action_labels + '\',$(this),true);"><i class="icon-cloud-download"></i>&nbsp;' + omnivalt_bulk_labels + '</a></li>');

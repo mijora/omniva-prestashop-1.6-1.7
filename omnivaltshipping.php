@@ -790,13 +790,35 @@ class OmnivaltShipping extends CarrierModule
 
     public function hookDisplayBackOfficeHeader($params)
     {
-        Media::addJsDef([
-            'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),
-            'omnivalt_bulk_manifests' => $this->l("Print Omnivalt manifests"),
-            'omnivalt_admin_action_labels' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulklabels")),
-            'omnivalt_admin_action_manifests' => $this->context->link->getAdminLink("AdminOmnivaOrders", true, [], array("action" => "bulkmanifests")),
-        ]);
-        $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
+
+    }
+
+    public function hookActionAdminControllerSetMedia()
+    {
+        if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore'
+            || (isset($this->context->controller->module) && $this->context->controller->module == $this)) {
+            {
+                Media::addJsDef([
+                    'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),
+                    'omnivalt_bulk_manifests' => $this->l("Print Omnivalt manifests"),
+                    'omnivalt_admin_action_labels' => $this->context->link->getAdminLink("AdminOmnivaOrders") . "&action=bulklabels",
+                    'omnivalt_admin_action_manifests' => $this->context->link->getAdminLink("AdminOmnivaOrders") . "&action=bulkmanifests",
+                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=generateLabels',
+                    'success_add_trans' => $this->l('Successfully added.'),
+                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
+                    'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
+                ]);
+                $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
+            }
+            if (version_compare(_PS_VERSION_, '1.7.7', '>='))
+            {
+                $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
+            }
+            else
+            {
+                $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order.js');
+            }
+        }
     }
 
     public function hookHeader($params)
@@ -895,28 +917,6 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
-    public function hookActionAdminControllerSetMedia($params)
-    {
-        if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore') {
-            {
-                Media::addJsDef([
-                    'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'generateLabels']),
-                    'success_add_trans' => $this->l('Successfully added.'),
-                    'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ['action' => 'saveOrderInfo']),
-                    'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
-                ]);
-                if (version_compare(_PS_VERSION_, '1.7.7', '>='))
-                {
-                    $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
-                }
-                else
-                {
-                    $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order.js');
-                }
-            }
-        }
-    }
-
     public function hookDisplayAdminOrder($id_order)
     {
         $order = new Order((int)$id_order['id_order']);
@@ -929,7 +929,7 @@ class OmnivaltShipping extends CarrierModule
             $countryCode = Country::getIsoById($address->id_country);
 
             $omnivaOrder = new OmnivaOrder($order->id);
-            $printLabelsUrl = $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], ["action" => "printLabels", "id_order" => $order->id]);
+            $printLabelsUrl = $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . "&action=printLabels&id_order=" . $order->id;
 
             $error_msg = $omnivaOrder->error ?: false;
             $omniva_tpl = 'blockinorder.tpl';
@@ -947,8 +947,8 @@ class OmnivaltShipping extends CarrierModule
                 'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
-                'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'saveOrderInfo')),
-                'generateLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX, true, [], array('action' => 'generateLabels')),
+                'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
+                'generateLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=generateLabels',
                 'printLabelsUrl' => $printLabelsUrl,
                 'is_tracked' => count(json_decode($omnivaOrder->tracking_numbers)) > 0,
                 'error' => $error_msg,
@@ -972,14 +972,21 @@ class OmnivaltShipping extends CarrierModule
                 'tracking_number' => $order->getWsShippingNumber(),
                 'country_code' => $iso_code,
             ]);
-            $this->context->controller->registerJavascript(
-                'omnivalt',
-                'modules/' . $this->name . '/views/js/trackingURL.js',
-                [
-                    'media' => 'all',
-                    'priority' => 200,
-                ]
-            );
+            if(version_compare(_PS_VERSION_, '1.7', '>='))
+            {
+                $this->context->controller->registerJavascript(
+                    'omnivalt',
+                    'modules/' . $this->name . '/views/js/trackingURL.js',
+                    [
+                        'media' => 'all',
+                        'priority' => 200,
+                    ]
+                );   
+            }
+            else
+            {
+                $this->context->controller->addJS('modules/' . $this->name . '/views/js/trackingURL.js');   
+            }
 
             return $this->display(__file__, 'trackingInfo.tpl');
         }

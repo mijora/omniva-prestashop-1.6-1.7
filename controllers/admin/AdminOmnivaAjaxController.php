@@ -2,7 +2,6 @@
 
 class AdminOmnivaAjaxController extends ModuleAdminController
 {
-    private $labelsMix = 4;
 
     public function __construct()
     {
