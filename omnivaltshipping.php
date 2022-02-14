@@ -817,39 +817,33 @@ class OmnivaltShipping extends CarrierModule
                     'omnivalt_parcel_terminal_error' => $this->l('Please select parcel terminal'),
                     'select_terminal' => $this->l('Please select a parcel terminal'),
                     'omnivaSearch' => $this->l('Enter an address, if you want to find terminals'),
-                ]
+
+                ],
+                'is_17' => version_compare(_PS_VERSION_, '1.7', '>='),
             ]);
+            if(version_compare(_PS_VERSION_, '1.7', '>='))
+            {
+                $this->context->controller->registerJavascript(
+                    'leaflet',
+                    'modules/' . $this->name . '/views/js/leaflet.js',
+                    ['priority' => 190]
+                );
 
-            $this->context->controller->registerJavascript(
-                'leaflet',
-                'modules/' . $this->name . '/views/js/leaflet.js',
-                ['priority' => 190]
-            );
-
-            $this->context->controller->registerStylesheet(
-                'leaflet-style',
-                'modules/' . $this->name . '/views/css/leaflet.css',
-                [
-                    'media' => 'all',
-                    'priority' => 200,
-                ]
-            );
-            $this->context->controller->registerStylesheet(
-                'omniva-modulename-style',
-                'modules/' . $this->name . '/views/css/omniva.css',
-                [
-                    'media' => 'all',
-                    'priority' => 200,
-                ]
-            );
-
-            $this->context->controller->registerJavascript(
-                'omnivalt',
-                'modules/' . $this->name . '/views/js/omniva.js',
-                [
-                    'priority' => 200,
-                ]
-            );
+                $this->context->controller->registerJavascript(
+                    'omnivalt',
+                    'modules/' . $this->name . '/views/js/omniva.js',
+                    [
+                        'priority' => 200,
+                    ]
+                );
+            }
+            else
+            {
+                $this->context->controller->addJS('modules/' . $this->name . '/views/js/leaflet.js');
+                $this->context->controller->addJS('modules/' . $this->name . '/views/js/omniva.js');
+            }
+            $this->context->controller->addCSS('modules/' . $this->name . '/views/css/leaflet.css');
+            $this->context->controller->addCSS('modules/' . $this->name . '/views/css/omniva.css');
 
             return $this->display(__FILE__, 'header.tpl');
         }
