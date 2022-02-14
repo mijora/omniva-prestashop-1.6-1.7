@@ -670,10 +670,7 @@ class OmnivaltShipping extends CarrierModule
             $country = $shop_country->getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
         }
 
-        $terminals_json_file_dir = dirname(__file__) . "/locations.json";
-        $terminals_file = fopen($terminals_json_file_dir, "r");
-        $terminals = fread($terminals_file, filesize($terminals_json_file_dir) + 10);
-        fclose($terminals_file);
+        $terminals = file_get_contents(__DIR__ . "/locations.json");
         $terminals = json_decode($terminals, true);
         $parcel_terminals = '';
         if (is_array($terminals)) {
@@ -692,16 +689,12 @@ class OmnivaltShipping extends CarrierModule
                 $grouped_options[(string)$terminal['A1_NAME']][(string)$terminal['ZIP']] = $terminal['NAME'] . ' (' . $address . ')';
             }
             ksort($grouped_options);
-            foreach ($grouped_options as $city => $locs) {
-                $parcel_terminals .= '<optgroup label = "' . $city . '">';
-                foreach ($locs as $key => $loc) {
-                    $parcel_terminals .= '<option value = "' . $key . '" ' . ($key == $selected ? 'selected' : '') . '  class="omnivaOption">' . $loc . '</option>';
-                }
-                $parcel_terminals .= '</optgroup>';
-            }
+            $this->context->smarty->assign([
+                'grouped_options' => $grouped_options,
+                'selected' => $selected,
+            ]);
         }
-        $parcel_terminals = '<option value = "">' . $this->l('Select parcel terminal') . '</option>' . $parcel_terminals;
-        return $parcel_terminals;
+        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name .'/views/templates/front/omniva-terminals.tpl');
     }
 
     /**
@@ -714,10 +707,7 @@ class OmnivaltShipping extends CarrierModule
             $country = $shop_country->getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
         }
 
-        $terminals_json_file_dir = dirname(__file__) . "/locations.json";
-        $terminals_file = fopen($terminals_json_file_dir, "r");
-        $terminals = fread($terminals_file, filesize($terminals_json_file_dir) + 10);
-        fclose($terminals_file);
+        $terminals = file_get_contents(__DIR__ . "/locations.json");
         $terminals = json_decode($terminals, true);
         if (is_array($terminals)) {
             $terminalsList = array();
@@ -736,10 +726,7 @@ class OmnivaltShipping extends CarrierModule
 
     public static function getTerminalAddress($code)
     {
-        $terminals_json_file_dir = dirname(__file__) . "/locations.json";
-        $terminals_file = fopen($terminals_json_file_dir, "r");
-        $terminals = fread($terminals_file, filesize($terminals_json_file_dir) + 10);
-        fclose($terminals_file);
+        $terminals = file_get_contents(__DIR__ . "/locations.json");
         $terminals = json_decode($terminals, true);
 
         if (is_array($terminals)) {

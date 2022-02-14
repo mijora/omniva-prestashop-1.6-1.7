@@ -37,7 +37,7 @@ class OmnivaPatcher
 
     public function __construct()
     {
-        $this->current_dir = __DIR__ . 'OmnivaPatcher.php/';
+        $this->current_dir = __DIR__;
         $this->patch_dir = _PS_MODULE_DIR_ . '/patches/';
         $this->logs_path = $this->current_dir;
 
