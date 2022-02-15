@@ -7,7 +7,6 @@ require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
 
-require_once __DIR__ . "/classes/OmnivaPatcher.php";
 require_once __DIR__ . "/classes/OmnivaHelper.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
 
@@ -362,12 +361,6 @@ class OmnivaltShipping extends CarrierModule
     */
     public function getContent()
     {
-
-        if (Tools::isSubmit('patch' . $this->name)) {
-            $patcher = new OmnivaPatcher();
-            $this->runPatcher($patcher);
-        }
-
         $output = null;
 
         if (Tools::isSubmit('submit' . $this->name)) {
@@ -587,23 +580,6 @@ class OmnivaltShipping extends CarrierModule
             )
         );
 
-        $patcher = new OmnivaPatcher();
-
-        $installed_patches = $patcher->getInstalledPatches();
-        $latest_patch = 'OmnivaPatcher Installed';
-        if ($installed_patches) {
-            $latest_patch = $installed_patches[count($installed_patches) - 1];
-        }
-
-        $patch_link = AdminController::$currentIndex . '&configure=' . $this->name . '&patch' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules');
-
-        $fields_form[0]['form']['input'][] = array(
-            'type' => 'html',
-            'label' => 'Patch:',
-            'name' => 'patcher_info',
-            'html_content' => '<label class="control-label"><b>' . $latest_patch . '</b></label><br><a class="btn btn-default" href="' . $patch_link . '">Check & Install Patches</a>',
-        );
-
         $helper = new HelperForm();
 
         // Module, token and currentIndex
@@ -655,12 +631,6 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
         return $helper->generateForm($fields_form);
-    }
-
-    private function runPatcher(OmnivaPatcher $patcherInstance)
-    {
-        $patcherInstance->startUpdate(Configuration::get('omnivalt_api_user'), Configuration::get('PS_SHOP_EMAIL'));
-        Configuration::updateValue('omnivalt_patcher_update', time());
     }
 
     private function getTerminalsOptions($selected = '', $country = "")
