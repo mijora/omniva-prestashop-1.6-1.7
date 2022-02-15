@@ -1,4 +1,9 @@
-= Unreleased =
+= 2.0.0 =
+ - Reworked module to use API library for better maintenance.
+ - Removed Cart override and cart table alterations.
+ - Remade ajax controller to admin type.
+ - Various code clean-ups and optimizations.
+ - Compatibility along 1.6 - 1.7 versions.
 
 # Fixed
 - Default language code select in Checkout page

@@ -694,7 +694,7 @@ ol li {
     height: 14px;
     top: 6px;
     left: 0px;
-    background-image: url("../../back.png");
+    background-image: url("../img/back.png");
     background-size: contain;
     position: absolute;
 }
