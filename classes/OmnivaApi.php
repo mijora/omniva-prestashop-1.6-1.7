@@ -167,13 +167,10 @@ class OmnivaApi
         return $senderContact;
     }
 
-    public function getOrderLabels($id_order)
+    public function getOrderLabels($tracking_numbers)
     {
         $label = new Label();
         $this->setAuth($label);
-
-        $omnivaOrder = new OmnivaOrder($id_order);
-        $tracking_numbers = json_decode($omnivaOrder->tracking_numbers);
         $label->downloadLabels($tracking_numbers);
     }
 

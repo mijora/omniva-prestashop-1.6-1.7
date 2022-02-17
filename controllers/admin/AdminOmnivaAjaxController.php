@@ -178,7 +178,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
      */
     protected function printOrderLabels()
     {
-        $id_order = null;
+        $id_order = $history_tracking = null;
         if(Tools::getValue('history'))
         {
             $history = new OmnivaOrderHistory((int) Tools::getValue('history'));
@@ -186,19 +186,13 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             {
                 $id_order = $history->id_order;
             }
-        }
-        if (!$id_order && !($id_order = (int) Tools::getValue('id_order')))
-        {
-            die(json_encode(['error' => $this->module->l('No order ID provided.')]));
-        }
-
-        $omnivaOrder = new OmnivaOrder($id_order);
-        if (!Validate::isLoadedObject($omnivaOrder))
-        {
-            die(json_encode(['error' => 'Could not load order info.']));
+            else
+            {
+                die(json_encode(['error' => 'Could not load order info.']));
+            }
         }
 
-        if(!$this->module->api->getOrderLabels($id_order))
+        if(!$this->module->api->getOrderLabels(json_decode($history->tracking_numbers)))
         {
             die(json_encode(['error' => 'Could not fetch labels from the API.']));
         }
