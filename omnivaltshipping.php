@@ -6,6 +6,7 @@ if (!defined('_PS_VERSION_'))
 require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
+require_once __DIR__ . "/classes/OmnivaOrderHistory.php";
 
 require_once __DIR__ . "/classes/OmnivaHelper.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
@@ -909,6 +910,7 @@ class OmnivaltShipping extends CarrierModule
                 'printLabelsUrl' => $printLabelsUrl,
                 'is_tracked' => count(json_decode($omnivaOrder->tracking_numbers)) > 0,
                 'error' => $error_msg,
+                'orderHistory' => OmnivaOrderHistory::getHistoryByOrder($omnivaOrder->id),
             ));
 
             return $this->display(__FILE__, $omniva_tpl);

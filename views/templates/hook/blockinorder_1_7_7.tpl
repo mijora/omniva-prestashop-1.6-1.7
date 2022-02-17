@@ -1,6 +1,12 @@
 <script type="text/javascript">
     var id_order = "{$order_id}";
 </script>
+<style>
+    #labels-history {
+        display: flex;
+        flex-wrap: wrap;
+    }
+</style>
 <div class="product-row row omniva-block">
     <div class="col-md-12 d-print-block left-column">
         <div class="card">
@@ -61,15 +67,36 @@
                         </div>
                     </div>
                 </form>
+                {if !empty($orderHistory)}
+                    <div id="labels-history">
+                        <div class="col-md-4 col-xs-12">
+                            <label for="omniva-packs">{l s="Tracking numbers" mod='omnivaltshipping'}:</label>
+                        </div>
+                        <div class="col-md-4 col-xs-12">
+                            <label for="omniva-weight">{l s="Date" mod='omnivaltshipping'}:</label>
+                        </div>
+                        <div class="col-md-4 col-xs-12">
+                            <label for="omniva-weight">{l s="Print labels" mod='omnivaltshipping'}:</label>
+                        </div>
+                        {foreach $orderHistory as $historyPage}
+                            <div class="col-md-4 col-xs-12">
+                                {implode(', ', json_decode($historyPage->tracking_numbers))}
+                            </div>
+                            <div class="col-md-4 col-xs-12">
+                                {$historyPage->date_add}
+                            </div>
+                            <div class="col-md-4 col-xs-12">
+                                <a href="{$printLabelsUrl}&history={$historyPage->id}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
+                            </div>
+                        {/foreach}
+                    </div>
+                {/if}
                 <div class="omniva-response alert d-none" role="alert"></div>
             </div>
             <div class="card-footer omniva-footer d-flex justify-content-between">
                 <form method="POST" action="{$generateLabelsUrl}" id="omnivaltOrderPrintLabelsForm" target="_blank">
                     <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels" class="btn btn-default"><i class="material-icons">tag</i> {l s="Generate label" mod='omnivaltshipping'}</button>
                 </form>
-                {if $is_tracked}
-                    <a href="{$printLabelsUrl}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
-                {/if}
             </div>
         </div>
     </div>

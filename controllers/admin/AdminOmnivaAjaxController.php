@@ -150,7 +150,14 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             }
             $omnivaOrder->error = '';
             $omnivaOrder->tracking_numbers = json_encode($status['barcodes']);
-            $omnivaOrder->update();
+            if($omnivaOrder->update())
+            {
+                $omnivaOrderHistory = new OmnivaOrderHistory();
+                $omnivaOrderHistory->id_order = $omnivaOrder->id;
+                $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
+                $omnivaOrderHistory->save();
+            }
+
             $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
             if(Tools::getValue('redirect'))
                 Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
@@ -171,7 +178,16 @@ class AdminOmnivaAjaxController extends ModuleAdminController
      */
     protected function printOrderLabels()
     {
-        if (!($id_order = (int) Tools::getValue('id_order')))
+        $id_order = null;
+        if(Tools::getValue('history'))
+        {
+            $history = new OmnivaOrderHistory((int) Tools::getValue('history'));
+            if(Validate::isLoadedObject($history))
+            {
+                $id_order = $history->id_order;
+            }
+        }
+        if (!$id_order && !($id_order = (int) Tools::getValue('id_order')))
         {
             die(json_encode(['error' => $this->module->l('No order ID provided.')]));
         }

@@ -6,7 +6,8 @@ class OmnivaDb
 
     const TABLES = [
         'omniva_order',
-        'omniva_cart_terminal'
+        'omniva_cart_terminal',
+        'omniva_order_history',
     ];
     /**
      * Create tables for module
