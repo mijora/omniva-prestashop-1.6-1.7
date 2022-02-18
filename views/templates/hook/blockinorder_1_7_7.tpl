@@ -72,12 +72,12 @@
                         </div>
                     </div>
                 </form>
-            <div class="card-header">
-                <h3 class="card-header-title">
-                    {l s="Omniva Labels History" mod='omnivaltshipping'}
-                </h3>
-            </div>
                 {if !empty($orderHistory)}
+                    <div class="card-header">
+                        <h3 class="card-header-title">
+                            {l s="Omniva Labels History" mod='omnivaltshipping'}
+                        </h3>
+                    </div>
                     <div id="labels-history">
                         <div class="col-md-3 col-xs-12">
                             <h4>{l s="Tracking numbers" mod='omnivaltshipping'}</h4>

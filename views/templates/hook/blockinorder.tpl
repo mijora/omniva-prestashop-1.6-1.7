@@ -11,6 +11,9 @@
     #labels-history a {
         margin-bottom: 10px;
     }
+    #content .omnivalt_order_config h3:not(.modal-title) {
+        margin: 0px;
+    }
 </style>
 <div class="tab-content omnivalt">
     <div class="panel">
@@ -85,42 +88,43 @@
                             <i class="icon-tag"></i> {l s="Generate label" mod='omnivaltshipping'}
                         </button>
                     </form>
-                    <div class="card-header">
-                        <h3 class="card-header-title">
-                            {l s="Omniva Labels History" mod='omnivaltshipping'}
-                        </h3>
-                    </div>
-                        {if !empty($orderHistory)}
-                            <div id="labels-history">
-                                <div class="col-md-3 col-xs-12">
-                                    <h4>{l s="Tracking numbers" mod='omnivaltshipping'}</h4>
-                                </div>
-                                <div class="col-md-3 col-xs-12">
-                                    <h4>{l s="Service Code" mod='omnivaltshipping'}</h4>
-                                </div>
-                                <div class="col-md-3 col-xs-12">
-                                    <h4>{l s="Date" mod='omnivaltshipping'}</h4>
-                                </div>
-                                <div class="col-md-3 col-xs-12">
-                                    <h4>{l s="Label printing" mod='omnivaltshipping'}</h4>
-                                </div>
-                                {foreach $orderHistory as $historyPage}
-                                    <div class="col-md-3 col-xs-12">
-                                        {implode(', ', json_decode($historyPage->tracking_numbers))}
-                                    </div>
-                                    <div class="col-md-3 col-xs-12">
-                                        {$historyPage->service_code}
-                                    </div>
-                                    <div class="col-md-3 col-xs-12">
-                                        {$historyPage->date_add}
-                                    </div>
-                                    <div class="col-md-3 col-xs-12">
-                                        <a href="{$printLabelsUrl}&history={$historyPage->id}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
-                                    </div>
-                                {/foreach}
+                    {if !empty($orderHistory)}
+                        <hr>
+                        <div class="card-header">
+                            <h3 class="card-header-title">
+                                {l s="Omniva Labels History" mod='omnivaltshipping'}
+                            </h3>
+                        </div>
+                        <div id="labels-history">
+                            <div class="col-md-3 col-xs-12">
+                                <h4>{l s="Tracking numbers" mod='omnivaltshipping'}</h4>
                             </div>
-                        {/if}
-                        <div class="omniva-response alert d-none" role="alert"></div>
+                            <div class="col-md-3 col-xs-12">
+                                <h4>{l s="Service Code" mod='omnivaltshipping'}</h4>
+                            </div>
+                            <div class="col-md-3 col-xs-12">
+                                <h4>{l s="Date" mod='omnivaltshipping'}</h4>
+                            </div>
+                            <div class="col-md-3 col-xs-12">
+                                <h4>{l s="Label printing" mod='omnivaltshipping'}</h4>
+                            </div>
+                            {foreach $orderHistory as $historyPage}
+                                <div class="col-md-3 col-xs-12">
+                                    {implode(', ', json_decode($historyPage->tracking_numbers))}
+                                </div>
+                                <div class="col-md-3 col-xs-12">
+                                    {$historyPage->service_code}
+                                </div>
+                                <div class="col-md-3 col-xs-12">
+                                    {$historyPage->date_add}
+                                </div>
+                                <div class="col-md-3 col-xs-12">
+                                    <a href="{$printLabelsUrl}&history={$historyPage->id}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
+                                </div>
+                            {/foreach}
+                        </div>
+                    {/if}
+                    <div class="omniva-response alert d-none" role="alert"></div>
                     </div>
                 </div>
             </div>
