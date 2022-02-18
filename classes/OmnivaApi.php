@@ -186,7 +186,7 @@ class OmnivaApi
     {
         $label = new Label();
         $this->setAuth($label);
-        $label->downloadLabels($tracking_numbers);
+        $label->downloadLabels($tracking_numbers, Configuration::get('omnivalt_print_type') == 'four');
     }
 
     public function getBulkLabels($order_ids)
@@ -203,7 +203,7 @@ class OmnivaApi
                 $tracking_numbers = array_merge($tracking_numbers, json_decode($omnivaOrder->tracking_numbers));
             }
         }
-        $label->downloadLabels($tracking_numbers);
+        $label->downloadLabels($tracking_numbers, Configuration::get('omnivalt_print_type') == 'four');
     }
 
     public function getManifest()

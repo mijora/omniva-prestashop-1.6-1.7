@@ -194,8 +194,21 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 die(json_encode(['error' => 'Could not load order info.']));
             }
         }
+        elseif(Tools::getValue('id_order'))
+        {
+            $omnivaOrder = new OmnivaOrder((int) Tools::getValue('id_order'));
+            if(!Validate::isLoadedObject($omnivaOrder))
+            {
+                die(json_encode(['error' => 'Could not load order info.']));
+            }
+        }
 
-        if(!$this->module->api->getOrderLabels(json_decode($history->tracking_numbers)))
+        $tracking_numbers = isset($history) ? $history->tracking_numbers : (isset($omnivaOrder) ? $omnivaOrder->tracking_numbers : '');
+        if(!$tracking_numbers)
+        {
+            die(json_encode(['error' => 'No tracking numbers were provided.']));
+        }
+        if(!$this->module->api->getOrderLabels(json_decode($tracking_numbers)))
         {
             die(json_encode(['error' => 'Could not fetch labels from the API.']));
         }

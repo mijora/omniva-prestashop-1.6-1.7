@@ -6,7 +6,6 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        padding-top: 10px;
     }
     #labels-history a {
         margin-bottom: 10px;
