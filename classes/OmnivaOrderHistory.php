@@ -6,6 +6,8 @@ class OmnivaOrderHistory extends ObjectModel
 
     public $id_order;
 
+    public $service_code;
+
     public $tracking_numbers;
 
     /** @var string Object creation date */
@@ -22,6 +24,7 @@ class OmnivaOrderHistory extends ObjectModel
         'primary' => 'id',
         'fields' => [
             'id_order' =>            ['type' => self::TYPE_INT, 'size' => 10],
+            'service_code' =>        ['type' => self::TYPE_STRING, 'size' => 64],
             'tracking_numbers' =>    ['type' => self::TYPE_STRING, 'size' => 512],
             'date_add' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
             'date_upd' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],

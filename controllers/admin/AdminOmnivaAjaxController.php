@@ -155,6 +155,9 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory = new OmnivaOrderHistory();
                 $omnivaOrderHistory->id_order = $omnivaOrder->id;
                 $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
+
+                $serviceCode = $this->module->api->getServiceCode($order->id_carrier);
+                $omnivaOrderHistory->service_code = $serviceCode;
                 $omnivaOrderHistory->save();
             }
 

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS `_DB_PREFIX_omniva_order_history` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `id_order` int(10) NOT NULL,
+    `service_code` varchar(64),
     `tracking_numbers` varchar(512),
     `date_add` datetime NOT NULL,
     `date_upd` datetime NOT NULL,

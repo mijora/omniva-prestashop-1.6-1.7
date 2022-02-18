@@ -47,26 +47,7 @@ class OmnivaApi
 
             $packages = [];
 
-            $send_method = $this->getMethod($order->id_carrier);
-            $pickup_method = Configuration::get('omnivalt_send_off');
-
-            switch ($pickup_method . ' ' . $send_method) {
-                case 'c pt':
-                    $service = "PU";
-                    break;
-                case 'c c':
-                    $service = "QH";
-                    break;
-                case 'pt c':
-                    $service = "PK";
-                    break;
-                case 'pt pt':
-                    $service = "PA";
-                    break;
-                default:
-                    $service = "";
-                    break;
-            }
+            $service = $this->getServiceCode($order->id_carrier);
 
             $additionalServices = [];
             if ($service == "PA" || $service == "PU")
@@ -111,7 +92,7 @@ class OmnivaApi
                     ->setPostcode($orderAdress->postcode)
                     ->setDeliverypoint($orderAdress->city)
                     ->setStreet($orderAdress->address1);
-                if ($send_method == "pt" && $id_terminal)
+                if (($service == 'PU' || $service == 'PA') && $id_terminal)
                     $receiverAddress->setOffloadPostcode($id_terminal);
                 else
                     $receiverAddress->setOffloadPostcode($orderAdress->postcode);
@@ -148,6 +129,40 @@ class OmnivaApi
         } catch (OmnivaException $e) {
             return ['msg' => $e->getMessage()];
         }
+    }
+
+    public function getServiceCode($id_carrier)
+    {
+
+        $send_method = '';
+        $terminals = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
+        $couriers = OmnivaltShipping::getCarrierIds(['omnivalt_c']);
+        if (in_array((int)$id_carrier, $terminals, true))
+            $send_method = 'pt';
+        if (in_array((int)$id_carrier, $couriers, true))
+            $send_method =  'c';
+
+        $pickup_method = Configuration::get('omnivalt_send_off');
+
+        switch ($pickup_method . ' ' . $send_method) {
+            case 'c pt':
+                $service = "PU";
+                break;
+            case 'c c':
+                $service = "QH";
+                break;
+            case 'pt c':
+                $service = "PK";
+                break;
+            case 'pt pt':
+                $service = "PA";
+                break;
+            default:
+                $service = "";
+                break;
+        }
+
+        return $service;
     }
 
     private function getSenderContact()
@@ -265,14 +280,6 @@ class OmnivaApi
 
     private function getMethod($order_carrier_id = false)
     {
-        if (!$order_carrier_id)
-            return '';
-        $terminals = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
-        $couriers = OmnivaltShipping::getCarrierIds(['omnivalt_c']);
-        if (in_array((int)$order_carrier_id, $terminals, true))
-            return 'pt';
-        if (in_array((int)$order_carrier_id, $couriers, true))
-            return 'c';
-        return '';
+
     }
 }
