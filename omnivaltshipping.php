@@ -22,6 +22,9 @@ class OmnivaltShipping extends CarrierModule
     const CONTROLLER_OMNIVA_AJAX = 'AdminOmnivaAjax';
     const CONTROLLER_OMNIVA_ORDERS = 'AdminOmnivaOrders';
 
+    const UPDATE_URL = 'https://api.github.com/repos/mijora/omniva-prestashop-1.6-1.7/releases/latest';
+    const DOWNLOAD_URL = "https://github.com/mijora/omniva-prestashop-1.6-1.7/releases/latest/download//omnivaltshipping.zip";
+
     protected $_hooks = array(
         'actionCarrierUpdate', //For control change of the carrier's ID (id_carrier), the module must use the updateCarrier hook.
         'displayAdminOrderContentShip',
@@ -356,6 +359,25 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
+    public function checkForUpdate()
+    {
+        $ch = curl_init(); 
+        curl_setopt($ch, CURLOPT_URL, self::UPDATE_URL);
+        curl_setopt($ch, CURLOPT_USERAGENT,'Awesome-Octocat-App');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+        $response_data = json_decode(curl_exec($ch)); 
+        curl_close($ch);
+    
+        $update_info = null;
+        if (isset($response_data->tag_name)) {
+            $update_info = [
+                'version' => str_replace('v', '', $response_data->tag_name),
+                'url' => (isset($response_data->html_url)) ? $response_data->html_url : '#',
+            ];
+        }
+        return $update_info;
+    }
+
     /*
     ** Form Config Methods
     **
@@ -363,6 +385,18 @@ class OmnivaltShipping extends CarrierModule
     public function getContent()
     {
         $output = null;
+        $updateData = $this->checkForUpdate();
+        if ($updateData && version_compare($this->version, $updateData['version'], '<'))
+        {
+            $this->context->smarty->assign([
+                'update_url' => self::UPDATE_URL,
+                'release_url' => $updateData['url'],
+                'download_url' => self::DOWNLOAD_URL,
+                'version' => $updateData['version'],
+            ]);
+            $output .= $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name .'/views/templates/admin/update.tpl');
+        }
+        
 
         if (Tools::isSubmit('submit' . $this->name)) {
             $fields = array('omnivalt_map', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_print_type', 'omnivalt_manifest_lang');
