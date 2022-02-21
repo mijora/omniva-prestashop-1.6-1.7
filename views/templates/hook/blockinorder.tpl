@@ -88,7 +88,7 @@
                             <i class="icon-tag"></i> {l s="Generate label" mod='omnivaltshipping'}
                         </button>
                     </form>
-                    {if !empty($orderHistory)}
+                    {if !empty($orderHistory) && ($orderHistory[0]->tracking_numbers)}
                         <hr>
                         <div class="card-header">
                             <h3 class="card-header-title">

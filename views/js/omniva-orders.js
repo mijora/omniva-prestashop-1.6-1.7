@@ -108,7 +108,7 @@ $(document).ready(() => {
                                 <td>${data['tracking_numbers']}</a></td>
                                 <td>${data['date_add']}</td>
                                 <td>${data['total_paid_tax_incl']}</td>
-                                <td><a href='${bulkLabelsLink}&order_ids=${data['id_order']}' class='btn btn-default btn-xs' target='_blank'>${labels_trans}</a></td>
+                                <td><a href='${labelsLink}&id_order=${data['id']}&history=${data['history']}' class='btn btn-default btn-xs' target='_blank'>${labels_trans}</a></td>
                             </tr>`
                         );
                     }

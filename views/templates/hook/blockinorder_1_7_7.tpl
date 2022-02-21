@@ -71,7 +71,7 @@
                         </div>
                     </div>
                 </form>
-                {if !empty($orderHistory)}
+                {if !empty($orderHistory) && ($orderHistory[0]->tracking_numbers)}
                     <div class="card-header">
                         <h3 class="card-header-title">
                             {l s="Omniva Labels History" mod='omnivaltshipping'}

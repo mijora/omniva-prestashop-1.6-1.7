@@ -7,7 +7,7 @@
 
 <div class="panel col-lg-12">
     <div class="panel-heading">
-        <h4>{l s='Omniva orders' mod='omnivaltshipping'} ({$manifestNum})</h4>
+        <h4>{l s='Omniva manifest:' mod='omnivaltshipping'} {$manifestNum}</h4>
     </div>
     <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal" title="{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}" style="position:absolute; right:10px">
         <i class="fa fa fa-send-o"></i>{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}
@@ -42,7 +42,7 @@
                                 {/if}
                             </td>
                             <td>{$order.date_upd}</td>
-                            <td>{$order.total_paid}</td>
+                            <td>{$order.total_paid|round:2}</td>
                             <td>
                                 {if $order.tracking_numbers == null}
                                     <a href="{$generateLabelsLink}{$order.id_order}" class="btn btn-info btn-xs">{l s='Generate Labels' mod='omnivaltshipping'}</a>
@@ -81,7 +81,7 @@
                             <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
                             <td>{$order.tracking_number}</td>
                             <td>{$order.date_upd}</td>
-                            <td>{$order.total_paid}</td>
+                            <td>{$order.total_paid|round:2}</td>
                             <td>
                                 <a href="{$cancelSkip}{$order.id_order}" class="btn btn-danger btn-xs">{l s='Add to manifest' mod='omnivaltshipping'}</a>
                             </td>
@@ -126,11 +126,15 @@
                             <td><input type="checkbox" class="selected-orders" value="{$order.id_order}"/></td>
                             <td>{$order.id_order}</td>
                             <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
-                            <td>{$order.tracking_number}</td>
-                            <td>{$order.date_upd}</td>
-                            <td>{$order.total_paid}</td>
                             <td>
-                                <a href="{$labelsLink}&id_order={$order.id_order}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
+                                {if $order.tracking_numbers}
+                                    {implode(', ', json_decode($order.tracking_numbers))}
+                                {/if}
+                            </td>
+                            <td>{$order.date_upd}</td>
+                            <td>{$order.total_paid|round:2}</td>
+                            <td>
+                                <a href="{$labelsLink}&id_order={$order.id_order}&history={$order.history}" class="btn btn-success btn-xs" target="_blank">{l s='Labels' mod='omnivaltshipping'}</a>
                             </td>
                             {$result = "{$result},{$order.id_order}"}
                             {$manifestOrd = $order.manifest}

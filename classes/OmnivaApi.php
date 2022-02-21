@@ -211,14 +211,15 @@ class OmnivaApi
         $manifest = new Manifest();
         $manifest->setSender($this->getSenderContact());
 
-        $omnivaOrderIds = OmnivaOrder::getCurrentManifestOrders();
-        foreach ($omnivaOrderIds as $omnivaOrderId)
+        $omnivaOrderHistoryIds = OmnivaOrderHistory::getCurrentManifestOrders();
+        foreach ($omnivaOrderHistoryIds as $omnivaOrderHistoryId)
         {
-            $omnivaOrder = new OmnivaOrder($omnivaOrderId);
-            if(Validate::isLoadedObject($omnivaOrder))
+            $omnivaOrderHistory = new OmnivaOrderHistory($omnivaOrderHistoryId);
+            if(Validate::isLoadedObject($omnivaOrderHistory))
             {
                 $terminal_address = '';
-                $order = new \Order($omnivaOrderId);
+                $order = new \Order($omnivaOrderHistory->id_order);
+                $omnivaOrder = new OmnivaOrder($omnivaOrderHistory->id_order);
                 $cartTerminal = new OmnivaCartTerminal($order->id_cart);
                 if(Validate::isLoadedObject($cartTerminal))
                 {
@@ -228,7 +229,7 @@ class OmnivaApi
                 $address = new \Address($order->id_address_delivery);
                 $client_address = $address->firstname . ' ' . $address->lastname . ', ' . $address->address1 . ', ' . $address->postcode . ', ' . $address->city . ' ' . $address->country;
 
-                $barcodes = json_decode($omnivaOrder->tracking_numbers);
+                $barcodes = json_decode($omnivaOrderHistory->tracking_numbers);
                 if(!empty($barcodes))
                 {
                     $num_packages = count($barcodes);

@@ -144,20 +144,21 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         {
             $order->setWsShippingNumber($status['barcodes'][0]);
             $order->update();
-            if(!$omnivaOrder->manifest)
-            {
-                $omnivaOrder->manifest = (int) Configuration::get('omnivalt_manifest');
-            }
             $omnivaOrder->error = '';
             $omnivaOrder->tracking_numbers = json_encode($status['barcodes']);
             if($omnivaOrder->update())
             {
-                $omnivaOrderHistory = new OmnivaOrderHistory();
+                $omnivaOrderHistory = OmnivaOrderHistory::getLatestOrderHistory($omnivaOrder->id);
+
+                // If there is blank history, we update it with tracking info.
+                if($omnivaOrderHistory->tracking_numbers)
+                    $omnivaOrderHistory = new OmnivaOrderHistory();
                 $omnivaOrderHistory->id_order = $omnivaOrder->id;
                 $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
 
                 $serviceCode = $this->module->api->getServiceCode($order->id_carrier);
                 $omnivaOrderHistory->service_code = $serviceCode;
+                $omnivaOrderHistory->manifest = (int) Configuration::get('omnivalt_manifest');
                 $omnivaOrderHistory->save();
             }
 
@@ -228,20 +229,6 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
     }
 
-    public function setOmnivaOrder($id_order = 0)
-    {
-        $omnivaOrder = new OmnivaOrder($id_order);
-        if(!Validate::isLoadedObject($omnivaOrder))
-        {
-            return false;
-        }
-
-        if(!$omnivaOrder->manifest)
-        {
-            $omnivaOrder->manifest = (int) Configuration::get('omnivalt_manifest');
-        }
-    }
-
     public function saveManifest()
     {
         if (Tools::getValue('type') == 'new') {
@@ -255,11 +242,11 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             $orderIds = explode(',', $orderIds);
             foreach ($orderIds as $order_id)
             {
-                $omnivaOrder = new OmnivaOrder($order_id);
-                if(Validate::isLoadedObject($omnivaOrder))
+                $omnivaOrderHistory = OmnivaOrderHistory::getLatestOrderHistory($order_id);
+                if(Validate::isLoadedObject($omnivaOrderHistory))
                 {
-                    $omnivaOrder->manifest = -1;
-                    $omnivaOrder->update();
+                    $omnivaOrderHistory->manifest = -1;
+                    $omnivaOrderHistory->update();
                 }
 
             }

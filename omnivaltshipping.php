@@ -980,6 +980,12 @@ class OmnivaltShipping extends CarrierModule
             $omnivaOrder->weight = $order->getTotalWeight();
             $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
             $omnivaOrder->add();
+
+            // Add blank history, so that order would appear new orders tab in admin.
+            $omnivaOrderHistory = new OmnivaOrderHistory();
+            $omnivaOrderHistory->id_order = $order->id;
+            $omnivaOrderHistory->manifest = 0;
+            $omnivaOrderHistory->add();
         }
     }
 

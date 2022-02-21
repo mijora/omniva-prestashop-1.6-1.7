@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS `_DB_PREFIX_omniva_order` (
     `packs` int(10) NOT NULL,
     `cod` tinyint(1),
     `cod_amount` float(10),
-    `manifest` varchar(255),
     `weight` float(10),
     `error` varchar(255),
     `tracking_numbers` varchar(512),
