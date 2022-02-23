@@ -399,7 +399,7 @@ class OmnivaltShipping extends CarrierModule
         
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            $fields = array('omnivalt_map', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_print_type', 'omnivalt_manifest_lang');
+            $fields = array('omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_print_type', 'omnivalt_manifest_lang');
             $not_required = array('omnivalt_bank_account');
             $values = array();
             $all_filled = true;
@@ -585,6 +585,24 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
+                    'type' => 'switch',
+                    'label' => $this->l('Send delivery email'),
+                    'name' => 'send_delivery_email',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
+                    )
+                ),
+                array(
                     'type' => 'select',
                     'lang' => true,
                     'label' => $this->l('Labels print type'),
@@ -663,6 +681,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_pick_up_time_start'] = Configuration::get('omnivalt_pick_up_time_start') ? Configuration::get('omnivalt_pick_up_time_start') : '8:00';
         $helper->fields_value['omnivalt_pick_up_time_finish'] = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
+        $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
         return $helper->generateForm($fields_form);
@@ -689,7 +708,6 @@ class OmnivaltShipping extends CarrierModule
                     continue;
                 if (!isset($grouped_options[$terminal['A1_NAME']]))
                     $grouped_options[(string)$terminal['A1_NAME']] = array();
-                //$grouped_options[(string)$terminal['A1_NAME']][(string)$terminal['ZIP']] = $terminal['NAME'];
                 $address = trim($terminal['A2_NAME'] . ' ' . ($terminal['A5_NAME'] != 'NULL' ? $terminal['A5_NAME'] : '') . ' ' . ($terminal['A7_NAME'] != 'NULL' ? $terminal['A7_NAME'] : ''));
                 $grouped_options[(string)$terminal['A1_NAME']][(string)$terminal['ZIP']] = $terminal['NAME'] . ' (' . $address . ')';
             }

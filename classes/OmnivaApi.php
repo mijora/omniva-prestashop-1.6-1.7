@@ -51,7 +51,13 @@ class OmnivaApi
 
             $additionalServices = [];
             if ($service == "PA" || $service == "PU")
+            {
                 $additionalServices[] = "ST";
+                if(Configuration::get('send_delivery_email'))
+                {
+                    $additionalServices[] = "SF";
+                }
+            }            
             if ($omnivaOrder->cod)
                 $additionalServices[] = "BP";
 
@@ -91,7 +97,8 @@ class OmnivaApi
                     ->setCountry($country_iso)
                     ->setPostcode($orderAdress->postcode)
                     ->setDeliverypoint($orderAdress->city)
-                    ->setStreet($orderAdress->address1);
+                    ->setStreet($orderAdress->address1)
+                    ;
                 if (($service == 'PU' || $service == 'PA') && $id_terminal)
                     $receiverAddress->setOffloadPostcode($id_terminal);
                 else
