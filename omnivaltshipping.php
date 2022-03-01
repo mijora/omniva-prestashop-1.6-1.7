@@ -25,6 +25,36 @@ class OmnivaltShipping extends CarrierModule
     const UPDATE_URL = 'https://api.github.com/repos/mijora/omniva-prestashop-1.6-1.7/releases/latest';
     const DOWNLOAD_URL = "https://github.com/mijora/omniva-prestashop-1.6-1.7/releases/latest/download//omnivaltshipping.zip";
 
+    const SHIPPING_SETS = array(
+        'baltic' => array(
+          'pt pt' => 'PA',
+          'pt c' => 'PK',
+          'c pt' => 'PU',
+          'c c' => 'QH',
+          'courier_call' => 'QH',
+        ),
+        'estonia' => array(
+          'pt pt' => 'PA',
+          'pt po' => 'PO',
+          'pt c' => 'PK',
+          'c pt' => 'PU',
+          'c c' => 'CI',
+          'c cp' => 'LX',
+          'po cp' => 'LH',
+          'po pt' => 'PV',
+          'po po' => 'CD',
+          'po c' => 'CE',
+          'lc pt' => 'PP',
+          'courier_call' => 'CI',
+        ),
+        'finland' => array(
+          'c pc' => 'QB',
+          'c po' => 'CD',
+          'c cp' => 'CE',
+          'courier_call' => 'CE',
+        ),
+      );
+
     protected $_hooks = array(
         'actionCarrierUpdate', //For control change of the carrier's ID (id_carrier), the module must use the updateCarrier hook.
         'displayAdminOrderContentShip',
@@ -399,7 +429,7 @@ class OmnivaltShipping extends CarrierModule
         
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            $fields = array('omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_print_type', 'omnivalt_manifest_lang');
+            $fields = array('omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_print_type', 'omnivalt_manifest_lang');
             $not_required = array('omnivalt_bank_account');
             $values = array();
             $all_filled = true;
@@ -451,6 +481,14 @@ class OmnivaltShipping extends CarrierModule
                 'id_option' => 'c',
                 'name' => $this->l('Courier')
             ),
+            array(
+                'id_option' => 'po',
+                'name' => $this->l('Post Office')
+            ),
+            array(
+                'id_option' => 'lc',
+                'name' => $this->l('Logistics Center')
+            ),
         );
         $print_options = array(
             array(
@@ -489,6 +527,66 @@ class OmnivaltShipping extends CarrierModule
                     'name' => 'omnivalt_api_pass',
                     'size' => 20,
                     'required' => true
+                ),
+                array(
+                    'type' => 'select',
+                    'lang' => true,
+                    'label' => $this->l('Api login country'),
+                    'name' => 'omnivalt_api_country',
+                    'desc' => $this->l('Select the Omniva department country, from which you got the logins.'),
+                    'required' => true,
+                    'options' => array(
+                        'query' => array(
+                            array(
+                                'id_option' => 'lt',
+                                'name' => $this->l('Lithuania / Latvia')
+                            ),
+                            array(
+                                'id_option' => 'ee',
+                                'name' => $this->l('Estonia')
+                            ),
+                        ),
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    )
+                ),
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Estonia Carrier Service'),
+                    'name' => 'omnivalt_ee_service',
+                    'desc' => $this->l('Activate this service, if your e-shop clients want to receive parcels in Estonia. Only available for Estonia API country.'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
+                    )
+                ),
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Finland Carrier Service'),
+                    'name' => 'omnivalt_fi_service',
+                    'desc' => $this->l('Activate this service, if you want to send parcels to Finland. Only available for Estonia API country.'),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
+                    )
                 ),
                 array(
                     'type' => 'text',
@@ -670,6 +768,9 @@ class OmnivaltShipping extends CarrierModule
         }
         $helper->fields_value['omnivalt_api_user'] = Configuration::get('omnivalt_api_user');
         $helper->fields_value['omnivalt_api_pass'] = Configuration::get('omnivalt_api_pass');
+        $helper->fields_value['omnivalt_api_country'] = Configuration::get('omnivalt_api_country');
+        $helper->fields_value['omnivalt_ee_service'] = Configuration::get('omnivalt_ee_service');
+        $helper->fields_value['omnivalt_fi_service'] = Configuration::get('omnivalt_fi_service');
         $helper->fields_value['omnivalt_send_off'] = Configuration::get('omnivalt_send_off');
         $helper->fields_value['omnivalt_company'] = Configuration::get('omnivalt_company');
         $helper->fields_value['omnivalt_address'] = Configuration::get('omnivalt_address');
