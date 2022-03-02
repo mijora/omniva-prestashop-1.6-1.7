@@ -47,7 +47,8 @@ class OmnivaApi
 
             $packages = [];
 
-            $service = $this->getServiceCode($order->id_carrier);
+            $sendOffCountry = $this->getSendOffCountry($orderAdress);
+            $service = $this->getServiceCode($order->id_carrier, $sendOffCountry);
 
             $additionalServices = [];
             if ($service == "PA" || $service == "PU")
@@ -138,7 +139,7 @@ class OmnivaApi
         }
     }
 
-    public function getServiceCode($id_carrier)
+    public function getServiceCode($id_carrier, $sendOffCountry)
     {
 
         $send_method = '';
@@ -147,29 +148,60 @@ class OmnivaApi
         if (in_array((int)$id_carrier, $terminals, true))
             $send_method = 'pt';
         if (in_array((int)$id_carrier, $couriers, true))
+        {
             $send_method =  'c';
-
-        $pickup_method = Configuration::get('omnivalt_send_off');
-
-        switch ($pickup_method . ' ' . $send_method) {
-            case 'c pt':
-                $service = "PU";
-                break;
-            case 'c c':
-                $service = "QH";
-                break;
-            case 'pt c':
-                $service = "PK";
-                break;
-            case 'pt pt':
-                $service = "PA";
-                break;
-            default:
-                $service = "";
-                break;
+            if($sendOffCountry == 'estonia')
+            {
+                $send_method =  'cp'; 
+            }
+            if($sendOffCountry == 'finland')
+            {
+                $send_method =  'pc'; 
+            }
         }
 
+        $pickup_method = Configuration::get('omnivalt_send_off');
+        $method_code = $pickup_method . ' ' . $send_method;
+
+        $service = '';
+        if(isset(OmnivaltShipping::SHIPPING_SETS[$sendOffCountry][$method_code]))
+        {
+            $service = OmnivaltShipping::SHIPPING_SETS[$sendOffCountry][$method_code];
+        }
         return $service;
+    }
+
+    public function getSendOffCountry($address = null)
+    {
+        $api_country = Configuration::get('omnivalt_api_country');
+        $ee_service_enabled = Configuration::get('omnivalt_ee_service');
+        $fi_service_enabled = Configuration::get('omnivalt_fi_service');
+        if($api_country == 'ee')
+        {
+            if(!$address)
+            {
+                if($ee_service_enabled)
+                {
+                    return 'estonia';
+                }
+                elseif($fi_service_enabled)
+                {
+                    return 'finland';
+                }
+                return 'baltic';
+            }
+            // Determine the type by destination address.
+            $country_iso = Country::getIsoById($address->id_country);
+            if(($country_iso == 'EE' && $ee_service_enabled) || ($country_iso == 'FI' && !$fi_service_enabled && $ee_service_enabled))
+            {
+                return 'estonia';
+            }
+            elseif($country_iso == 'FI' && $fi_service_enabled)
+            {
+                return 'finland';
+            }
+        }
+        return 'baltic';
     }
 
     private function getSenderContact()
@@ -268,6 +300,7 @@ class OmnivaApi
     public function callCarrier()
     {
         $call = new CallCourier();
+        $call->setDestinationCountry($this->getSendOffCountry());
         $this->setAuth($call);
         $call->setSender($this->getSenderContact());
 
@@ -284,10 +317,5 @@ class OmnivaApi
     {
         if(method_exists($object, 'setAuth'))
             $object->setAuth($this->username, $this->password);
-    }
-
-    private function getMethod($order_carrier_id = false)
-    {
-
     }
 }

@@ -907,8 +907,7 @@ class OmnivaltShipping extends CarrierModule
     public function hookActionAdminControllerSetMedia()
     {
         if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore'
-            || (isset($this->context->controller->module) && $this->context->controller->module == $this)) {
-            {
+            || (isset($this->context->controller->module) && $this->context->controller->module == $this) || Tools::getValue('configure') == $this->name) {
                 Media::addJsDef([
                     'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),
                     'omnivalt_bulk_manifests' => $this->l("Print Omnivalt manifests"),
@@ -920,14 +919,17 @@ class OmnivaltShipping extends CarrierModule
                     'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
                 ]);
                 $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
-            }
-            if (version_compare(_PS_VERSION_, '1.7.7', '>='))
+
+            if(Tools::getValue('configure') !== $this->name)
             {
-                $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
-            }
-            else
-            {
-                $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order.js');
+                if (version_compare(_PS_VERSION_, '1.7.7', '>='))
+                {
+                    $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
+                }
+                else
+                {
+                    $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order.js');
+                }
             }
         }
     }

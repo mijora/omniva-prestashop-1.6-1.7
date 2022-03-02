@@ -113,3 +113,16 @@ $_MODULE['<{omnivaltshipping}prestashop>header_a0cdc9d65ba1546e0d55ae52ce24ab97'
 $_MODULE['<{omnivaltshipping}prestashop>header_ec9f1fac0b8a074f11b706dc26f426f4'] = 'Omniva paštomatai';
 $_MODULE['<{omnivaltshipping}prestashop>header_bbd99246558810170f2bbba7b75f517c'] = 'Paštomatų adresai';
 $_MODULE['<{omnivaltshipping}prestashop>header_630f6dc397fe74e52d5189e2c80f282b'] = 'Atgal į sąrašą';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_b2f062385cd680e6de20a414d61c0d67'] = 'Pakuočių skaičius';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_8c489d0946f66d17d73f26366a4bf620'] = 'Svoris';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_167b083f093912ea36223cf253893669'] = 'C.O.D Suma';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_914419aa32f04011357d3b604a86d7eb'] = 'Kurjeris';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_af5a5195fe01aae1edf7c0770e86bc03'] = 'Paštomatas';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_0c7b5040f05ce016c980797f78f6838b'] = 'Omniva siunta';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_5050224de02ab60008e2fe590f0b7bea'] = 'Generuoti lipdukus';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_d9f68527a3927030f8ae2080484342ba'] = 'Omniva lipdukų istorija';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_c8a289757a2d2a05e89bdf781be50060'] = 'Sekimo numeriai';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_473b9b7e8964ab5f193d282f8b4b527c'] = 'Paslaugos kodas';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_44749712dbec183e983dcd78a7736c41'] = 'Data';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_36e5769d3d33717f601e1f1dc3409d11'] = 'Lipdukų spausdinimas';
+$_MODULE['<{omnivaltshipping}prestashop>blockinorder_1_7_7_c879cb3351593188d1178647eb2032fe'] = 'Spausdinti lipdukus';

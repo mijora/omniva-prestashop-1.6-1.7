@@ -134,6 +134,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
 
         $order = new Order($id_order);
+        $orderAdress = new Address($order->id_address_delivery);
         $omnivaOrder = new OmnivaOrder($id_order);
         if (!Validate::isLoadedObject($omnivaOrder)) {
             die(json_encode(['error' => 'Order info not saved. Please save before generating labels']));
@@ -156,7 +157,8 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory->id_order = $omnivaOrder->id;
                 $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
 
-                $serviceCode = $this->module->api->getServiceCode($order->id_carrier);
+                $sendOffCountry = $this->module->api->getSendOffCountry($orderAdress);
+                $serviceCode = $this->module->api->getServiceCode($order->id_carrier, $sendOffCountry);
                 $omnivaOrderHistory->service_code = $serviceCode;
                 $omnivaOrderHistory->manifest = (int) Configuration::get('omnivalt_manifest');
                 $omnivaOrderHistory->save();
@@ -251,7 +253,5 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
             }
         }
-        $this->printBulkManifests();
-
     }
 }
