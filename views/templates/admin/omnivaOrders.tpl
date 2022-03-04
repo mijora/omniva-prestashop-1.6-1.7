@@ -10,8 +10,8 @@
         <h4>{l s='Omniva manifest:' mod='omnivaltshipping'} {$manifestNum}</h4>
     </div>
     <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal"
-        title="{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}" style="position:absolute; right:10px">
-        <i class="fa fa fa-send-o"></i>{l s='Kurjerio iškvietimas' mod='omnivaltshipping'}
+        title="{l s='Courier call' mod='omnivaltshipping'}" style="position:absolute; right:10px">
+        <i class="fa fa fa-send-o"></i>{l s='Courier call' mod='omnivaltshipping'}
     </button>
 
 

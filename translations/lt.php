@@ -95,3 +95,4 @@ $_MODULE['<{omnivaltshipping}prestashop>orders_table_header_96b0141273eabab32011
 $_MODULE['<{omnivaltshipping}prestashop>orders_table_header_3ad6cb6100190c8f81e99fd52debf7ef'] = 'Lipdukų generavimas';
 $_MODULE['<{omnivaltshipping}prestashop>pagination_08d8f2394d17064e1c505e3d6ef7ef12'] = 'Rodoma %1$d - %2$d iš %3$d užsakymų';
 $_MODULE['<{omnivaltshipping}prestashop>pagination_89762ea29386643afc3fc50e7e50b53c'] = 'Rodoma %1$d - %2$d iš 1 užsakymo';
+$_MODULE['<{omnivaltshipping}prestashop>omnivaorders_2ae6e7e2d861bd03250e246f505c309b'] = 'Kurjerio iškvietimas';
