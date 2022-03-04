@@ -80,6 +80,9 @@ $(document).ready(() => {
     if (params['tab'] == 'completed')
         $('[href="#tab-sent-orders"]').trigger('click');
 
+    if (params['tab'] == 'new')
+        $('[href="#tab-general"]').trigger('click');
+
     /* Search script */
     $('#button-search').on('click', function () {
         var tracking = $('input[name="tracking_nr"]').val();
