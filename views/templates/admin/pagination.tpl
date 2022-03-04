@@ -198,9 +198,9 @@
         	{assign var='productShowingStart' value=$n*$p-$n+1}
         {/if}
         {if $nb_products > 1}
-        	{l s='Showing %1$d - %2$d of %3$d items' sprintf=[$productShowingStart, $productShowing, $nb_products]}
+        	{l s='Showing %1$d - %2$d of %3$d items' sprintf=[$productShowingStart, $productShowing, $nb_products] mod='omnivaltshipping'}
 		{else}
-        	{l s='Showing %1$d - %2$d of 1 item' sprintf=[$productShowingStart, $productShowing]}
+        	{l s='Showing %1$d - %2$d of 1 item' sprintf=[$productShowingStart, $productShowing] mod='omnivaltshipping'}
        	{/if}
     </div>
 	<!-- /Pagination -->

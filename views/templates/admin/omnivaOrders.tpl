@@ -215,29 +215,29 @@
                 <form class="form-horizontal">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h4 class="modal-title">{l s='Baigiamoji siunta, kurjerio iškvietimas.' mod='omnivaltshipping'}
+                        <h4 class="modal-title">{l s='Final shipment - courier call.' mod='omnivaltshipping'}
                         </h4>
                     </div>
                     <div class="modal-body">
                         <div class="alert alert-info">
-                            <strong>Svarbu!</strong>
-                            {l s='Vėliausias galimas kurjerio iškvietimas yra iki 15val. Vėliau iškvietus kurjerį negarantuojame, jog siunta bus paimta.' mod='omnivaltshipping'}
+                            <strong>{l s='Important!' mod='omnivaltshipping'}</strong>
+                            {l s='Latest time on which courier call can be made is 3 p.m. If you call courier later, we do not guarantee that shipment will be picked up.' mod='omnivaltshipping'}
                             <br />
-                            <strong>{l s='Adresą ir kontaktinius duomenis' mod='omnivaltshipping'}</strong>
-                            {l s='galima keisti Omnivalt modulio nustatymuose.' mod='omnivaltshipping'}
+                            <strong>{l s='Address and contact data' mod='omnivaltshipping'}</strong>
+                            {l s='can be changed in Omnivalt module settings.' mod='omnivaltshipping'}
                         </div>
-                        <h4>{l s='Siunčiami duomenys' mod='omnivaltshipping'}</h4>
-                        <b>{l s='Siuntėjas:' mod='omnivaltshipping'}</b> {$sender}<br>
-                        <b>{l s='Telefonas:' mod='omnivaltshipping'}</b> {$phone}<br>
-                        <b>{l s='Pašto kodas:' mod='omnivaltshipping'}</b> {$postcode}<br>
-                        <b>{l s='Adresas:' mod='omnivaltshipping'}</b> {$address}<br><br>
+                        <h4>{l s='Data to be sent' mod='omnivaltshipping'}</h4>
+                        <b>{l s='Sender:' mod='omnivaltshipping'}</b> {$sender}<br>
+                        <b>{l s='Phone:' mod='omnivaltshipping'}</b> {$phone}<br>
+                        <b>{l s='Zipcode:' mod='omnivaltshipping'}</b> {$postcode}<br>
+                        <b>{l s='Address:' mod='omnivaltshipping'}</b> {$address}<br><br>
                         <div id="alertList"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" id="requestOmnivaltQourier"
-                            class="btn btn-default">{l s='Siųsti' mod='omnivaltshipping'}</button>
+                            class="btn btn-default">{l s='Send' mod='omnivaltshipping'}</button>
                         <button type="button" class="btn btn-default"
-                            data-dismiss="modal">{l s='Atšaukti' mod='omnivaltshipping'}</button>
+                            data-dismiss="modal">{l s='Cancel' mod='omnivaltshipping'}</button>
                     </div>
                 </form>
             </div>

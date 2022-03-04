@@ -88,8 +88,13 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         parent::initContent();
 
         $ordersCount = $this->newOrdersNumb();
+        $finishedCount = $this->finishedOrdersNumb();
         $perPage = 10;
+
         $pagesToShow = intval(ceil($ordersCount / $perPage));
+        if(Tools::getValue('tab') == 'completed')
+            $pagesToShow = intval(ceil($finishedCount / $perPage));
+
         $page = 1;
         if (Tools::getValue('p') && Tools::getValue('p') != null)
             $page = intval(Tools::getValue('p'));
@@ -154,7 +159,6 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             )
         );
 
-        $finishedCount = $this->finishedOrdersNumb();
         $pagesToShow = intval(ceil($finishedCount / $perPage));
         if ($pagesToShow <= 5) {
             $endGroup = $pagesToShow;
@@ -172,6 +176,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         }
         $this->context->smarty->assign(
             array(
+                'next_p' => (int)$page + 1 > $pagesToShow ? $pagesToShow : $page + 1,
                 'nb_products' => $finishedCount,
                 'pages_nb' => $pagesToShow,
                 'requestPage' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&tab=completed',
