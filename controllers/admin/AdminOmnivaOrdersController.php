@@ -20,7 +20,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'labelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . "&action=printLabels",
             'bulkLabelsLink' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . "&action=bulkPrintLabels",
             'labels_trans' => $this->module->l('Labels'),
-            'not_found_trans' => $this->module->l('Nothing found'),
+            'not_found_trans' => $this->module->l('Nothing found', 'adminomnivaorderscontroller'),
         ]);
     }
 

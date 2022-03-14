@@ -68,7 +68,7 @@
                 <hr />
                 <br />
             {else}
-                <p class="text-center">{l s='Užsakymų nėra' mod='omnivaltshipping'}</p>
+                <p class="text-center">{l s='There are no orders' mod='omnivaltshipping'}</p>
             {/if}
             <div class="text-center">
                 {$finished_pagination_content}
@@ -105,7 +105,7 @@
                 <br />
             {else}
                 <p class="text-center">
-                    {l s='Užsakymų nėra' mod='omnivaltshipping'}
+                    {l s='There are no orders' mod='omnivaltshipping'}
                 </p>
             {/if}
         </div>
