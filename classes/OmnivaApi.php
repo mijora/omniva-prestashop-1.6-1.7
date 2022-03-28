@@ -106,8 +106,11 @@ class OmnivaApi
                     $receiverAddress->setOffloadPostcode($orderAdress->postcode);
                 $receiverContact
                     ->setAddress($receiverAddress)
-                    ->setEmail($customer->email)
                     ->setPersonName($customer->firstname . ' ' . $customer->lastname);
+                if(Configuration::get('send_delivery_email'))
+                {
+                    $receiverContact->setEmail($customer->email);
+                }
                 if(isset($orderAdress->phone) && $orderAdress->phone)
                 {
                     $receiverContact->setPhone($orderAdress->phone);
