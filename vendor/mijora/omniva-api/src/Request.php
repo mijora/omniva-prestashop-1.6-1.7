@@ -84,7 +84,7 @@ class Request
                       echo htmlentities($xmlResponse);
                       echo "</pre>"; */
                     //exit;
-                    $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
+                    $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:', 'ns3:'], '', $xmlResponse);
                     $xml = simplexml_load_string($xmlResponse);
                     if (!is_object($xml)) {
                         $errors[] = 'Response is in the wrong format';
@@ -226,7 +226,7 @@ class Request
                 $errors[] = "Error in xml request";
             }
             if (strlen(trim($xmlResponse)) > 0) {
-                $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
+                $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:', 'ns3:'], '', $xmlResponse);
                 $xml = simplexml_load_string($xmlResponse);
                 if (!is_object($xml)) {
                     $errors[] = 'Response is in the wrong format';
@@ -261,7 +261,7 @@ class Request
         
         $xmlResponse = $this->make_call(false, $url);
         
-        $return = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
+        $return = str_ireplace(['SOAP-ENV:', 'SOAP:', 'ns3:'], '', $xmlResponse);
         try {
             $xml = @simplexml_load_string($return);
             if (!is_object($xml)) {
