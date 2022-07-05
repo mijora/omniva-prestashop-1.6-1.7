@@ -33,10 +33,9 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             case 'printManifest':
                 $this->module->api->getManifest();
                 break;
-            case 'bulkmanifestsall':
-                $this->saveManifest();
+            case 'printAllManifests':
+                $this->module->api->getAllManifests();
                 break;
-
         }
     }
 

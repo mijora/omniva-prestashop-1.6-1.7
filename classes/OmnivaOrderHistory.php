@@ -59,15 +59,23 @@ class OmnivaOrderHistory extends ObjectModel
         return $orderHistoryId ? new OmnivaOrderHistory($orderHistoryId) : null;
     }
 
-    public static function getCurrentManifestOrders()
+    public static function getManifestOrders($id_manifest)
     {
         $query = (new DbQuery())
-            ->select("id")
+            ->select("id, id_order")
             ->from(self::$definition['table'])
-            ->where('manifest = ' . (int) Configuration::get('omnivalt_manifest'));
+            ->where('manifest = ' . $id_manifest);
+
+        $orderHistoryEntries = Db::getInstance()->executeS($query);
+
+        $orderHistoryEntriesUnique = [];
+        foreach($orderHistoryEntries as $orderHistory)
+        {
+            $orderHistoryEntriesUnique[$orderHistory['id_order']] = $orderHistory;
+        }
 
         return array_map(function($order) {
             return $order['id'];
-        }, Db::getInstance()->executeS($query));
+        }, $orderHistoryEntriesUnique);
     }
 }
