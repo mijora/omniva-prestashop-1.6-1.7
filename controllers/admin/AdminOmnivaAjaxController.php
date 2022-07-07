@@ -10,6 +10,10 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
 
         parent::__construct();
+        if(Tools::isSubmit('noLabelsError'))
+        {
+            $this->errors[] = $this->module->l('Could not get label information for some orders.');
+        }
         $this->parseActions();
     }
 
@@ -126,10 +130,13 @@ class AdminOmnivaAjaxController extends ModuleAdminController
     /**
      * Call API to get register shipment.
      */
-    protected function generateLabels()
+    protected function generateLabels($id_order = null)
     {
-        if (!($id_order = (int) Tools::getValue('id_order'))) {
-            die(json_encode(['error' => $this->module->l('No order ID provided.')]));
+        if(!$id_order)
+        {
+            if (!($id_order = (int) Tools::getValue('id_order'))) {
+                die(json_encode(['error' => $this->module->l('No order ID provided.')]));
+            }
         }
 
         $order = new Order($id_order);
@@ -166,7 +173,6 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
             if(Tools::getValue('redirect'))
                 Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
-            die(json_encode(['success' => $this->module->l('Successfully generated labels.')]));
         }
         else
         {
@@ -224,8 +230,21 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             die(json_encode(['error' => $this->module->l('No order ID\'s provided.')]));
         }
 
-        if(!$this->module->api->getBulkLabels($order_ids))
+        foreach($order_ids as $id_order)
         {
+            $omnivaOrder = new OmnivaOrder($id_order);
+            if(Validate::isLoadedObject($omnivaOrder) && !$omnivaOrder->tracking_numbers)
+            {
+                $this->generateLabels($id_order);
+            }
+        }
+
+        try {
+            $this->module->api->getBulkLabels($order_ids);
+        }
+        catch(Mijora\Omniva\OmnivaException $e)
+        {
+            Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . '&noLabelsError');
             die(json_encode(['error' => 'Could not fetch labels from the API.']));
         }
     }

@@ -1133,6 +1133,8 @@ class OmnivaltShipping extends CarrierModule
             $omnivaOrder->packs = 1;
             $omnivaOrder->id = $order->id;
             $omnivaOrder->weight = $order->getTotalWeight();
+            if($omnivaOrder->weight == 0)
+                $omnivaOrder->weight = 1;
             $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
             $omnivaOrder->add();
 

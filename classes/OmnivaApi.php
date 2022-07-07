@@ -74,6 +74,8 @@ class OmnivaApi
                 $package->setAdditionalServices($additionalServiceObj);
 
                 $measures = new Measures();
+                if($omnivaOrder->weight == 0)
+                    $omnivaOrder->weight = 1;
                 $measures->setWeight($omnivaOrder->weight);
                 $package->setMeasures($measures);
 
@@ -141,7 +143,6 @@ class OmnivaApi
 
     public function getServiceCode($id_carrier, $sendOffCountry)
     {
-
         $send_method = '';
         $terminals = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
         $couriers = OmnivaltShipping::getCarrierIds(['omnivalt_c']);
