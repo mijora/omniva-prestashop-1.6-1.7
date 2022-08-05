@@ -1,5 +1,5 @@
 <?php
-
+// test
 if (!defined('_PS_VERSION_'))
     exit;
 
@@ -911,8 +911,8 @@ class OmnivaltShipping extends CarrierModule
                 Media::addJsDef([
                     'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),
                     'omnivalt_bulk_manifests' => $this->l("Print Omnivalt manifests"),
-                    'omnivalt_admin_action_labels' => $this->context->link->getAdminLink("AdminOmnivaOrders") . "&action=bulklabels",
-                    'omnivalt_admin_action_manifests' => $this->context->link->getAdminLink("AdminOmnivaOrders") . "&action=bulkmanifests",
+                    'omnivalt_admin_action_labels' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . "&action=bulkPrintLabels",
+                    'omnivalt_admin_action_manifests' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . "&action=printAllManifests",
                     'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=generateLabels',
                     'success_add_trans' => $this->l('Successfully added.'),
                     'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
@@ -1133,6 +1133,8 @@ class OmnivaltShipping extends CarrierModule
             $omnivaOrder->packs = 1;
             $omnivaOrder->id = $order->id;
             $omnivaOrder->weight = $order->getTotalWeight();
+            if($omnivaOrder->weight == 0)
+                $omnivaOrder->weight = 1;
             $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
             $omnivaOrder->add();
 

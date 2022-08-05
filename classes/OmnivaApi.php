@@ -74,6 +74,8 @@ class OmnivaApi
                 $package->setAdditionalServices($additionalServiceObj);
 
                 $measures = new Measures();
+                if($omnivaOrder->weight == 0)
+                    $omnivaOrder->weight = 1;
                 $measures->setWeight($omnivaOrder->weight);
                 $package->setMeasures($measures);
 
@@ -144,7 +146,6 @@ class OmnivaApi
 
     public function getServiceCode($id_carrier, $sendOffCountry)
     {
-
         $send_method = '';
         $terminals = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
         $couriers = OmnivaltShipping::getCarrierIds(['omnivalt_c']);
@@ -253,7 +254,7 @@ class OmnivaApi
         $manifest = new Manifest();
         $manifest->setSender($this->getSenderContact());
 
-        $omnivaOrderHistoryIds = OmnivaOrderHistory::getCurrentManifestOrders();
+        $omnivaOrderHistoryIds = OmnivaOrderHistory::getManifestOrders((int) Configuration::get('omnivalt_manifest'));
         foreach ($omnivaOrderHistoryIds as $omnivaOrderHistoryId)
         {
             $omnivaOrderHistory = new OmnivaOrderHistory($omnivaOrderHistoryId);
@@ -290,6 +291,53 @@ class OmnivaApi
 
         Configuration::updateValue('omnivalt_manifest', ((int) Configuration::get('omnivalt_manifest')) + 1);
         $manifest->downloadManifest();
+    }
+
+    public function getAllManifests()
+    {
+        $manifests = [];
+        for($i = 1; $i <= (int) Configuration::get('omnivalt_manifest'); $i++)
+        {
+            $manifest = new Manifest();
+            $manifest->setSender($this->getSenderContact());
+    
+            $omnivaOrderHistoryIds = OmnivaOrderHistory::getManifestOrders($i);
+            foreach($omnivaOrderHistoryIds as $omnivaOrderHistoryId)
+            {
+                $omnivaOrderHistory = new OmnivaOrderHistory($omnivaOrderHistoryId);
+                if(Validate::isLoadedObject($omnivaOrderHistory))
+                {
+                    $terminal_address = '';
+                    $order = new \Order($omnivaOrderHistory->id_order);
+                    $omnivaOrder = new OmnivaOrder($omnivaOrderHistory->id_order);
+                    $cartTerminal = new OmnivaCartTerminal($order->id_cart);
+                    if(Validate::isLoadedObject($cartTerminal))
+                    {
+                        $terminal_address = OmnivaltShipping::getTerminalAddress($cartTerminal->id_terminal);
+                    }
+    
+                    $address = new \Address($order->id_address_delivery);
+                    $client_address = $address->firstname . ' ' . $address->lastname . ', ' . $address->address1 . ', ' . $address->postcode . ', ' . $address->city . ' ' . $address->country;
+    
+                    $barcodes = json_decode($omnivaOrderHistory->tracking_numbers);
+                    if(!empty($barcodes))
+                    {
+                        $num_packages = count($barcodes);
+                        foreach ($barcodes as $barcode)
+                        {
+                            $order = new Order();
+                            $order->setTracking($barcode);
+                            $order->setQuantity(1);
+                            $order->setWeight($omnivaOrder->weight / $num_packages);
+                            $order->setReceiver($terminal_address ?: $client_address);
+                            $manifest->addOrder($order);
+                        }
+                    }
+                }
+            }
+            $manifests[] = $manifest;
+        }
+        Manifest::downloadMultipleManifests($manifests);
     }
 
     public function getTracking($tracking_numbers)
