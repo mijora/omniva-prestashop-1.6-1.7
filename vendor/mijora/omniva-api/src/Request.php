@@ -198,6 +198,10 @@ class Request
     public function get_labels($barcodes)
     {
         $labels = [];
+        foreach($barcodes as $barcode)
+        {
+            $labels[$barcode] = null;
+        }
         $barcodeXML = '';
         foreach ($barcodes as $barcode) {
             $barcodeXML .= '<barcode>' . $barcode . '</barcode>';
@@ -243,6 +247,13 @@ class Request
                 }
             }
             if (!empty($labels)) {
+                foreach($labels as $key => $label)
+                {
+                    if(empty($label))
+                    {
+                        unset($labels[$key]);
+                    }
+                }
                 return array('labels' => $labels);
             } else {
                 throw new OmnivaException(implode('. ', $this->helper->translateErrors($errors)));
