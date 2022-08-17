@@ -201,6 +201,7 @@ class Request
         $barcodeXML = '';
         foreach ($barcodes as $barcode) {
             $barcodeXML .= '<barcode>' . $barcode . '</barcode>';
+            $labels[$barcode] = null;
         }
         $xml = '
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://service.core.epmx.application.eestipost.ee/xsd">
@@ -243,6 +244,13 @@ class Request
                 }
             }
             if (!empty($labels)) {
+                foreach($labels as $key => $label)
+                {
+                    if(!$label[$key])
+                    {
+                        unset($labels[$key]);
+                    }
+                }
                 return array('labels' => $labels);
             } else {
                 throw new OmnivaException(implode('. ', $this->helper->translateErrors($errors)));
