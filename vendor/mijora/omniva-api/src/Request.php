@@ -198,6 +198,10 @@ class Request
     public function get_labels($barcodes)
     {
         $labels = [];
+        foreach($barcodes as $barcode)
+        {
+            $labels[$barcode] = null;
+        }
         $barcodeXML = '';
         foreach ($barcodes as $barcode) {
             $barcodeXML .= '<barcode>' . $barcode . '</barcode>';
