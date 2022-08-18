@@ -699,14 +699,14 @@ var omnivaltDelivery = {
                                             type: 'inline',
                                             autoScale: true,
                                             minHeight: 30,
-                                            content: '<p class="fancybox-error">' + omnivalt_parcel_terminal_error + '</p>'
+                                            content: '<p class="fancybox-error">' + omnivadata.omnivalt_parcel_terminal_error + '</p>'
                                         }],
                                     {
                                         padding: 0
                                     }
                                 );
                             else
-                                alert(omnivalt_parcel_terminal_error);
+                                alert(omnivadata.omnivalt_parcel_terminal_error);
                         }
                     }
                 });
@@ -723,14 +723,14 @@ var omnivaltDelivery = {
                     type: 'inline',
                     autoScale: true,
                     minHeight: 30,
-                    content: '<p class="fancybox-error">' + omnivalt_parcel_terminal_error + '</p>'
+                    content: '<p class="fancybox-error">' + omnivadata.omnivalt_parcel_terminal_error + '</p>'
                 }],
                 {
                     padding: 0
                 });
             }
             else {
-                alert(omnivalt_parcel_terminal_error);
+                alert(omnivadata.omnivalt_parcel_terminal_error);
             }
         }
         else {
