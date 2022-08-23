@@ -89,7 +89,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
         $ordersCount = $this->newOrdersNumb();
         $finishedCount = $this->finishedOrdersNumb();
-        $perPage = 10;
+        $perPage = 30;
 
         $pagesToShow = intval(ceil($ordersCount / $perPage));
         if(Tools::getValue('tab') == 'completed')
@@ -200,7 +200,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         );
     }
 
-    public function getOrders($page = 1, $perPage = 10)
+    public function getOrders($page = 1, $perPage = 30)
     {
         $newOrder = (int) Configuration::get('omnivalt_manifest');
         $from = $page * $perPage;
@@ -227,7 +227,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($orders);
     }
 
-    public function getNewOrders($page = 1, $perPage = 10)
+    public function getNewOrders($page = 1, $perPage = 30)
     {
         $newOrderNum = (int) Configuration::get('omnivalt_manifest');
         $from = $page * $perPage;

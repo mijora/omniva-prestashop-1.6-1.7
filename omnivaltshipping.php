@@ -73,6 +73,11 @@ class OmnivaltShipping extends CarrierModule
         'Courier' => 'omnivalt_c',
     );
 
+    /**
+     * COD modules
+     */
+    public static $_codModules = array('ps_cashondelivery', 'venipakcod');
+
     public function __construct()
     {
         $this->name = 'omnivaltshipping';
@@ -1133,6 +1138,12 @@ class OmnivaltShipping extends CarrierModule
             $omnivaOrder->packs = 1;
             $omnivaOrder->id = $order->id;
             $omnivaOrder->weight = $order->getTotalWeight();
+
+            $is_cod = 0;
+            if(in_array($order->module, self::$_codModules))
+                $is_cod = 1;
+            $omnivaOrder->cod = $is_cod;
+
             if($omnivaOrder->weight == 0)
                 $omnivaOrder->weight = 1;
             $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
