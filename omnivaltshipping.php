@@ -64,7 +64,8 @@ class OmnivaltShipping extends CarrierModule
         'displayAdminOrder',
         'displayBackOfficeHeader',
         'actionValidateOrder',
-        'actionAdminControllerSetMedia'
+        'actionAdminControllerSetMedia',
+        'actionObjectOrderUpdateAfter'
     );
 
     private static $_carriers = array(
@@ -82,7 +83,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.0';
+        $this->version = '2.0.1';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.8');
@@ -1231,5 +1232,33 @@ class OmnivaltShipping extends CarrierModule
         $new_cart->delete();
 
         return $order;
+    }
+
+    public function hookActionObjectOrderUpdateAfter($params)
+    {
+        $order = $params['object'];
+        if(!Validate::isLoadedObject($order))
+        {
+            return;
+        }
+
+        $omnivaOrder = new OmnivaOrder($order->id);
+        if(!Validate::isLoadedObject($omnivaOrder))
+        {
+            return;
+        }
+
+        $omnivaOrder->weight = $order->getTotalWeight();
+
+        $is_cod = 0;
+        if(in_array($order->module, self::$_codModules))
+            $is_cod = 1;
+        $omnivaOrder->cod = $is_cod;
+
+        if($omnivaOrder->weight == 0)
+            $omnivaOrder->weight = 1;
+        
+        $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
+        $omnivaOrder->update();
     }
 }
