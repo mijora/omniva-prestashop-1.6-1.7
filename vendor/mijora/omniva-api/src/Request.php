@@ -85,7 +85,7 @@ class Request
                       echo "</pre>"; */
                     //exit;
                     $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:', 'ns3:'], '', $xmlResponse);
-                    $xml = simplexml_load_string($xmlResponse);
+                    $xml = @simplexml_load_string($xmlResponse);
                     if (!is_object($xml)) {
                         $errors[] = 'Response is in the wrong format';
                     }
@@ -198,14 +198,9 @@ class Request
     public function get_labels($barcodes)
     {
         $labels = [];
-        foreach($barcodes as $barcode)
-        {
-            $labels[$barcode] = null;
-        }
         $barcodeXML = '';
         foreach ($barcodes as $barcode) {
             $barcodeXML .= '<barcode>' . $barcode . '</barcode>';
-            $labels[$barcode] = null;
         }
         $xml = '
         <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsd="http://service.core.epmx.application.eestipost.ee/xsd">
@@ -231,8 +226,8 @@ class Request
                 $errors[] = "Error in xml request";
             }
             if (strlen(trim($xmlResponse)) > 0) {
-                $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:', 'ns3:'], '', $xmlResponse);
-                $xml = simplexml_load_string($xmlResponse);
+                $xmlResponse = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
+                $xml = @simplexml_load_string($xmlResponse);
                 if (!is_object($xml)) {
                     $errors[] = 'Response is in the wrong format';
                 }
@@ -248,13 +243,6 @@ class Request
                 }
             }
             if (!empty($labels)) {
-                foreach($labels as $key => $label)
-                {
-                    if(!$label[$key])
-                    {
-                        unset($labels[$key]);
-                    }
-                }
                 return array('labels' => $labels);
             } else {
                 throw new OmnivaException(implode('. ', $this->helper->translateErrors($errors)));
@@ -273,7 +261,7 @@ class Request
         
         $xmlResponse = $this->make_call(false, $url);
         
-        $return = str_ireplace(['SOAP-ENV:', 'SOAP:', 'ns3:'], '', $xmlResponse);
+        $return = str_ireplace(['SOAP-ENV:', 'SOAP:'], '', $xmlResponse);
         try {
             $xml = @simplexml_load_string($return);
             if (!is_object($xml)) {

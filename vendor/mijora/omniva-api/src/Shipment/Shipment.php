@@ -48,7 +48,7 @@ class Shipment
      * @var array
      */
     private $terminalServices = [
-         'PU', 'PA'
+         'PU', 'PA', 'PK', 'PP'
      ];
     
     public function setAuth($username, $password)
@@ -225,11 +225,14 @@ class Shipment
             if ($measures) {
 		$measuresNode = $item->addChild('measures');
 		$measuresNode->addAttribute('weight', $measures->getWeight());
-		if ($measures->getWidth()) {
-                    $measuresNode->addAttribute('width', $measures->getWidth());
-		}
 		if ($measures->getVolume()) {
                     $measuresNode->addAttribute('volume', $measures->getVolume());
+		}
+		if ($measures->getLength()) {
+                    $measuresNode->addAttribute('length', $measures->getLength());
+		}
+		if ($measures->getWidth()) {
+                    $measuresNode->addAttribute('width', $measures->getWidth());
 		}
 		if ($measures->getHeight()) {
                     $measuresNode->addAttribute('height', $measures->getHeight());
@@ -261,6 +264,9 @@ class Shipment
             }
             if($this->isShowReturnCodeEmail()) {
                 $item->addChild('show_return_code_email', true);
+            }
+	    if($this->getComment()) {
+                $item->addChild('comment', $this->getComment());
             }
             if($this->getPartnerId()) {
                 $item->addChild('partnerId', $this->getPartnerId());

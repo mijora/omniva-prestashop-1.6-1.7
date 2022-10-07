@@ -1,3 +1,11 @@
+= 2.0.1 =
+# Updated
+- API library to 1.0.5
+- Added new logo
+
+# Improved
+- Added save of initial order data
+
 = 2.0.0 =
  - Reworked module to use API library for better maintenance.
  - Removed Cart override and cart table alterations.
