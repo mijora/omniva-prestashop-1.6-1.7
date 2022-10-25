@@ -1012,7 +1012,7 @@ class OmnivaltShipping extends CarrierModule
 
     public static function getReferenceNumber($order_number)
     {
-        $order_number = (string)$order_number;
+        $order_number = str_pad((string)$order_number, 2, '0', STR_PAD_LEFT);
         $kaal = array(7, 3, 1);
         $sl = $st = strlen($order_number);
         $total = 0;
