@@ -1,3 +1,7 @@
+## [1.0.6] - Improvements
+- removed ns3: from all responses
+- added a escaping of sender and receiver values
+
 ## [1.0.5] - Updates
 - Added length to measurements
 - Update readme, added examples with comments
