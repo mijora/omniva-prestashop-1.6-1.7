@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.2 =
 # Fixed
 - fixed reference number generation, when order ID is less then 10
 
