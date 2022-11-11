@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => '__root__',
-        'pretty_version' => 'dev-develop',
-        'version' => 'dev-develop',
-        'reference' => '7dede05deeb86328f51aeb28a8c442f6e7635e00',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '924a6a0892e78349933f4a9201b1633fb4725d5e',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,18 +11,18 @@
     ),
     'versions' => array(
         '__root__' => array(
-            'pretty_version' => 'dev-develop',
-            'version' => 'dev-develop',
-            'reference' => '7dede05deeb86328f51aeb28a8c442f6e7635e00',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '924a6a0892e78349933f4a9201b1633fb4725d5e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
         'mijora/omniva-api' => array(
-            'pretty_version' => '1.0.6',
-            'version' => '1.0.6.0',
-            'reference' => 'aa58d3a931712bb6eff725969c3f1aedddb51c9f',
+            'pretty_version' => '1.0.6.1',
+            'version' => '1.0.6.1',
+            'reference' => 'efd1c89fc306ab08384d2672ba6113633029d751',
             'type' => 'library',
             'install_path' => __DIR__ . '/../mijora/omniva-api',
             'aliases' => array(),
