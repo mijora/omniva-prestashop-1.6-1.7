@@ -2,6 +2,9 @@
 # Fixed
 - fixed reference number generation, when order ID is less then 10
 
+# Updated
+- API library to 1.0.6
+
 = 2.0.1 =
 # Updated
 - API library to 1.0.5
