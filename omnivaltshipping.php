@@ -83,7 +83,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.1';
+        $this->version = '2.0.2';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.8');
@@ -1012,7 +1012,7 @@ class OmnivaltShipping extends CarrierModule
 
     public static function getReferenceNumber($order_number)
     {
-        $order_number = (string)$order_number;
+        $order_number = str_pad((string)$order_number, 2, '0', STR_PAD_LEFT);
         $kaal = array(7, 3, 1);
         $sl = $st = strlen($order_number);
         $total = 0;
