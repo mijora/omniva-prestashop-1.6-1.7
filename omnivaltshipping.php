@@ -923,6 +923,10 @@ class OmnivaltShipping extends CarrierModule
                     'success_add_trans' => $this->l('Successfully added.'),
                     'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
                     'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
+                    'omnivalt_text' => array(
+                        'ajax_parsererror' => $this->l("An invalid response was received"),
+                        'ajax_unknownerror' => $this->l("Unknown error"),
+                    ),
                 ]);
                 $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
 

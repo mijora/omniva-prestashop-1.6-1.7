@@ -1,4 +1,10 @@
 = Unreleased =
+# Fixed
+- fixed label generation ajax error in order edit page 
+
+# Improved
+- added error message in order edit page, when label generation ajax got error
+
 # Updated
 - API library to 1.0.6.1
 

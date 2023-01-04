@@ -26,6 +26,15 @@ $(document).ready(function () {
             .html(msg);
     }
 
+    function getErrorText(error_type) {
+        switch(error_type) {
+            case "parsererror":
+                return omnivalt_text.ajax_parsererror;
+            default:
+                return omnivalt_text.ajax_unknownerror;
+        }
+    }
+
     function labelOrderInfo() {
         disableButton('#omnivaltOrderPrintLabels', true);
 
@@ -55,7 +64,8 @@ $(document).ready(function () {
                     window.location.href = location.href
                 }, 1000);
             },
-            error: function (res) {
+            error: function (res, error_type) {
+                showResponse(getErrorText(error_type), "alert-danger");
                 disableButton('#omnivaltOrderPrintLabels', false);
             }
         });
@@ -88,7 +98,8 @@ $(document).ready(function () {
 
                 $("#omnivalt_print_btn").addClass('d-none');
             },
-            error: function (res) {
+            error: function (res, error_type) {
+                showResponse(getErrorText(error_type), "alert-danger");
                 disableButton('#omnivaltOrderSubmitBtn', false);
             }
         });
