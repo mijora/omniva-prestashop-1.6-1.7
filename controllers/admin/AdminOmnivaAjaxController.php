@@ -143,7 +143,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         $orderAdress = new Address($order->id_address_delivery);
         $omnivaOrder = new OmnivaOrder($id_order);
         if (!Validate::isLoadedObject($omnivaOrder)) {
-            die(json_encode(['error' => 'Order info not saved. Please save before generating labels']));
+            die(json_encode(['error' => $this->module->l('Order info not saved. Please save before generating labels')]));
         }
 
         $status = $this->module->api->createShipment($id_order);
@@ -171,8 +171,11 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             }
 
             $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
-            if(Tools::getValue('redirect'))
+            if(Tools::getValue('redirect')) {
                 Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
+            } else {
+                die(json_encode(['success' => $this->module->l('Label successfully generated')]));
+            }
         }
         else
         {
