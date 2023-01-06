@@ -3,11 +3,13 @@
 class AdminOmnivaOrdersController extends ModuleAdminController
 {
     private $_carriers = '';
+    private $_path;
 
     public function setMedia($isNewTheme = false)
     {
         parent::setMedia($isNewTheme);
-        $this->addJS('modules/' . $this->module->name . '/views/js/omniva-orders.js');
+
+        $this->addJS($this->_path . 'views/js/omniva-orders.js');
         Media::addJsDef([
             'check_orders' => $this->module->l('Please select orders'),
             'carrier_cal_url' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&callCourier=1',
@@ -28,6 +30,10 @@ class AdminOmnivaOrdersController extends ModuleAdminController
     {
         $this->bootstrap = true;
         parent::__construct();
+
+        if (empty($this->_path)) {
+            $this->_path = __PS_BASE_URI__ . 'modules/' . $this->module->name . '/';
+        }
 
         $this->_carriers = $this->getCarrierIds();
         if (Tools::getValue('orderSkip') != null) {
@@ -236,7 +242,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             INNER JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
             INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
             INNER JOIN " . _DB_PREFIX_ . "omniva_order_history ooh ON ooh.id_order = a.id_order AND (ooh.manifest=" . $newOrderNum . " OR ooh.manifest = 0)
-            ORDER BY ooh.manifest DESC, a.id_order DESC
+            ORDER BY a.id_order DESC
             LIMIT $perPage OFFSET $from";
 
         return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($newOrder);

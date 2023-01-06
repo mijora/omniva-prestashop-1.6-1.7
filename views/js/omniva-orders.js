@@ -106,9 +106,9 @@ $(document).ready(() => {
                     for (data of datas) {
                         $('#searchTable').append(`
                             <tr>
-                                <td class='left'>${data['id_order']}</td>
-                                <td><a href='${orderLink}&id_order=${data['id_order']}' target='_blank'>${data['full_name']}</a></td>
-                                <td>${data['tracking_numbers']}</a></td>
+                                <td class='left'><a href='${orderLink}&id_order=${data['id_order']}' target='_blank'>${data['id_order']}</a></td>
+                                <td>${data['full_name']}</td>
+                                <td>${data['tracking_numbers']}</td>
                                 <td>${data['date_add']}</td>
                                 <td>${data['total_paid_tax_incl']}</td>
                                 <td><a href='${labelsLink}&id_order=${data['id']}&history=${data['history']}' class='btn btn-default btn-xs' target='_blank'>${labels_trans}</a></td>

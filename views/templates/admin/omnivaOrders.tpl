@@ -26,6 +26,8 @@
         <div class="tab-pane active" id="tab-general">
             {if $newOrders != null}
                 <h4 style="display: inline:block;vertical-align: baseline;">{l s='New orders' mod='omnivaltshipping'}</h4>
+                <a id="print-manifest" href="" class="btn btn-default btn-xs action-call float-right pull-right"
+                    target='_blank'>{l s='Send all Orders with label' mod='omnivaltshipping'}</a>
                 <table class="table order">
                     <thead>
                         {include file="./_partials/orders_table_header.tpl" select_all=true}
@@ -35,8 +37,8 @@
                         {foreach $newOrders as $order}
                             <tr>
                                 <td><input type="checkbox" class="selected-orders" value="{$order.id_order}" /></td>
-                                <td>{$order.id_order}</td>
-                                <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
+                                <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.id_order}</a></td>
+                                <td>{$order.firstname} {$order.lastname}</td>
                                 <td>
                                     {if $order.tracking_numbers}
                                         {implode(', ', json_decode($order.tracking_numbers))}
@@ -61,10 +63,10 @@
                         {/foreach}
                     </tbody>
                 </table>
-                <a id="print-manifest" href="" class="btn btn-default btn-xs action-call"
-                    target='_blank'>{l s='Manifest' mod='omnivaltshipping'}</a>
                 <a id="print-labels" href="" class="btn btn-default btn-xs action-call"
                     target='_blank'>{l s='Labels' mod='omnivaltshipping'}</a>
+                <a id="print-manifest" href="" class="btn btn-default btn-xs action-call float-right pull-right"
+                    target='_blank'>{l s='Send all Orders with label' mod='omnivaltshipping'}</a>
                 <hr />
                 <br />
             {else}
@@ -87,8 +89,8 @@
                     <tbody>
                         {foreach $skippedOrders as $order}
                             <tr>
-                                <td>{$order.id_order}</td>
-                                <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
+                                <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.id_order}</a></td>
+                                <td>{$order.firstname} {$order.lastname}</td>
                                 <td>{$order.tracking_number}</td>
                                 <td>{$order.date_upd}</td>
                                 <td>{$order.total_paid|round:2}</td>
@@ -132,11 +134,11 @@
                                 {include file="./_partials/orders_table_header.tpl" select_all=true}
                             </thead>
                             <tbody>
-                            {/if}
+                    {/if}
                             <tr>
                                 <td><input type="checkbox" class="selected-orders" value="{$order.id_order}" /></td>
-                                <td>{$order.id_order}</td>
-                                <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.firstname} {$order.lastname}</td>
+                                <td><a href="{$orderLink}&id_order={$order.id_order}">{$order.id_order}</a></td>
+                                <td>{$order.firstname} {$order.lastname}</td>
                                 <td>
                                     {if $order.tracking_numbers}
                                         {implode(', ', json_decode($order.tracking_numbers))}
@@ -151,9 +153,9 @@
                                 {$result = "{$result},{$order.id_order}"}
                                 {$manifestOrd = $order.manifest}
                             </tr>
-                        {/foreach}
-                    {/if}
-                    {if $orders != null}
+                {/foreach}
+            {/if}
+            {if $orders != null}
                     </tbody>
                 </table>
                 <br>
