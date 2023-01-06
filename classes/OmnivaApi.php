@@ -134,6 +134,21 @@ class OmnivaApi
 
             $shipment->setPackages($packages);
 
+            if (Configuration::get('omnivalt_send_return')) {
+                switch (Configuration::get('omnivalt_send_return')) {
+                    case 'sms':
+                        $shipment->setShowReturnCodeEmail(false);
+                        break;
+                    case 'email':
+                        $shipment->setShowReturnCodeSms(false);
+                        break;
+                    case 'dont':
+                        $shipment->setShowReturnCodeEmail(false);
+                        $shipment->setShowReturnCodeSms(false);
+                        break;
+                }
+            }
+
             //set auth data
             $this->setAuth($shipment);
 
