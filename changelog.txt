@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.3 =
 # Fixed
 - fixed label generation ajax error in order edit page
 - in Omniva Orders page order link moved from customer to id
