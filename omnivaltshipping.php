@@ -83,7 +83,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.2';
+        $this->version = '2.0.3';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.8');
@@ -435,7 +435,7 @@ class OmnivaltShipping extends CarrierModule
         
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            $fields = array('omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_print_type', 'omnivalt_manifest_lang');
+            $fields = array('omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang');
             $not_required = array('omnivalt_bank_account');
             $values = array();
             $all_filled = true;
@@ -504,6 +504,24 @@ class OmnivaltShipping extends CarrierModule
             array(
                 'id_option' => 'four',
                 'name' => $this->l('A4 (4 labels)')
+            ),
+        );
+        $send_return_options = array(
+            array(
+                'id_option' => 'all',
+                'name' => $this->l('Add to SMS and email')
+            ),
+            array(
+                'id_option' => 'sms',
+                'name' => $this->l('Add to SMS')
+            ),
+            array(
+                'id_option' => 'email',
+                'name' => $this->l('Add to email')
+            ),
+            array(
+                'id_option' => 'dont',
+                'name' => $this->l('Do not send')
             ),
         );
 
@@ -709,6 +727,19 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
+                    'label' => $this->l('Send return code'),
+                    'name' => 'omnivalt_send_return',
+                    'desc' => $this->l('Choose how to send the return code to the customer'),
+                    'required' => false,
+                    'options' => array(
+                        'query' => $send_return_options,
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    )
+                ),
+                array(
+                    'type' => 'select',
+                    'lang' => true,
                     'label' => $this->l('Labels print type'),
                     'name' => 'omnivalt_print_type',
                     'required' => false,
@@ -789,6 +820,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_pick_up_time_finish'] = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
+        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') ? Configuration::get('omnivalt_send_return') : 'all';
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
         return $helper->generateForm($fields_form);
@@ -923,6 +955,10 @@ class OmnivaltShipping extends CarrierModule
                     'success_add_trans' => $this->l('Successfully added.'),
                     'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
                     'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
+                    'omnivalt_text' => array(
+                        'ajax_parsererror' => $this->l("An invalid response was received"),
+                        'ajax_unknownerror' => $this->l("Unknown error"),
+                    ),
                 ]);
                 $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
 
