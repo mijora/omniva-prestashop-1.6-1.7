@@ -363,7 +363,9 @@ var omniva_addrese_change = false;
               if (data.candidates != undefined && data.candidates.length > 0){
                 calculateDistance(data.candidates[0].location.y,data.candidates[0].location.x);
                 refreshList(autoselect);
-                list.prepend(showMapBtn);
+                if(settings.showMap == true){                  
+                  list.prepend(showMapBtn);
+                }
                 //console.log('add');
                 showMore.show();
                 if (settings.showMap == true){
