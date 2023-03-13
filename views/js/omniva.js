@@ -363,7 +363,9 @@ var omniva_addrese_change = false;
               if (data.candidates != undefined && data.candidates.length > 0){
                 calculateDistance(data.candidates[0].location.y,data.candidates[0].location.x);
                 refreshList(autoselect);
-                list.prepend(showMapBtn);
+                if(settings.showMap == true){                  
+                  list.prepend(showMapBtn);
+                }
                 //console.log('add');
                 showMore.show();
                 if (settings.showMap == true){
@@ -374,7 +376,7 @@ var omniva_addrese_change = false;
         }
         
         function suggest(address){
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry=LT&maxSuggestions=1", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry="+omniva_current_country+"&maxSuggestions=1", function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
                 findPosition(data.suggestions[0].text,false);
               }
