@@ -2,6 +2,7 @@
 # Fixed
 - fixed address geocode hardcode
 - fixed a map button show by settings value
+- fixed a carrier selection in Omniva block on Order edit page, when carrier is disabled
 
 = 2.0.3 =
 # Fixed

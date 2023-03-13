@@ -904,10 +904,10 @@ class OmnivaltShipping extends CarrierModule
     private function getCarriersOptions($selected = '')
     {
         $carriers = '';
-        foreach (self::$_carriers as $key => $value) {
+        foreach ( self::$_carriers as $key => $value ) {
             $tmp_carrier_id = Configuration::get($value);
             $carrier = new Carrier($tmp_carrier_id);
-            if ($carrier->active) {
+            if ( ! empty($carrier->id) ) {
                 $carriers .= '<option value = "' . Configuration::get($value) . '" ' . (Configuration::get($value) == $selected ? 'selected' : '') . '>' . $this->l($key) . '</option>';
             }
         }
