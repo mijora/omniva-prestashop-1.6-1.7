@@ -1,3 +1,8 @@
+= Unreleased =
+# Fixed
+- fixed address geocode hardcode
+- fixed a map button show by settings value
+
 = 2.0.3 =
 # Fixed
 - fixed label generation ajax error in order edit page
