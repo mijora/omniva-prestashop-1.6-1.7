@@ -923,6 +923,7 @@ class OmnivaltShipping extends CarrierModule
         }
         $address = new Address($params['cart']->id_address_delivery);
         $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
+        $iso_code = strtoupper($iso_code);
 
         $showMap = Configuration::get('omnivalt_map');
         $this->context->smarty->assign(array(
