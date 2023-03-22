@@ -904,10 +904,10 @@ class OmnivaltShipping extends CarrierModule
     private function getCarriersOptions($selected = '')
     {
         $carriers = '';
-        foreach (self::$_carriers as $key => $value) {
+        foreach ( self::$_carriers as $key => $value ) {
             $tmp_carrier_id = Configuration::get($value);
             $carrier = new Carrier($tmp_carrier_id);
-            if ($carrier->active) {
+            if ( ! empty($carrier->id) ) {
                 $carriers .= '<option value = "' . Configuration::get($value) . '" ' . (Configuration::get($value) == $selected ? 'selected' : '') . '>' . $this->l($key) . '</option>';
             }
         }
@@ -923,6 +923,7 @@ class OmnivaltShipping extends CarrierModule
         }
         $address = new Address($params['cart']->id_address_delivery);
         $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
+        $iso_code = strtoupper($iso_code);
 
         $showMap = Configuration::get('omnivalt_map');
         $this->context->smarty->assign(array(
