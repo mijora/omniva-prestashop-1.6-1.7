@@ -4,6 +4,7 @@
 - fixed a map button show by settings value
 - fixed a carrier selection in Omniva block on Order edit page, when carrier is disabled
 - fixed the error on Checkout page that occurs when the country code is lowercase
+- fixed Omniva block showing in old Orders, after Omniva carrier edit
 
 = 2.0.3 =
 # Fixed

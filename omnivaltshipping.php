@@ -1077,8 +1077,13 @@ class OmnivaltShipping extends CarrierModule
     {
         $order = new Order((int)$id_order['id_order']);
         $cart = new OmnivaCartTerminal($order->id_cart);
+        $carrier = self::getCarrierById($order->id_carrier);
 
-        if ($order->id_carrier == Configuration::get('omnivalt_pt') || $order->id_carrier == Configuration::get('omnivalt_c')) {
+        if ( ! $carrier ) {
+            return '';
+        }
+
+        if ( self::isOmnivaCarrier($order->id_carrier, $carrier->id_reference) ) {
             $id_terminal = $cart->id_terminal;
 
             $address = new Address($order->id_address_delivery);
@@ -1113,6 +1118,27 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, $omniva_tpl);
         }
+    }
+
+    public static function getCarrierById($carrier_id)
+    {
+        $carrier = new Carrier((int)$carrier_id);
+
+        return (! empty($carrier->id)) ? $carrier : false;
+    }
+
+    public static function isOmnivaCarrier($carrier_id = false, $carrier_ref_id = false)
+    {
+        foreach ( self::$_carriers as $key => $value ) {
+            if ( $carrier_id && $carrier_id == Configuration::get($value) ) {
+                return true;
+            }
+            if ( $carrier_ref_id && $carrier_ref_id == Configuration::get($value . '_reference') ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function hookOrderDetailDisplayed($params)
