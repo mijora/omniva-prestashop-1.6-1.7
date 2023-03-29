@@ -6,6 +6,9 @@
 - fixed the error on Checkout page that occurs when the country code is lowercase
 - fixed Omniva block showing in old Orders, after Omniva carrier edit
 
+# Updated
+- API library to 1.0.9
+
 = 2.0.3 =
 # Fixed
 - fixed label generation ajax error in order edit page
