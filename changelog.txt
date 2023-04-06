@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.4 =
 # Fixed
 - fixed address geocode hardcode
 - fixed a map button show by settings value
