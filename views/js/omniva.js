@@ -23,8 +23,8 @@ var omniva_addrese_change = false;
         var homeIcon = null;
         var map = null;
         //var terminals = [];
-        //var terminals = JSON.parse(omnivaTerminals);
-        var terminals = omnivaTerminals;
+        //var terminals = JSON.parse(omnivalt_terminals);
+        var terminals = omnivalt_terminals;
         var selected = false;
         var previous_list = [];
 
@@ -153,16 +153,16 @@ var omniva_addrese_change = false;
             if (selected == false){
             var postcode = '';
             if (omniva_addrese_change == true){
-                if (omniva_postcode != ''){
-                    postcode = omniva_postcode;
+                if (omnivalt_postcode != ''){
+                    postcode = omnivalt_postcode;
                     search.val(postcode).trigger('selectpostcode');
                 }
                 //console.log('search '+postcode);
             } else {
                 omniva_addrese_change = true;
             }
-            if (omniva_postcode != ''){
-                    postcode = omniva_postcode;
+            if (omnivalt_postcode != ''){
+                    postcode = omnivalt_postcode;
                     search.val(postcode).trigger('selectpostcode');
                 }
             }
@@ -359,11 +359,13 @@ var omniva_addrese_change = false;
                 refreshList(autoselect);
                 return false;
             }
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omniva_current_country+"&category=&outFields=Postal&maxLocations=1&forStorage=false&f=pjson", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal&maxLocations=1&forStorage=false&f=pjson", function( data ) {
               if (data.candidates != undefined && data.candidates.length > 0){
                 calculateDistance(data.candidates[0].location.y,data.candidates[0].location.x);
                 refreshList(autoselect);
-                list.prepend(showMapBtn);
+                if(settings.showMap == true){                  
+                  list.prepend(showMapBtn);
+                }
                 //console.log('add');
                 showMore.show();
                 if (settings.showMap == true){
@@ -374,7 +376,7 @@ var omniva_addrese_change = false;
         }
         
         function suggest(address){
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry=LT&maxSuggestions=1", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry="+omnivalt_current_country+"&maxSuggestions=1", function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
                 findPosition(data.suggestions[0].text,false);
               }
@@ -383,13 +385,13 @@ var omniva_addrese_change = false;
         
         function initMap(){
            $('#omnivaMapContainer').html('<div id="omnivaMap"></div>');
-          if (omniva_current_country == "LT"){
+          if (omnivalt_current_country == "LT"){
             map = L.map('omnivaMap').setView([54.999921, 23.96472], 8);
           }
-          if (omniva_current_country == "LV"){
+          if (omnivalt_current_country == "LV"){
             map = L.map('omnivaMap').setView([56.8796, 24.6032], 8);
           }
-          if (omniva_current_country == "EE"){
+          if (omnivalt_current_country == "EE"){
             map = L.map('omnivaMap').setView([58.7952, 25.5923], 7);
           }
           L.tileLayer('https://maps.omnivasiunta.lt/tile/{z}/{x}/{y}.png', {
@@ -419,7 +421,7 @@ var omniva_addrese_change = false;
             terminalIcon = new Icon({iconUrl: omniva_img_url + 'sasi.png'});
             homeIcon = new Icon2({iconUrl: omniva_img_url + 'locator_img.png'});
             
-          var locations = omnivaTerminals;
+          var locations = omnivalt_terminals;
             jQuery.each( locations, function( key, location ) {
               L.marker([location[1], location[2]], {icon: terminalIcon, terminalId:location[3] }).on('click',function(e){ listTerminals(locations,0,this.options.terminalId);terminalDetails(this.options.terminalId);}).addTo(map);
             });
@@ -474,8 +476,8 @@ var omniva_addrese_change = false;
             $('.omniva-autocomplete').hide();
             if (address == "" || address.length < 3) return false;
             $('#omniva-search form input').val(address);
-            //$.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omniva_current_country+"&category=&outFields=Postal,StAddr&maxLocations=5&forStorage=false&f=pjson", function( data ) {
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omniva_current_country+"&f=pjson&maxSuggestions=4", function( data ) {
+            //$.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal,StAddr&maxLocations=5&forStorage=false&f=pjson", function( data ) {
+            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omnivalt_current_country+"&f=pjson&maxSuggestions=4", function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
                   $.each(data.suggestions ,function(i,item){
                     //console.log(item);
@@ -750,7 +752,7 @@ function launch_omniva(retry = 0) {
     if (retry >= 50) return;
 
     if ($('#omnivalt_parcel_terminal_carrier_details select').length){
-        $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: show_omniva_map});
+        $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: omnivalt_show_map});
         omnivaltDelivery.init();
         $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').on('click',function(){
             omnivaltDelivery.init();

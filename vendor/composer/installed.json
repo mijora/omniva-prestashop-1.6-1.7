@@ -2,17 +2,17 @@
     "packages": [
         {
             "name": "mijora/omniva-api",
-            "version": "1.0.7",
-            "version_normalized": "1.0.7.0",
+            "version": "1.0.10",
+            "version_normalized": "1.0.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/omniva-baltic/omniva-api-lib.git",
-                "reference": "af44da611dfdc878e14d5c2adf93cf3c224ffc52"
+                "reference": "f7633167cf04d82de68fe8591a75f4bc64d046b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/omniva-baltic/omniva-api-lib/zipball/af44da611dfdc878e14d5c2adf93cf3c224ffc52",
-                "reference": "af44da611dfdc878e14d5c2adf93cf3c224ffc52",
+                "url": "https://api.github.com/repos/omniva-baltic/omniva-api-lib/zipball/f7633167cf04d82de68fe8591a75f4bc64d046b8",
+                "reference": "f7633167cf04d82de68fe8591a75f4bc64d046b8",
                 "shasum": ""
             },
             "require": {
@@ -20,7 +20,7 @@
                 "setasign/fpdi": "^2.3",
                 "tecnickcom/tcpdf": "^6.3"
             },
-            "time": "2023-01-06T11:46:32+00:00",
+            "time": "2023-04-05T14:25:16+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -32,36 +32,38 @@
             "authors": [
                 {
                     "name": "Modestas",
-                    "email": "modestas.slivinskas@gmail.com"
+                    "email": "modestas.slivinskas@gmail.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "UAB Mijora",
+                    "email": "info@mijora.lt",
+                    "homepage": "https://mijora.dev"
                 }
             ],
             "description": "Omniva API wrapper",
             "support": {
                 "issues": "https://github.com/omniva-baltic/omniva-api-lib/issues",
-                "source": "https://github.com/omniva-baltic/omniva-api-lib/tree/v1.0.7"
+                "source": "https://github.com/omniva-baltic/omniva-api-lib/tree/v1.0.10"
             },
             "install-path": "../mijora/omniva-api"
         },
         {
             "name": "setasign/fpdf",
-            "version": "1.8.5",
-            "version_normalized": "1.8.5.0",
+            "version": "1.8.2",
+            "version_normalized": "1.8.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Setasign/FPDF.git",
-                "reference": "f4104a04c9a3f95c4c26a0a0531abebcc980987a"
+                "reference": "d77904018090c17dc9f3ab6e944679a7a47e710a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/FPDF/zipball/f4104a04c9a3f95c4c26a0a0531abebcc980987a",
-                "reference": "f4104a04c9a3f95c4c26a0a0531abebcc980987a",
+                "url": "https://api.github.com/repos/Setasign/FPDF/zipball/d77904018090c17dc9f3ab6e944679a7a47e710a",
+                "reference": "d77904018090c17dc9f3ab6e944679a7a47e710a",
                 "shasum": ""
             },
-            "require": {
-                "ext-gd": "*",
-                "ext-zlib": "*"
-            },
-            "time": "2022-11-18T07:02:00+00:00",
+            "time": "2019-12-08T10:32:10+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -87,23 +89,23 @@
                 "pdf"
             ],
             "support": {
-                "source": "https://github.com/Setasign/FPDF/tree/1.8.5"
+                "source": "https://github.com/Setasign/FPDF/tree/1.8.2"
             },
             "install-path": "../setasign/fpdf"
         },
         {
             "name": "setasign/fpdi",
-            "version": "v2.3.6",
-            "version_normalized": "2.3.6.0",
+            "version": "v2.3.7",
+            "version_normalized": "2.3.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Setasign/FPDI.git",
-                "reference": "6231e315f73e4f62d72b73f3d6d78ff0eed93c31"
+                "reference": "bccc892d5fa1f48c43f8ba7db5ed4ba6f30c8c05"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/6231e315f73e4f62d72b73f3d6d78ff0eed93c31",
-                "reference": "6231e315f73e4f62d72b73f3d6d78ff0eed93c31",
+                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/bccc892d5fa1f48c43f8ba7db5ed4ba6f30c8c05",
+                "reference": "bccc892d5fa1f48c43f8ba7db5ed4ba6f30c8c05",
                 "shasum": ""
             },
             "require": {
@@ -123,7 +125,7 @@
             "suggest": {
                 "setasign/fpdf": "FPDI will extend this class but as it is also possible to use TCPDF or tFPDF as an alternative. There's no fixed dependency configured."
             },
-            "time": "2021-02-11T11:37:01+00:00",
+            "time": "2023-02-09T10:38:43+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -156,7 +158,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Setasign/FPDI/issues",
-                "source": "https://github.com/Setasign/FPDI/tree/v2.3.6"
+                "source": "https://github.com/Setasign/FPDI/tree/v2.3.7"
             },
             "funding": [
                 {

@@ -1,3 +1,17 @@
+= 2.0.4 =
+# Fixed
+- fixed address geocode hardcode
+- fixed a map button show by settings value
+- fixed a carrier selection in Omniva block on Order edit page, when carrier is disabled
+- fixed the error on Checkout page that occurs when the country code is lowercase
+- fixed Omniva block showing in old Orders, after Omniva carrier edit
+
+# Improved
+- unified structure of JS variables in the parcel terminal carrier template
+
+# Updated
+- API library to 1.0.10
+
 = 2.0.3 =
 # Fixed
 - fixed label generation ajax error in order edit page

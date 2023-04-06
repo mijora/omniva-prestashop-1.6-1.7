@@ -83,7 +83,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.3';
+        $this->version = '2.0.4';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.8');
@@ -904,10 +904,10 @@ class OmnivaltShipping extends CarrierModule
     private function getCarriersOptions($selected = '')
     {
         $carriers = '';
-        foreach (self::$_carriers as $key => $value) {
+        foreach ( self::$_carriers as $key => $value ) {
             $tmp_carrier_id = Configuration::get($value);
             $carrier = new Carrier($tmp_carrier_id);
-            if ($carrier->active) {
+            if ( ! empty($carrier->id) ) {
                 $carriers .= '<option value = "' . Configuration::get($value) . '" ' . (Configuration::get($value) == $selected ? 'selected' : '') . '>' . $this->l($key) . '</option>';
             }
         }
@@ -923,6 +923,7 @@ class OmnivaltShipping extends CarrierModule
         }
         $address = new Address($params['cart']->id_address_delivery);
         $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
+        $iso_code = strtoupper($iso_code);
 
         $showMap = Configuration::get('omnivalt_map');
         $this->context->smarty->assign(array(
@@ -1076,8 +1077,13 @@ class OmnivaltShipping extends CarrierModule
     {
         $order = new Order((int)$id_order['id_order']);
         $cart = new OmnivaCartTerminal($order->id_cart);
+        $carrier = self::getCarrierById($order->id_carrier);
 
-        if ($order->id_carrier == Configuration::get('omnivalt_pt') || $order->id_carrier == Configuration::get('omnivalt_c')) {
+        if ( ! $carrier ) {
+            return '';
+        }
+
+        if ( self::isOmnivaCarrier($order->id_carrier, $carrier->id_reference) ) {
             $id_terminal = $cart->id_terminal;
 
             $address = new Address($order->id_address_delivery);
@@ -1112,6 +1118,27 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, $omniva_tpl);
         }
+    }
+
+    public static function getCarrierById($carrier_id)
+    {
+        $carrier = new Carrier((int)$carrier_id);
+
+        return (! empty($carrier->id)) ? $carrier : false;
+    }
+
+    public static function isOmnivaCarrier($carrier_id = false, $carrier_ref_id = false)
+    {
+        foreach ( self::$_carriers as $key => $value ) {
+            if ( $carrier_id && $carrier_id == Configuration::get($value) ) {
+                return true;
+            }
+            if ( $carrier_ref_id && $carrier_ref_id == Configuration::get($value . '_reference') ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function hookOrderDetailDisplayed($params)
