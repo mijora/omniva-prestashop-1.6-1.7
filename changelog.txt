@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- changed so that the recipient name is taken from the shipping information
+
 = 2.0.4 =
 # Fixed
 - fixed address geocode hardcode

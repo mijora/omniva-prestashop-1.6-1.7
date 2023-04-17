@@ -108,7 +108,7 @@ class OmnivaApi
                     $receiverAddress->setOffloadPostcode($orderAdress->postcode);
                 $receiverContact
                     ->setAddress($receiverAddress)
-                    ->setPersonName($customer->firstname . ' ' . $customer->lastname);
+                    ->setPersonName($this->getReceiverName($orderAdress));
                 if(Configuration::get('send_delivery_email'))
                 {
                     $receiverContact->setEmail($customer->email);
@@ -157,6 +157,16 @@ class OmnivaApi
         } catch (OmnivaException $e) {
             return ['msg' => $e->getMessage()];
         }
+    }
+
+    private function getReceiverName($orderAdress)
+    {
+        $reveicer_name = $orderAdress->firstname . ' ' . $orderAdress->lastname;
+        if ( ! empty($orderAdress->company) && ! empty($orderAdress->vat_number) ) {
+            $reveicer_name = $orderAdress->company;
+        }
+
+        return trim($reveicer_name);
     }
 
     public function getServiceCode($id_carrier, $sendOffCountry)
