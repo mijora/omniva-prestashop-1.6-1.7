@@ -95,17 +95,31 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             $omnivaCartTerminal->save();
         }
 
+        $add = false;
         if(!Validate::isLoadedObject($omnivaOrder))
         {
             $omnivaOrder->force_id = true;
             $omnivaOrder->id = $order->id;
+            $add = true;
         }
         $omnivaOrder->packs = $packs;
         $omnivaOrder->weight = $weight;
         $omnivaOrder->cod = $isCod;
         $omnivaOrder->cod_amount = $codAmount;
 
-        if($result = $omnivaOrder->save())
+        if($add) {
+          $result = $omnivaOrder->add();
+          // Add blank history, so that order would appear new orders tab in admin.
+          $omnivaOrderHistory = new OmnivaOrderHistory();
+          $omnivaOrderHistory->id_order = $order->id;
+          $omnivaOrderHistory->manifest = 0;
+          $omnivaOrderHistory->add();
+        }
+        else {
+          $result = $omnivaOrder->save();
+        }
+
+        if($result)
         {
             $selected_carrier = new Carrier($carrier);
             $order = new Order($id_order);
