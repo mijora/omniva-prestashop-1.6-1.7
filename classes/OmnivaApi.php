@@ -197,6 +197,11 @@ class OmnivaApi
         {
             $service = OmnivaltShipping::SHIPPING_SETS[$sendOffCountry][$method_code];
         }
+        if (empty($service)) {
+            $method_code = $pickup_method . ' → ' . $send_method;
+            throw new OmnivaException('Invalid shipment sending method: ' . $method_code);
+        }
+        
         return $service;
     }
 
