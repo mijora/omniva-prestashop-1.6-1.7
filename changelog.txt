@@ -1,3 +1,14 @@
+= 2.0.5 =
+# Fixed
+- changed so that the recipient name is taken from the shipping information
+- fixed Omniva info saving if Order history data not exists
+- fixed Omniva terminal saving if Order dont have selected terminal
+
+# Improved
+- changed the name of the generate manifest button and added a description
+- added missing LT translations
+- added error message when shipment sending method not available
+
 = 2.0.4 =
 # Fixed
 - fixed address geocode hardcode
