@@ -2,6 +2,7 @@
 # Fixed
 - changed so that the recipient name is taken from the shipping information
 - fixed Omniva info saving if Order history data not exists
+- fixed Omniva terminal saving if Order dont have selected terminal
 
 # Improved
 - changed the name of the generate manifest button and added a description
