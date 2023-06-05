@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.5 =
 # Fixed
 - changed so that the recipient name is taken from the shipping information
 - fixed Omniva info saving if Order history data not exists
