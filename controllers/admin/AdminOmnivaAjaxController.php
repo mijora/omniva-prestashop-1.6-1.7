@@ -85,29 +85,35 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
         if(Tools::isSubmit('parcel_terminal') && ($id_terminal = (int) Tools::getValue('parcel_terminal')))
         {
+            $add_terminal = false;
             $omnivaCartTerminal = new OmnivaCartTerminal($order->id_cart);
             if(!Validate::isLoadedObject($omnivaCartTerminal))
             {
                 $omnivaCartTerminal->force_id = true;
                 $omnivaCartTerminal->id = $order->id_cart;
+                $add_terminal = true;
             }
             $omnivaCartTerminal->id_terminal = $id_terminal;
-            $omnivaCartTerminal->save();
+            if ($add_terminal) {
+                $omnivaCartTerminal->add();
+            } else {
+                $omnivaCartTerminal->save();
+            }
         }
 
-        $add = false;
+        $add_order = false;
         if(!Validate::isLoadedObject($omnivaOrder))
         {
             $omnivaOrder->force_id = true;
             $omnivaOrder->id = $order->id;
-            $add = true;
+            $add_order = true;
         }
         $omnivaOrder->packs = $packs;
         $omnivaOrder->weight = $weight;
         $omnivaOrder->cod = $isCod;
         $omnivaOrder->cod_amount = $codAmount;
 
-        if($add) {
+        if($add_order) {
           $result = $omnivaOrder->add();
           // Add blank history, so that order would appear new orders tab in admin.
           $omnivaOrderHistory = new OmnivaOrderHistory();
