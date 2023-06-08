@@ -1111,7 +1111,7 @@ class OmnivaltShipping extends CarrierModule
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
                 'generateLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=generateLabels',
                 'printLabelsUrl' => $printLabelsUrl,
-                'is_tracked' => count(json_decode($omnivaOrder->tracking_numbers)) > 0,
+                'is_tracked' => count((array)json_decode($omnivaOrder->tracking_numbers)) > 0,
                 'error' => $error_msg,
                 'orderHistory' => OmnivaOrderHistory::getHistoryByOrder($omnivaOrder->id),
             ));
