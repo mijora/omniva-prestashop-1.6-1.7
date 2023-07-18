@@ -1,3 +1,7 @@
+= 2.0.6 =
+# Changed
+- Allow to install module on newest Prestashop version
+
 = 2.0.5 =
 # Fixed
 - changed so that the recipient name is taken from the shipping information
