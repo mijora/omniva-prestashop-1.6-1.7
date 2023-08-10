@@ -1,3 +1,10 @@
+= 2.0.7 =
+# Added
+- Option to add order id or reference to label. Option is in module settings
+
+# Fixed
+- Fixed an issue where during bulk label registration first succesfull registration terminated registering of other labels
+
 = 2.0.6 =
 # Changed
 - Allow to install module on newest Prestashop version
