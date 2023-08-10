@@ -435,7 +435,14 @@ class OmnivaltShipping extends CarrierModule
         
 
         if (Tools::isSubmit('submit' . $this->name)) {
-            $fields = array('omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off', 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start', 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang');
+            $fields = array(
+                'omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass',
+                'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off',
+                'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city',
+                'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
+                'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
+                'omnivalt_label_comment_type'
+            );
             $not_required = array('omnivalt_bank_account');
             $values = array();
             $all_filled = true;
@@ -504,6 +511,20 @@ class OmnivaltShipping extends CarrierModule
             array(
                 'id_option' => 'four',
                 'name' => $this->l('A4 (4 labels)')
+            ),
+        );
+        $label_comment_options = array(
+            array(
+                'id_option' => OmnivaApi::LABEL_COMMENT_TYPE_NONE,
+                'name' => $this->l('No comment')
+            ),
+            array(
+                'id_option' => OmnivaApi::LABEL_COMMENT_TYPE_ORDER_ID,
+                'name' => $this->l('Order ID')
+            ),
+            array(
+                'id_option' => OmnivaApi::LABEL_COMMENT_TYPE_ORDER_REF,
+                'name' => $this->l('Order reference')
             ),
         );
         $send_return_options = array(
@@ -752,6 +773,18 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
+                    'label' => $this->l('Label comment'),
+                    'name' => 'omnivalt_label_comment_type',
+                    'required' => false,
+                    'options' => array(
+                        'query' => $label_comment_options,
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    )
+                ),
+                array(
+                    'type' => 'select',
+                    'lang' => true,
                     'label' => $this->l('Manifest language'),
                     'name' => 'omnivalt_manifest_lang',
                     'required' => false,
@@ -822,6 +855,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
         $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') ? Configuration::get('omnivalt_send_return') : 'all';
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
+        $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
         return $helper->generateForm($fields_form);
     }
