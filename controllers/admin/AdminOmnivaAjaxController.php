@@ -288,7 +288,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
 
         try {
-            $this->module->api->getBulkLabels($order_ids);
+            $this->module->api->getBulkLabels($registered_ids);
         }
         catch(Mijora\Omniva\OmnivaException $e)
         {
