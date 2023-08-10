@@ -150,12 +150,13 @@ class AdminOmnivaAjaxController extends ModuleAdminController
     /**
      * Call API to get register shipment.
      */
-    protected function generateLabels($id_order = null)
+    protected function generateLabels($id_order = null, $return_on_die = false)
     {
         if(!$id_order)
         {
             if (!($id_order = (int) Tools::getValue('id_order'))) {
-                die(json_encode(['error' => $this->module->l('No order ID provided.')]));
+                $error = $this->module->l('No order ID provided.');
+                return $return_on_die ? ['error' => $error] : die(json_encode(['error' => $error]));
             }
         }
 
@@ -163,7 +164,8 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         $orderAdress = new Address($order->id_address_delivery);
         $omnivaOrder = new OmnivaOrder($id_order);
         if (!Validate::isLoadedObject($omnivaOrder)) {
-            die(json_encode(['error' => $this->module->l('Order info not saved. Please save before generating labels')]));
+            $error = $this->module->l('Order info not saved. Please save before generating labels');
+            return $return_on_die ? ['error' => $error] : die(json_encode(['error' => $error]));
         }
 
         $status = $this->module->api->createShipment($id_order);
@@ -194,7 +196,8 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             if(Tools::getValue('redirect')) {
                 Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
             } else {
-                die(json_encode(['success' => $this->module->l('Label successfully generated')]));
+                $return = $this->module->l('Label successfully generated');
+                return $return_on_die ? ['success' => $return] : die(json_encode(['success' => $return]));
             }
         }
         else
@@ -202,9 +205,10 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             $omnivaOrder->error = $status['msg'];
             $omnivaOrder->update();
             $this->module->changeOrderStatus($id_order, $this->module->getErrorOrderState());
-            echo
-            die(json_encode(['error' => $status['msg']]));
+            return $return_on_die ? ['error' => $status['msg']] : die(json_encode(['error' => $status['msg']]));
         }
+
+        return null; // we never reach it
     }
 
     /**
@@ -253,13 +257,34 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             die(json_encode(['error' => $this->module->l('No order ID\'s provided.')]));
         }
 
+        $registered_ids = [];
         foreach($order_ids as $id_order)
         {
             $omnivaOrder = new OmnivaOrder($id_order);
-            if(Validate::isLoadedObject($omnivaOrder) && !$omnivaOrder->tracking_numbers)
-            {
-                $this->generateLabels($id_order);
+            if(!Validate::isLoadedObject($omnivaOrder)) {
+                continue;
             }
+
+            // allready registered
+            if ($omnivaOrder->tracking_numbers) {
+                $registered_ids[] = $id_order;
+                continue;
+            }
+
+            // doesnt have registered tracking number
+            $result = $this->generateLabels($id_order, true);
+
+            // found errors during registration, skip order id
+            if (isset($result['error'])) {
+                continue;
+            }
+
+            $registered_ids[] = $id_order;
+        }
+
+        if (empty($registered_ids)) {
+            Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . '&noLabelsError');
+            return;
         }
 
         try {
