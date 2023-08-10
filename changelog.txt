@@ -1,3 +1,7 @@
+= 2.0.8 =
+# Fixed
+- Fixed order id list typo given for bulk label download.
+
 = 2.0.7 =
 # Added
 - Option to add order id or reference to label. Option is in module settings
