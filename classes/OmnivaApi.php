@@ -17,6 +17,10 @@ use Mijora\Omniva\Shipment\Tracking;
 
 class OmnivaApi
 {
+    const LABEL_COMMENT_TYPE_NONE = 0;
+    const LABEL_COMMENT_TYPE_ORDER_ID = 1;
+    const LABEL_COMMENT_TYPE_ORDER_REF = 2;
+
     private $username;
 
     private $password;
@@ -36,6 +40,7 @@ class OmnivaApi
         $country_iso = Country::getIsoById($orderAdress->id_country);
         $omnivaCartTerminal = new OmnivaCartTerminal($order->id_cart);
         $id_terminal = $omnivaCartTerminal->id_terminal;
+        $label_comment_type = (int) Configuration::get('omnivalt_label_comment_type');
         try {
             $shipment = new Shipment();
 
@@ -44,6 +49,18 @@ class OmnivaApi
                 ->setSenderCd($this->username)
                 ->setFileId(date('Ymdhis'));
             $shipment->setShipmentHeader($shipmentHeader);
+            
+            switch ($label_comment_type) {
+                case self::LABEL_COMMENT_TYPE_ORDER_ID:
+                    $shipment->setComment('Order ID: ' . $order->id);
+                    break;
+                case self::LABEL_COMMENT_TYPE_ORDER_REF:
+                    $shipment->setComment('Order Ref: ' . $order->getUniqReference());
+                    break;
+                default:
+                    // nothing
+                    break;
+            }
 
             $packages = [];
 
