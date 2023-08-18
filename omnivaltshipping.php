@@ -1094,7 +1094,7 @@ class OmnivaltShipping extends CarrierModule
         return $order_number . $kontrollnr;
     }
 
-    public function changeOrderStatus($id_order, $status)
+    public function changeOrderStatus($id_order, $status, $template_vars = false)
     {
         $order = new Order((int)$id_order);
         if ($order->current_state != $status) // && $order->current_state != Configuration::get('PS_OS_SHIPPING'))
@@ -1103,7 +1103,7 @@ class OmnivaltShipping extends CarrierModule
             $history->id_order = (int)$id_order;
             $history->id_employee = (int)$this->context->employee->id;
             $history->changeIdOrderState((int)$status, $order);
-            $history->add();
+            $history->addWithEmail(true, $template_vars);
         }
     }
 
