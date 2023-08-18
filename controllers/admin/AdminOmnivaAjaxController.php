@@ -2,6 +2,7 @@
 
 class AdminOmnivaAjaxController extends ModuleAdminController
 {
+    private $_carrier_url_cache = [];
 
     public function __construct()
     {
@@ -192,7 +193,19 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory->save();
             }
 
-            $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState());
+            
+            
+            try {
+                if (!isset($this->_carrier_url_cache[$order->id_carrier])) {
+                    $carrier = new Carrier($order->id_carrier);
+                    $this->_carrier_url_cache[$order->id_carrier] = $carrier->url;
+                }
+                $template_vars = array('{followup}' => str_replace('@', $status['barcodes'][0], $this->_carrier_url_cache[$order->id_carrier]));
+                $this->module->changeOrderStatus($id_order, $this->module->getCustomOrderState(), $template_vars);
+            } catch (\Throwable $th) {
+                // silence if something not right with changing order status
+            }
+
             if(Tools::getValue('redirect')) {
                 Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS));
             } else {
