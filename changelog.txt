@@ -1,3 +1,8 @@
+= 2.0.9 =
+# Changed
+- Changed how order history is added. Instead of using add() it will be added using addWithEmail().
+    This allows Prestashop to send email if user has set email template on Omniva custom order statuses.
+
 = 2.0.8 =
 # Fixed
 - Fixed order id list typo given for bulk label download.
