@@ -79,6 +79,16 @@ class OmnivaApi
             if ($omnivaOrder->cod)
                 $additionalServices[] = "BP";
 
+            // calculate weight
+            $pack_weight = (float) $omnivaOrder->weight;
+            if($pack_weight <= 0) {
+                $pack_weight = 1;
+            }
+
+            if ((int) $omnivaOrder->packs > 0) {
+                $pack_weight = round($pack_weight / (int) $omnivaOrder->packs, 2);
+            }
+
             for ($i = 0; $i < $omnivaOrder->packs; $i++)
             {
                 $package = new Package();
@@ -91,9 +101,7 @@ class OmnivaApi
                 $package->setAdditionalServices($additionalServiceObj);
 
                 $measures = new Measures();
-                if($omnivaOrder->weight == 0)
-                    $omnivaOrder->weight = 1;
-                $measures->setWeight($omnivaOrder->weight);
+                $measures->setWeight($pack_weight);
                 $package->setMeasures($measures);
 
                 //set COD
@@ -328,7 +336,7 @@ class OmnivaApi
                         $order = new Order();
                         $order->setTracking($barcode);
                         $order->setQuantity(1);
-                        $order->setWeight($omnivaOrder->weight / $num_packages);
+                        $order->setWeight(round($omnivaOrder->weight / $num_packages, 2));
                         $order->setReceiver($terminal_address ?: $client_address);
                         $manifest->addOrder($order);
                     }
@@ -375,7 +383,7 @@ class OmnivaApi
                             $order = new Order();
                             $order->setTracking($barcode);
                             $order->setQuantity(1);
-                            $order->setWeight($omnivaOrder->weight / $num_packages);
+                            $order->setWeight(round($omnivaOrder->weight / $num_packages, 2));
                             $order->setReceiver($terminal_address ?: $client_address);
                             $manifest->addOrder($order);
                         }

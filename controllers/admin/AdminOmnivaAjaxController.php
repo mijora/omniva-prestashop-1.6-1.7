@@ -193,8 +193,6 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory->save();
             }
 
-            
-            
             try {
                 if (!isset($this->_carrier_url_cache[$order->id_carrier])) {
                     $carrier = new Carrier($order->id_carrier);

@@ -1,4 +1,9 @@
-= Unreleased =
+= 2.0.11 =
+# Changed
+- Changed error field type to let storage of larger error messages
+- Changed cod_amount field type to Decimal 8,2 - this allows a maximum COD amount of 999999.99
+- When registering with set multiple packages, weight is distributed by number of packages (eg. 2 pck 30kg -> 15kg each)
+
 # Improved
 - It has been made that in the Omniva order list, the "New" tab does not show orders by status that are not relevant for shipping.
 
