@@ -238,8 +238,10 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         $newOrderNum = (int) Configuration::get('omnivalt_manifest');
         $from = $page * $perPage;
         $newOrder = "SELECT * FROM " . _DB_PREFIX_ . "orders a
-            INNER JOIN " . _DB_PREFIX_ . "customer oh ON a.id_customer = oh.id_customer
+            INNER JOIN " . _DB_PREFIX_ . "customer c ON a.id_customer = c.id_customer
             INNER JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
+            INNER JOIN " . _DB_PREFIX_ . "order_state os ON a.current_state = os.id_order_state AND os.deleted = 0 AND os.shipped = 0
+            INNER JOIN " . _DB_PREFIX_ . "order_state_lang osl ON a.current_state = osl.id_order_state AND a.id_lang = osl.id_lang AND (osl.template IN ('', 'preparation') OR (os.paid = 1 AND osl.template = 'payment'))
             INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . $this->_carriers . ")
             INNER JOIN " . _DB_PREFIX_ . "omniva_order_history ooh ON ooh.id_order = a.id_order AND (ooh.manifest=" . $newOrderNum . " OR ooh.manifest = 0)
             ORDER BY a.id_order DESC
