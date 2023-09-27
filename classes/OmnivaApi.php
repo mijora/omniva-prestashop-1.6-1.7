@@ -92,6 +92,7 @@ class OmnivaApi
             for ($i = 0; $i < $omnivaOrder->packs; $i++)
             {
                 $package = new Package();
+                $package->setId($id_order);
                 $package->setService($service);
                 $additionalServiceObj = [];
                 foreach ($additionalServices as $additionalServiceCode)

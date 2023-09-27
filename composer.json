@@ -1,5 +1,5 @@
 {
     "require": {
-        "mijora/omniva-api": "^1.0.7"
+        "mijora/omniva-api": "dev-omx-api-rework"
     }
 }
