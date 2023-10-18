@@ -1,3 +1,7 @@
+= 2.0.12 =
+# Fixed
+- Fixed that courier call time will get from settings
+
 = 2.0.11 =
 # Changed
 - Changed error field type to let storage of larger error messages
