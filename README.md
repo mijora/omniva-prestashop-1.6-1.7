@@ -1,4 +1,4 @@
-# Omniva module for Prestahop 1.6-1.7.8
+# Omniva module for Prestahop 1.6, 1.7 and 8.x
 
 Download the omnivaltshipping.zip from the link below:
 
