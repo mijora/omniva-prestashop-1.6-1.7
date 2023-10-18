@@ -405,8 +405,15 @@ class OmnivaApi
 
     public function callCarrier()
     {
+        $pickup_start = Configuration::get('omnivalt_pick_up_time_start');
+        $pickup_end = Configuration::get('omnivalt_pick_up_time_finish');
+        if (empty($pickup_start)) $pickup_start = '8:00';
+        if (empty($pickup_end)) $pickup_end = '17:00';
+
         $call = new CallCourier();
         $call->setDestinationCountry($this->getSendOffCountry());
+        $call->setEarliestPickupTime($pickup_start);
+        $call->setLatestPickupTime($pickup_end);
         $this->setAuth($call);
         $call->setSender($this->getSenderContact());
 
