@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Fixed error when Order history element is empty
+
 = 2.0.12 =
 # Fixed
 - Fixed that courier call time will get from settings
