@@ -181,7 +181,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory = OmnivaOrderHistory::getLatestOrderHistory($omnivaOrder->id);
 
                 // If there is blank history, we update it with tracking info.
-                if($omnivaOrderHistory->tracking_numbers)
+                if(empty($omnivaOrderHistory) || $omnivaOrderHistory->tracking_numbers)
                     $omnivaOrderHistory = new OmnivaOrderHistory();
                 $omnivaOrderHistory->id_order = $omnivaOrder->id;
                 $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
