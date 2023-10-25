@@ -1,6 +1,10 @@
-= Unreleased =
+= 2.0.13 =
+# Updated
+- API library to 1.0.13
+
 # Fixed
 - Fixed error when Order history element is empty
+- hookHeader fron js and css file embed forprestashop 1.6 when prestashop is in subfolder
 
 = 2.0.12 =
 # Fixed
