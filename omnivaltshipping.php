@@ -83,7 +83,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.12';
+        $this->version = '2.0.13';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -1051,11 +1051,11 @@ class OmnivaltShipping extends CarrierModule
             }
             else
             {
-                $this->context->controller->addJS('modules/' . $this->name . '/views/js/leaflet.js');
-                $this->context->controller->addJS('modules/' . $this->name . '/views/js/omniva.js');
+                $this->context->controller->addJS($this->_path . '/views/js/leaflet.js');
+                $this->context->controller->addJS($this->_path . '/views/js/omniva.js');
             }
-            $this->context->controller->addCSS('modules/' . $this->name . '/views/css/leaflet.css');
-            $this->context->controller->addCSS('modules/' . $this->name . '/views/css/omniva.css');
+            $this->context->controller->addCSS($this->_path . '/views/css/leaflet.css');
+            $this->context->controller->addCSS($this->_path . '/views/css/omniva.css');
 
             return $this->display(__FILE__, 'header.tpl');
         }
