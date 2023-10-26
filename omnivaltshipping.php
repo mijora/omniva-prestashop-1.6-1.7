@@ -51,6 +51,7 @@ class OmnivaltShipping extends CarrierModule
           'c pc' => 'QB',
           'c po' => 'CD',
           'c cp' => 'CE',
+          'c pt' => 'CD',
           'pt pt' => 'CD',
           'courier_call' => 'CE',
         ),
