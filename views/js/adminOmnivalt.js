@@ -68,3 +68,17 @@ function sendOmnivaltBulkAction177(action) {
         alert('Select orders');
     }
 }
+
+function omivaltshippingForceTerminalUpdate(button) {
+    const form = document.createElement('form');
+    form.action = button.href;
+    form.method = "post";
+    form.enctype = "multipart/form-data";
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'forceUpdateTerminals';
+    input.value = '1';
+    form.append(input);
+    document.body.append(form);
+    form.submit();
+}

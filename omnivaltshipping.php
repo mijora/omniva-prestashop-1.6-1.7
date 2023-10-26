@@ -51,6 +51,7 @@ class OmnivaltShipping extends CarrierModule
           'c pc' => 'QB',
           'c po' => 'CD',
           'c cp' => 'CE',
+          'pt pt' => 'CD',
           'courier_call' => 'CE',
         ),
       );
@@ -79,11 +80,15 @@ class OmnivaltShipping extends CarrierModule
      */
     public static $_codModules = array('ps_cashondelivery', 'venipakcod');
 
+    public $id_carrier;
+
+    static $_omniva_cache = [];
+
     public function __construct()
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.13';
+        $this->version = '2.0.14';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -376,6 +381,19 @@ class OmnivaltShipping extends CarrierModule
 
     public function getOrderShippingCost($params, $shipping_cost)
     {
+        $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
+        $omniva_ref = (int) Configuration::get('omnivalt_pt_reference');
+
+        if (isset($this->context->cart->id_address_delivery) && (int) $carrier->id_reference === $omniva_ref) {
+            $address = new Address($this->context->cart->id_address_delivery);
+            $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
+            $iso_code = strtoupper($iso_code);
+            $contract_origin = Configuration::get('omnivalt_api_country');
+            if ($contract_origin !== 'ee' && $iso_code === 'FI') {
+                return false;
+            }
+        }
+
         return $shipping_cost;
     }
 
@@ -432,7 +450,13 @@ class OmnivaltShipping extends CarrierModule
             ]);
             $output .= $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name .'/views/templates/admin/update.tpl');
         }
-        
+
+        if (Tools::getValue('forceUpdateTerminals')) {
+            if ($this->helper->updateTerminals()) {
+                $output .= $this->displayConfirmation($this->l('Terminals updated'));
+                Configuration::updateValue('omnivalt_locations_update', time());
+            }
+        }
 
         if (Tools::isSubmit('submit' . $this->name)) {
             $fields = array(
@@ -545,6 +569,9 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Do not send')
             ),
         );
+
+        $last_update_timestamp = Configuration::get('omnivalt_locations_update');
+        $last_update_formated = !$last_update_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_update_timestamp);
 
         // Init Fields form array
         $fields_form[0]['form'] = array(
@@ -798,7 +825,19 @@ class OmnivaltShipping extends CarrierModule
             'submit' => array(
                 'title' => $this->l('Save'),
                 'class' => 'btn btn-default pull-right'
-            )
+            ),
+            'buttons' => [
+                [
+                    'href' => AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                    'js' => 'omivaltshippingForceTerminalUpdate(this); return false;',
+                    'class' => '',
+                    'type' => 'button',
+                    'id'   => 'omniva-update-terminals',
+                    'name' => 'updateTerminals',
+                    'icon' => 'process-icon-refresh',
+                    'title' => $this->l('Updated Terminals:') . ' ' . $last_update_formated
+                ],
+            ]
         );
 
         $helper = new HelperForm();
@@ -863,21 +902,26 @@ class OmnivaltShipping extends CarrierModule
     private function getTerminalsOptions($selected = '', $country = "")
     {
         if (!$country) {
-            $shop_country = new Country();
-            $country = $shop_country->getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
+            $country = Country::getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
+        }
+
+        $contract_origin = Configuration::get('omnivalt_api_country');
+        $origin_allows = true;
+        if ($contract_origin !== 'ee' && $country === 'FI') {
+            $origin_allows = false;
         }
 
         $terminals = file_get_contents(__DIR__ . "/locations.json");
         $terminals = json_decode($terminals, true);
         $parcel_terminals = '';
-        if (is_array($terminals)) {
+        if ($origin_allows && is_array($terminals)) {
             $grouped_options = array();
             foreach ($terminals as $terminal) {
                 # closed ? exists on EE only
                 if (intval($terminal['TYPE'])) {
                     continue;
                 }
-                if ($terminal['A0_NAME'] != $country && in_array($country, array("LT", "EE", "LV")))
+                if ($terminal['A0_NAME'] != $country)
                     continue;
                 if (!isset($grouped_options[$terminal['A1_NAME']]))
                     $grouped_options[(string)$terminal['A1_NAME']] = array();
@@ -899,8 +943,12 @@ class OmnivaltShipping extends CarrierModule
     private function getTerminalForMap($selected = '', $country = "LT")
     {
         if (!$country) {
-            $shop_country = new Country();
-            $country = $shop_country->getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
+            $country = Country::getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
+        }
+     
+        $contract_origin = Configuration::get('omnivalt_api_country');
+        if ($contract_origin !== 'ee' && $country === 'FI') {
+            return [];
         }
 
         $terminals = file_get_contents(__DIR__ . "/locations.json");
@@ -908,7 +956,7 @@ class OmnivaltShipping extends CarrierModule
         if (is_array($terminals)) {
             $terminalsList = array();
             foreach ($terminals as $terminal) {
-                if ($terminal['A0_NAME'] != $country && in_array($country, array("LT", "EE", "LV")) || intval($terminal['TYPE']) == 1)
+                if ($terminal['A0_NAME'] != $country || intval($terminal['TYPE']) == 1)
                     continue;
                 if (!isset($grouped_options[$terminal['A1_NAME']]))
                     $grouped_options[(string)$terminal['A1_NAME']] = array();
