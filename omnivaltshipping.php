@@ -954,8 +954,8 @@ class OmnivaltShipping extends CarrierModule
 
         $terminals = file_get_contents(__DIR__ . "/locations.json");
         $terminals = json_decode($terminals, true);
+        $terminalsList = array();
         if (is_array($terminals)) {
-            $terminalsList = array();
             foreach ($terminals as $terminal) {
                 if ($terminal['A0_NAME'] != $country || intval($terminal['TYPE']) == 1)
                     continue;
