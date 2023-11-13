@@ -12,14 +12,14 @@ class OmnivaltshippingAjaxModuleFrontController extends ModuleFrontController
             $cartTerminal = new OmnivaCartTerminal($id_cart);
             if(Validate::isLoadedObject($cartTerminal))
             {
-                $cartTerminal->id_terminal = (int) Tools::getValue('terminal');
+                $cartTerminal->id_terminal = pSQL(Tools::getValue('terminal'));
                 $result &= $cartTerminal->update();
             }
             else
             {
                 $cartTerminal->id = $id_cart;
                 $cartTerminal->force_id = true;
-                $cartTerminal->id_terminal = (int) Tools::getValue('terminal');
+                $cartTerminal->id_terminal = pSQL(Tools::getValue('terminal'));
                 $result &= $cartTerminal->add();
             }
             $response = $result ? ['success' => 'Terminal saved'] : ['fail' => 'Failed to save terminal'];
