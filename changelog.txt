@@ -2,6 +2,7 @@
 # Updated
 - Added Finland terminal selection for Estonian customers (Finland carrier option must be enabled)
 - API library to 1.0.14
+- Changed bulk action dropdown detection for PS 1.7.7+ versions
 
 = 2.0.13 =
 # Updated
