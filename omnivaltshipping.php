@@ -1043,6 +1043,7 @@ class OmnivaltShipping extends CarrierModule
                         'ajax_parsererror' => $this->l("An invalid response was received"),
                         'ajax_unknownerror' => $this->l("Unknown error"),
                     ),
+                    'omnivaltIsPS177Plus' => version_compare(_PS_VERSION_,'1.7.7','>='),
                 ]);
                 $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
 
