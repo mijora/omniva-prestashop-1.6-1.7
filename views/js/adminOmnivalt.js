@@ -1,6 +1,6 @@
 ﻿$(document).ready(function () {
     if (help_class_name == 'AdminOrders') {
-        if(typeof(_PS_VERSION_) !== 'undefined' && typeof(_PS_VERSION_[4]) !== 'undefined' && parseInt(_PS_VERSION_[4]) >= 8)
+        if(typeof(omnivaltIsPS177Plus) !== 'undefined' && omnivaltIsPS177Plus)
         {
             var bulk_dropdown = $('#order_grid .js-bulk-actions-btn + .dropdown-menu');
             bulk_dropdown.append(`<button id="order_grid_bulk_action_omniva_bulk_labels" class="dropdown-item js-bulk-modal-form-submit-btn" type="button" onclick="sendOmnivaltBulkAction177('${omnivalt_admin_action_labels}');">
@@ -67,4 +67,18 @@ function sendOmnivaltBulkAction177(action) {
     } else {
         alert('Select orders');
     }
+}
+
+function omivaltshippingForceTerminalUpdate(button) {
+    const form = document.createElement('form');
+    form.action = button.href;
+    form.method = "post";
+    form.enctype = "multipart/form-data";
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'forceUpdateTerminals';
+    input.value = '1';
+    form.append(input);
+    document.body.append(form);
+    form.submit();
 }

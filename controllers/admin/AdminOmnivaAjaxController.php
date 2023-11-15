@@ -84,7 +84,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             die(json_encode(['error' => 'Could not find order.']));
         }
 
-        if(Tools::isSubmit('parcel_terminal') && ($id_terminal = (int) Tools::getValue('parcel_terminal')))
+        if(Tools::isSubmit('parcel_terminal') && ($id_terminal = Tools::getValue('parcel_terminal')))
         {
             $add_terminal = false;
             $omnivaCartTerminal = new OmnivaCartTerminal($order->id_cart);
@@ -94,7 +94,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaCartTerminal->id = $order->id_cart;
                 $add_terminal = true;
             }
-            $omnivaCartTerminal->id_terminal = $id_terminal;
+            $omnivaCartTerminal->id_terminal = pSQL($id_terminal);
             if ($add_terminal) {
                 $omnivaCartTerminal->add();
             } else {

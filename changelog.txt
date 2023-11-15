@@ -1,6 +1,16 @@
-= Unreleased =
+= 2.0.14 =
+# Updated
+- Added Finland terminal selection for Estonian customers (Finland carrier option must be enabled)
+- API library to 1.0.14
+- Changed bulk action dropdown detection for PS 1.7.7+ versions
+
+= 2.0.13 =
+# Updated
+- API library to 1.0.13
+
 # Fixed
 - Fixed error when Order history element is empty
+- hookHeader fron js and css file embed forprestashop 1.6 when prestashop is in subfolder
 
 = 2.0.12 =
 # Fixed

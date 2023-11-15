@@ -13,7 +13,7 @@ class OmnivaCartTerminal extends ObjectModel
         'table' => 'omniva_cart_terminal',
         'primary' => 'id_cart',
         'fields' => [
-            'id_terminal' =>   ['type' => self::TYPE_INT, 'required' => true, 'size' => 10],
+            'id_terminal' =>   ['type' => self::TYPE_STRING, 'required' => true, 'size' => 50],
         ],
     ];
 
