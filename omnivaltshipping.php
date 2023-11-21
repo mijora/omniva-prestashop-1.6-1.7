@@ -380,6 +380,12 @@ class OmnivaltShipping extends CarrierModule
         return false;
     }
 
+    public function getPsVersion()
+    {
+        $version_parts = explode('.', _PS_VERSION_);
+        return $version_parts[0] . '.' . $version_parts[1];
+    }
+
     public function getOrderShippingCost($params, $shipping_cost)
     {
         $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
@@ -1019,28 +1025,6 @@ class OmnivaltShipping extends CarrierModule
             'ps_version' => $this->getPsVersion(),
         ));
         return $this->display(__file__, 'displayBeforeCarrier.tpl');
-    }
-
-    public function getPsVersion()
-    {
-        $version_parts = explode('.', _PS_VERSION_);
-        return $version_parts[0] . '.' . $version_parts[1];
-
-        /*if ( version_compare(_PS_VERSION_, '1.6.0', '<') ) {
-            return '1.5';
-        }
-        if ( version_compare(_PS_VERSION_, '1.7.0', '<') ) {
-            return '1.6';
-        }
-        if ( version_compare(_PS_VERSION_, '8.0.0', '<') ) {
-            return '1.7';
-        }
-        if ( version_compare(_PS_VERSION_, '8.1.0', '<') ) {
-            return '8.0';
-        }
-        if ( version_compare(_PS_VERSION_, '8.1.0', '<') ) {
-            return '8.0';
-        }*/
     }
 
     private function getCartCountryCode( $cart )
