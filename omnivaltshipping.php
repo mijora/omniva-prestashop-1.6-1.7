@@ -380,6 +380,22 @@ class OmnivaltShipping extends CarrierModule
         return false;
     }
 
+    public function getPsVersion()
+    {
+        $version_parts = explode('.', _PS_VERSION_);
+        return $version_parts[0] . '.' . $version_parts[1];
+    }
+
+    public function isPs16()
+    {
+        return version_compare(_PS_VERSION_, '1.7.0', '<');
+    }
+
+    public function isPs17()
+    {
+        return version_compare(_PS_VERSION_, '1.7.0', '>=');
+    }
+
     public function getOrderShippingCost($params, $shipping_cost)
     {
         $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
@@ -1005,8 +1021,7 @@ class OmnivaltShipping extends CarrierModule
             $selected = $omnivaCart->id_terminal;
         }
         $address = new Address($params['cart']->id_address_delivery);
-        $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
-        $iso_code = strtoupper($iso_code);
+        $iso_code = $this->getCartCountryCode($params['cart']);
 
         $showMap = Configuration::get('omnivalt_map');
         $this->context->smarty->assign(array(
@@ -1017,8 +1032,19 @@ class OmnivaltShipping extends CarrierModule
             'omniva_postcode' => $address->postcode ?: '',
             'omniva_map' => $showMap,
             'module_url' => $this->_path,
+            'ps_version' => $this->getPsVersion(),
         ));
         return $this->display(__file__, 'displayBeforeCarrier.tpl');
+    }
+
+    private function getCartCountryCode( $cart )
+    {
+        $default_country = (isset($this->context->country->iso_code)) ? $this->context->country->iso_code : $this->context->language->iso_code;
+
+        $address = new Address($cart->id_address_delivery);
+        $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $default_country;
+
+        return strtoupper($iso_code);
     }
 
     public function hookDisplayBackOfficeHeader($params)
@@ -1049,7 +1075,7 @@ class OmnivaltShipping extends CarrierModule
 
             if(Tools::getValue('configure') !== $this->name)
             {
-                if (version_compare(_PS_VERSION_, '1.7.7', '>='))
+                if ($this->isPs17())
                 {
                     $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
                 }
@@ -1081,10 +1107,12 @@ class OmnivaltShipping extends CarrierModule
                     'omnivaSearch' => $this->l('Enter an address, if you want to find terminals'),
 
                 ],
-                'is_17' => version_compare(_PS_VERSION_, '1.7', '>='),
+                'omnivalt_ps_version' => [
+                    'is_16' => $this->isPs16(),
+                    'is_17' => $this->isPs17(),
+                ],
             ]);
-            if(version_compare(_PS_VERSION_, '1.7', '>='))
-            {
+            if ($this->isPs17()) {
                 $this->context->controller->registerJavascript(
                     'leaflet',
                     'modules/' . $this->name . '/views/js/leaflet.js',
@@ -1098,9 +1126,7 @@ class OmnivaltShipping extends CarrierModule
                         'priority' => 200,
                     ]
                 );
-            }
-            else
-            {
+            } else {
                 $this->context->controller->addJS($this->_path . '/views/js/leaflet.js');
                 $this->context->controller->addJS($this->_path . '/views/js/omniva.js');
             }
@@ -1239,7 +1265,7 @@ class OmnivaltShipping extends CarrierModule
                 'tracking_number' => $order->getWsShippingNumber(),
                 'country_code' => $iso_code,
             ]);
-            if(version_compare(_PS_VERSION_, '1.7', '>='))
+            if($this->isPs17())
             {
                 $this->context->controller->registerJavascript(
                     'omnivalt',
