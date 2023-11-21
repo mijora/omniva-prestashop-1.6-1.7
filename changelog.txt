@@ -1,6 +1,10 @@
 = Unreleased =
 # Fixed
 - Fixed display of new orders on the Omniva orders page
+- Fixed terminals list show on Prestashop 1.6
+
+# Updated
+- API library to 1.0.15
 
 = 2.0.14 =
 # Updated

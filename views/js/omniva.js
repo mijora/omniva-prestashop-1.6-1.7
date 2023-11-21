@@ -749,6 +749,10 @@ $(document).ready(function(){
 function launch_omniva(retry = 0) {
     if (retry >= 50) return;
 
+    if ($('#omnivalt_parcel_terminal_carrier_details .omniva-terminals-list').length) {
+        return;
+    }
+
     if ($('#omnivalt_parcel_terminal_carrier_details select').length){
         $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: omnivalt_show_map});
         omnivaltDelivery.init();
