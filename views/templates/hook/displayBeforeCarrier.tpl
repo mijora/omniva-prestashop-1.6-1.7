@@ -23,7 +23,14 @@
     var omnivalt_show_map = {$omniva_map};
 </script>
 <script>
-    var omnivalt_terminals = {$terminals_list|@json_encode nofilter}
+    var omnivalt_terminals = {$terminals_list|@json_encode nofilter};
+</script>
+<script>
+    {if $ps_version == '1.6'}
+        $(document).ready(function(){
+            launch_omniva();
+        });
+    {/if}
 </script>
 <div id="omnivalt_parcel_terminal_carrier_details" style="display: none; margin-top: 10px;">
     <select class="" name="omnivalt_parcel_terminal" style = "width:100%;">{$parcel_terminals nofilter}</select>
