@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.15 =
 # Fixed
 - Fixed display of new orders on the Omniva orders page
 - Fixed terminals list show on Prestashop 1.6
