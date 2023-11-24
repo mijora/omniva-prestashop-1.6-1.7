@@ -89,7 +89,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.15';
+        $this->version = '2.0.16';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -482,7 +482,7 @@ class OmnivaltShipping extends CarrierModule
                 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city',
                 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
                 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
-                'omnivalt_label_comment_type'
+                'omnivalt_label_comment_type', 'omnivalt_18_plus_feature'
             );
             $not_required = array('omnivalt_bank_account');
             $values = array();
@@ -586,6 +586,17 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Do not send')
             ),
         );
+
+        $features = Feature::getFeatures(
+            Context::getContext()->language->id
+        );
+
+        $featuresOptions = array_map(function ($feature) {
+            return [
+                'id_option' => $feature['id_feature'],
+                'name' => $this->l($feature['name'])
+            ];
+        }, $features);
 
         $last_update_timestamp = Configuration::get('omnivalt_locations_update');
         $last_update_formated = !$last_update_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_update_timestamp);
@@ -838,6 +849,18 @@ class OmnivaltShipping extends CarrierModule
                         'name' => 'name'
                     )
                 ),
+                array(
+                    'type' => 'select',
+                    'lang' => true,
+                    'label' => $this->l('18+ Tag'),
+                    'name' => 'omnivalt_18_plus_feature',
+                    'required' => false,
+                    'options' => array(
+                        'query' => $featuresOptions,
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    )
+                )
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
@@ -913,6 +936,10 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
+        $helper->fields_value['omnivalt_18_plus_feature'] = Configuration::get('omnivalt_18_plus_feature')
+            ? Configuration::get('omnivalt_18_plus_feature')
+            : '';
+
         return $helper->generateForm($fields_form);
     }
 

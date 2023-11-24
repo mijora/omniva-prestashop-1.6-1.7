@@ -79,6 +79,28 @@ class OmnivaApi
             if ($omnivaOrder->cod)
                 $additionalServices[] = "BP";
 
+            // 18+ check
+            $omnivlt18PlusFeaureID = Configuration::get('omnivalt_18_plus_feature');
+
+            foreach ($order->getProducts() as $orderProduct) {
+                $product = new Product($orderProduct['product_id']);
+                $productFeatures = $product->getFeatures();
+
+                if (empty($productFeatures)) {
+                    continue;
+                }
+
+                $featuresIds = array_map(function ($feature) {
+                    return $feature['id_feature'];
+                }, $productFeatures);
+
+                if (in_array($omnivlt18PlusFeaureID, $featuresIds) && $omnivlt18PlusFeaureID) {
+                    $additionalServices[] = "PC";
+
+                    break;
+                }
+            }
+
             // calculate weight
             $pack_weight = (float) $omnivaOrder->weight;
             if($pack_weight <= 0) {

@@ -1,3 +1,10 @@
+= 2.0.16 =
+# Added
+- Additional configuration field '18+ Tag', where user can select, which product feature is treated as '18+' tag.
+
+# Improved
+- Each time checks order products for selected '18+ tag'. If at least one product has selected tag adds 'PC' service.
+
 = 2.0.15 =
 # Fixed
 - Fixed display of new orders on the Omniva orders page
