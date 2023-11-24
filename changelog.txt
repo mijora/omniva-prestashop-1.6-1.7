@@ -1,4 +1,4 @@
-= 2.0.16 =
+Unreleased
 # Added
 - Additional configuration field '18+ Tag', where user can select, which product feature is treated as '18+' tag.
 
