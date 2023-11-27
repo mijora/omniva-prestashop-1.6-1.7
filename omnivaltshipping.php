@@ -7,6 +7,7 @@ require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
 require_once __DIR__ . "/classes/OmnivaOrderHistory.php";
+require_once __DIR__ . "/classes/Omniva18PlusProduct.php";
 
 require_once __DIR__ . "/classes/OmnivaHelper.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
@@ -61,6 +62,8 @@ class OmnivaltShipping extends CarrierModule
         'actionCarrierUpdate', //For control change of the carrier's ID (id_carrier), the module must use the updateCarrier hook.
         'displayAdminOrderContentShip',
         'displayBeforeCarrier',
+        'displayAdminProductsExtra',
+        'actionProductUpdate',
         'header',
         'orderDetailDisplayed',
         'displayAdminOrder',
@@ -164,6 +167,51 @@ class OmnivaltShipping extends CarrierModule
         return true;
     }
 
+    public function hookDisplayAdminProductsExtra($params)
+    {
+        $id_product = Tools::getValue('id_product');
+
+        $is18Plus = Omniva18PlusProduct::get18PlusStatus($id_product, true);
+
+        $this->context->smarty->assign([
+            'is18Plus' => $is18Plus
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/admin/productTab.tpl');
+    }
+
+    public function hookActionProductUpdate($params)
+    {
+        $tab = Tools::getValue('key_tab');
+
+        if ($tab !== 'ModuleOmnivaltshipping') {
+            return;
+        }
+
+        $productID = (int) Tools::getValue('id_product');
+        $is18Plus = (bool) Tools::getValue('is_18_plus');
+
+        $result = Omniva18PlusProduct::get18PlusStatus($productID);
+
+        if (!$result) {
+            DB::getInstance()->insert(
+                Omniva18PlusProduct::$definition['table'],
+                [
+                    'id_product' => $productID,
+                    'is_18_plus' => (int) $is18Plus
+                ]
+            );
+
+            return;
+        }
+
+        DB::getInstance()->update(
+            Omniva18PlusProduct::$definition['table'],
+            [
+                'is_18_plus' => (int) $is18Plus
+            ]
+        );
+    }
 
     public function getCustomOrderState()
     {
@@ -482,7 +530,7 @@ class OmnivaltShipping extends CarrierModule
                 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city',
                 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
                 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
-                'omnivalt_label_comment_type', 'omnivalt_18_plus_feature'
+                'omnivalt_label_comment_type'
             );
             $not_required = array('omnivalt_bank_account');
             $values = array();
@@ -848,18 +896,6 @@ class OmnivaltShipping extends CarrierModule
                         'id' => 'id_option',
                         'name' => 'name'
                     )
-                ),
-                array(
-                    'type' => 'select',
-                    'lang' => true,
-                    'label' => $this->l('18+ Tag'),
-                    'name' => 'omnivalt_18_plus_feature',
-                    'required' => false,
-                    'options' => array(
-                        'query' => $featuresOptions,
-                        'id' => 'id_option',
-                        'name' => 'name'
-                    )
                 )
             ),
             'submit' => array(
@@ -936,9 +972,6 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
-        $helper->fields_value['omnivalt_18_plus_feature'] = Configuration::get('omnivalt_18_plus_feature')
-            ? Configuration::get('omnivalt_18_plus_feature')
-            : '';
 
         return $helper->generateForm($fields_form);
     }
