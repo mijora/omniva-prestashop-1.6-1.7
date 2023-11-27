@@ -80,12 +80,21 @@ class OmnivaApi
                 $additionalServices[] = "BP";
 
             // 18+ check
+            $omnivlt18PlusFeaureID = Configuration::get('omnivalt_18_plus_feature');
+
             foreach ($order->getProducts() as $orderProduct) {
-                $productId = (int) $orderProduct['product_id'];
+                $product = new Product($orderProduct['product_id']);
+                $productFeatures = $product->getFeatures();
 
-                $isProduct18Plus = Omniva18PlusProduct::get18PlusStatus($productId, true);
+                if (empty($productFeatures)) {
+                    continue;
+                }
 
-                if ($isProduct18Plus) {
+                $featuresIds = array_map(function ($feature) {
+                    return $feature['id_feature'];
+                }, $productFeatures);
+
+                if (in_array($omnivlt18PlusFeaureID, $featuresIds) && $omnivlt18PlusFeaureID) {
                     $additionalServices[] = "PC";
 
                     break;
