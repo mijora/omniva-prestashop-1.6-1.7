@@ -25,11 +25,4 @@
                id="omnivaltshipping_is_18_plus"
                 {if $is18Plus} checked {/if}>
     </div>
-
-    <div class="panel-footer">
-        <button type="submit" name="submitAddproductAndStay" class="btn btn-default pull-right">
-            <i class="process-icon-save"></i>
-            {l s='Save' mod='omnivaltshipping'}
-        </button>
-    </div>
 </div>

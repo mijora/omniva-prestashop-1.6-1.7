@@ -87,8 +87,6 @@ class OmnivaApi
 
                 if ($isProduct18Plus) {
                     $additionalServices[] = "PC";
-
-                    break;
                 }
             }
 

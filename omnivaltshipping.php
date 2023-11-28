@@ -171,25 +171,32 @@ class OmnivaltShipping extends CarrierModule
     {
         $id_product = Tools::getValue('id_product');
 
+        if ($this->isPs17()) {
+            $id_product = (int) $params['id_product'];
+        }
+
         $is18Plus = Omniva18PlusProduct::get18PlusStatus($id_product, true);
 
         $this->context->smarty->assign([
             'is18Plus' => $is18Plus
         ]);
 
+        if ($this->isPs17()) {
+            return $this->display(__FILE__, 'views/templates/admin/productTab-1.7.tpl');
+        }
+
         return $this->display(__FILE__, 'views/templates/admin/productTab.tpl');
     }
 
     public function hookActionProductUpdate($params)
     {
-        $tab = Tools::getValue('key_tab');
+        $productID = (int) Tools::getValue('id_product');
 
-        if ($tab !== 'ModuleOmnivaltshipping') {
-            return;
+        if ($this->isPs17()) {
+            $productID = (int) $params['id_product'];
         }
 
-        $productID = (int) Tools::getValue('id_product');
-        $is18Plus = (bool) Tools::getValue('is_18_plus');
+        $is18Plus = (bool) Tools::getValue('omnivaltshipping_is_18_plus');
 
         $result = Omniva18PlusProduct::get18PlusStatus($productID);
 
