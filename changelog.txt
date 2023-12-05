@@ -1,9 +1,9 @@
-Unreleased
+= 2.0.16 =
 # Added
-- Additional configuration field '18+ Tag', where user can select, which product feature is treated as '18+' tag.
+- Module configuration page accessible in product page, where user can select, which product must be treated as 18+
 
 # Improved
-- Each time checks order products for selected '18+ tag'. If at least one product has selected tag adds 'PC' service.
+- Label generation now checks if order products has 18+ mark. If yes adds additional service 'PC'.
 
 = 2.0.15 =
 # Fixed
