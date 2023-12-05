@@ -79,6 +79,17 @@ class OmnivaApi
             if ($omnivaOrder->cod)
                 $additionalServices[] = "BP";
 
+            // 18+ check
+            foreach ($order->getProducts() as $orderProduct) {
+                $productId = (int) $orderProduct['product_id'];
+
+                $isProduct18Plus = Omniva18PlusProduct::get18PlusStatus($productId, true);
+
+                if ($isProduct18Plus) {
+                    $additionalServices[] = "PC";
+                }
+            }
+
             // calculate weight
             $pack_weight = (float) $omnivaOrder->weight;
             if($pack_weight <= 0) {

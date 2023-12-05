@@ -1,3 +1,10 @@
+= 2.0.16 =
+# Added
+- Module configuration page accessible in product page, where user can select, which product must be treated as 18+
+
+# Improved
+- Label generation now checks if order products has 18+ mark. If yes adds additional service 'PC'.
+
 = 2.0.15 =
 # Fixed
 - Fixed display of new orders on the Omniva orders page
