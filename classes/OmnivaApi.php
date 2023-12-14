@@ -66,9 +66,10 @@ class OmnivaApi
 
             $sendOffCountry = $this->getSendOffCountry($orderAdress);
             $service = $this->getServiceCode($order->id_carrier, $sendOffCountry);
+            $is_terminal_service = ($service == "PA" || $service == "PU" || $service == 'CD');
 
             $additionalServices = [];
-            if ($service == "PA" || $service == "PU" || $service == 'CD')
+            if ($is_terminal_service)
             {
                 $additionalServices[] = "ST";
                 if(Configuration::get('send_delivery_email'))
@@ -76,8 +77,12 @@ class OmnivaApi
                     $additionalServices[] = "SF";
                 }
             }            
-            if ($omnivaOrder->cod)
+            if ($omnivaOrder->cod) {
                 $additionalServices[] = "BP";
+                if ($country_iso == 'FI' && $is_terminal_service) {
+                    return ['msg' => 'Additional service COD is not available in this country'];
+                }
+            }
 
             // calculate weight
             $pack_weight = (float) $omnivaOrder->weight;
@@ -127,7 +132,7 @@ class OmnivaApi
                     ->setDeliverypoint($orderAdress->city)
                     ->setStreet($orderAdress->address1)
                     ;
-                if (($service == 'PU' || $service == 'PA' || $service == 'CD') && $id_terminal)
+                if ($is_terminal_service && $id_terminal)
                     $receiverAddress->setOffloadPostcode($id_terminal);
                 else
                     $receiverAddress->setOffloadPostcode($orderAdress->postcode);
