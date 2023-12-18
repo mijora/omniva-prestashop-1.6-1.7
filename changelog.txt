@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.17 =
 # Improved
 - Added an error message when trying to register a shipment with the COD service for sending to a Finland Matkahuolto parcel terminal
 
