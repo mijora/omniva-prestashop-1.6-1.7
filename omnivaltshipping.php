@@ -1095,9 +1095,13 @@ class OmnivaltShipping extends CarrierModule
         $address = new Address($params['cart']->id_address_delivery);
         $iso_code = $this->getCartCountryCode($params['cart']);
 
+        $marker_img = 'sasi.png';
+        if ($iso_code == 'FI') {
+            $marker_img = 'sasi_mh.svg';
+        }
+
         $showMap = Configuration::get('omnivalt_map');
         $this->context->smarty->assign(array(
-            'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
             'parcel_terminals' => $this->getTerminalsOptions($selected, $iso_code),
             'terminals_list' => $this->getTerminalForMap($selected, $iso_code),
             'omniva_current_country' => $iso_code,
@@ -1105,6 +1109,8 @@ class OmnivaltShipping extends CarrierModule
             'omniva_map' => $showMap,
             'module_url' => $this->_path,
             'ps_version' => $this->getPsVersion(),
+            'marker_img' => $marker_img,
+            'select_block_theme' => ($iso_code == 'FI') ? 'matkahuolto' : 'omniva',
         ));
         return $this->display(__file__, 'displayBeforeCarrier.tpl');
     }
@@ -1163,25 +1169,39 @@ class OmnivaltShipping extends CarrierModule
     {
         if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
             Media::addJsDef([
-                'omniva_img_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/views/img/',
-                'omnivalt_parcel_terminal_carrier_id' => Configuration::get('omnivalt_pt'),
-                'omnivaltdelivery_controller' => $this->context->link->getModuleLink('omnivaltshipping', 'ajax'),
-                'omnivadata' => [
-                    'text_select_terminal' => $this->l('Select terminal'),
-                    'text_search_placeholder' => $this->l('Enter postcode'),
-                    'not_found' => $this->l('Place not found'),
-                    'text_enter_address' => $this->l('Enter postcode/address'),
-                    'text_show_in_map' => $this->l('Show in map'),
-                    'text_show_more' => $this->l('Show more'),
-                    'omniva_plugin_url' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
-                    'omnivalt_parcel_terminal_error' => $this->l('Please select parcel terminal'),
-                    'select_terminal' => $this->l('Please select a parcel terminal'),
-                    'omnivaSearch' => $this->l('Enter an address, if you want to find terminals'),
-
+                'omnivalt_params' => [
+                    'url' => [
+                        'plugin' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/',
+                        'images' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/' . $this->name . '/views/img/',
+                        'controller_ajax' => $this->context->link->getModuleLink('omnivaltshipping', 'ajax'),
+                    ],
+                    'methods' => [
+                        'omniva_terminal' => Configuration::get('omnivalt_pt')
+                    ],
+                    'prestashop' => [
+                        'is_16' => $this->isPs16(),
+                        'is_17' => $this->isPs17(),
+                        'is_177' => $this->isPs177(),
+                    ],
                 ],
-                'omnivalt_ps_version' => [
-                    'is_16' => $this->isPs16(),
-                    'is_17' => $this->isPs17(),
+                'omnivalt_text' => [
+                    'select_terminal' => $this->l('Select terminal'),
+                    'select_terminal_desc' => $this->l('Please select a parcel terminal'),
+                    'select_terminal_error' => $this->l('Please select parcel terminal'),
+                    'search_placeholder' => $this->l('Enter postcode'),
+                    'search_desc' => $this->l('Enter an address, if you want to find terminals'),
+                    'not_found' => $this->l('Place not found'),
+                    'enter_address' => $this->l('Enter postcode/address'),
+                    'show_in_map' => $this->l('Show in map'),
+                    'show_more' => $this->l('Show more'),
+                    'variables' => [
+                        'omniva' => [
+                            'modal_title' => $this->l('Omniva parcel terminals'),
+                        ],
+                        'matkahuolto' => [
+                            'modal_title' => $this->l('Matkahuolto parcel terminals'),
+                        ],
+                    ],
                 ],
             ]);
             if ($this->isPs17()) {
