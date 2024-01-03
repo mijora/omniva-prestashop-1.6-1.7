@@ -451,6 +451,11 @@ class OmnivaltShipping extends CarrierModule
         return version_compare(_PS_VERSION_, '1.7.0', '>=');
     }
 
+    public function isPs177()
+    {
+        return version_compare(_PS_VERSION_, '1.7.7', '>=');
+    }
+
     public function getOrderShippingCost($params, $shipping_cost)
     {
         $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
@@ -1136,13 +1141,13 @@ class OmnivaltShipping extends CarrierModule
                         'ajax_parsererror' => $this->l("An invalid response was received"),
                         'ajax_unknownerror' => $this->l("Unknown error"),
                     ),
-                    'omnivaltIsPS177Plus' => version_compare(_PS_VERSION_,'1.7.7','>='),
+                    'omnivaltIsPS177Plus' => $this->isPs177(),
                 ]);
                 $this->context->controller->addJS($this->_path . '/views/js/adminOmnivalt.js');
 
             if(Tools::getValue('configure') !== $this->name)
             {
-                if ($this->isPs17())
+                if ($this->isPs177())
                 {
                     $this->context->controller->addJS($this->_path . 'views/js/omniva-admin-order-177.js');
                 }
@@ -1272,7 +1277,7 @@ class OmnivaltShipping extends CarrierModule
             $error_msg = $omnivaOrder->error ?: false;
             $omniva_tpl = 'blockinorder.tpl';
 
-            if (version_compare(_PS_VERSION_, '1.7.7', '>=')) {
+            if ($this->isPs177()) {
                 $omniva_tpl = 'blockinorder_1_7_7.tpl';
                 $error_msg = $error_msg ? $this->displayError($error_msg) : false;
             }

@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Fixed bug when trying generate label from order edit page on PS 1.7.0-1.7.6
+
 = 2.0.17 =
 # Improved
 - Added an error message when trying to register a shipment with the COD service for sending to a Finland Matkahuolto parcel terminal
