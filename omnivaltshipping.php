@@ -65,6 +65,7 @@ class OmnivaltShipping extends CarrierModule
         'displayAdminProductsExtra',
         'actionProductUpdate',
         'header',
+        'displayHeader',
         'orderDetailDisplayed',
         'displayAdminOrder',
         'displayBackOfficeHeader',
@@ -1227,6 +1228,11 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, 'header.tpl');
         }
+    }
+
+    public function hookDisplayHeader($params)
+    {
+        return $this->hookHeader($params);
     }
 
     public static function getCarrierIds($carriers = [])

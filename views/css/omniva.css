@@ -251,27 +251,6 @@
     color: white;
 }
 
-.modal-omnivalt .omniva-btn {
-    max-height: 30px;
-    line-height: 100%;
-    position: relative;
-    padding: 5px;
-    padding-right: 30px;
-    margin-top: 5px;
-    width: 100%;
-    max-width: 440px;
-}
-
-.modal-omnivalt .omniva-btn img {
-    max-height: 20px;
-    max-width: 18px;
-    display: inline-block;
-    right: 10px;
-    position: absolute;
-    top: 3px;
-}
-
-
 .modal-omnivalt #omnivaMapContainer {
     width: 59%;
     height: 100%;
@@ -548,6 +527,26 @@
 
 
 /* omniva terminal selection */
+.select-omnivalt .omniva-btn {
+    max-height: 30px;
+    line-height: 100%;
+    position: relative;
+    padding: 5px;
+    padding-right: 30px;
+    margin-top: 5px;
+    width: 100%;
+    max-width: 440px;
+}
+
+.select-omnivalt .omniva-btn img {
+    max-height: 20px;
+    max-width: 18px;
+    display: inline-block;
+    right: 10px;
+    position: absolute;
+    top: 3px;
+}
+
 .select-omnivalt .omniva-terminals-list {
     background-color: #fff;
     position: relative;
