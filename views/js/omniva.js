@@ -18,8 +18,8 @@ var omniva_addrese_change = false;
         var autoSelectTerminal = false;
         var searchTimeout = null;
         var select = $(this);
-        var select_terminal = omnivadata.text_select_terminal;
-        var not_found = omnivadata.not_found;
+        var select_terminal = omnivalt_text.select_terminal;
+        var not_found = omnivalt_text.not_found;
         var terminalIcon = null;
         var homeIcon = null;
         var map = null;
@@ -47,14 +47,14 @@ var omniva_addrese_change = false;
         */
         var container = $(document.createElement('div'));
         container.addClass("omniva-terminals-list");
-        var dropdown = $('<div class = "dropdown">'+omnivadata.text_select_terminal+'</div>');
+        var dropdown = $('<div class = "dropdown">'+omnivalt_text.select_terminal+'</div>');
         updateSelection();
         
-        var search = $('<input type = "text" placeholder = "'+omnivadata.text_enter_address+'" class = "search-input"/>');
+        var search = $('<input type = "text" placeholder = "'+omnivalt_text.enter_address+'" class = "search-input"/>');
         var loader = $('<div class = "loader"></div>').hide();
         var list = $(document.createElement('ul'));
-        var showMapBtn = $('<li><a href = "#" class = "show-in-map">'+omnivadata.text_show_in_map+'</a></li>');
-        var showMore = $('<div class = "show-more"><a href = "#">'+omnivadata.text_show_more+'</a></div>').hide();
+        var showMapBtn = $('<li><a href = "#" class = "show-in-map">'+omnivalt_text.show_in_map+'</a></li>');
+        var showMore = $('<div class = "show-more"><a href = "#">'+omnivalt_text.show_more+'</a></div>').hide();
         var innerContainer = $('<div class = "inner-container"></div>').hide();
         
         $(container).insertAfter(select);
@@ -415,10 +415,14 @@ var omniva_addrese_change = false;
                     iconAnchor:   [16, 32]
                 }
             });
+
+          var terminalIconFile = "sasi.png";
+            if (omnivalt_current_country == "FI") {
+                terminalIconFile = "sasi_mh.svg";
+            }
             
-          
-            terminalIcon = new Icon({iconUrl: omniva_img_url + 'sasi.png'});
-            homeIcon = new Icon2({iconUrl: omniva_img_url + 'locator_img.png'});
+            terminalIcon = new Icon({iconUrl: omnivalt_params.url.images + terminalIconFile});
+            homeIcon = new Icon2({iconUrl: omnivalt_params.url.images + 'locator_img.png'});
             
           var locations = omnivalt_terminals;
             jQuery.each( locations, function( key, location ) {
@@ -647,8 +651,7 @@ var omnivaltDelivery = {
             var $this = $(this),
                 value = $this.val(),
                 carrierIds = value.split(',');
-            
-            if (value != omnivalt_parcel_terminal_carrier_id + ',') {
+            if (value != omnivalt_params.methods.omniva_terminal + ',') {
                 return;
             }
             if($this[0].classList.contains('delivery_option_radio'))
@@ -669,8 +672,8 @@ var omnivaltDelivery = {
             console.log('Omniva block added to carrier');
         });
 
-        let carrier_input = (omnivalt_ps_version.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
-        if ($(carrier_input).val() == omnivalt_parcel_terminal_carrier_id + ',') {
+        let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
+        if ($(carrier_input).val() == omnivalt_params.methods.omniva_terminal + ',') {
             $("#omnivalt_parcel_terminal_carrier_details").show();
             console.log('Omniva block shown');
         } else {
@@ -690,7 +693,7 @@ var omnivaltDelivery = {
                 $.ajax({
                     type: 'POST',
                     headers: { "cache-control": "no-cache" },
-                    url: omnivaltdelivery_controller,
+                    url: omnivalt_params.url.controller_ajax,
                     async: true,
                     cache: false,
                     dataType: 'json',
@@ -710,14 +713,14 @@ var omnivaltDelivery = {
                                             type: 'inline',
                                             autoScale: true,
                                             minHeight: 30,
-                                            content: '<p class="fancybox-error">' + omnivadata.omnivalt_parcel_terminal_error + '</p>'
+                                            content: '<p class="fancybox-error">' + omnivalt_text.select_terminal_error + '</p>'
                                         }],
                                     {
                                         padding: 0
                                     }
                                 );
                             else
-                                alert(omnivadata.omnivalt_parcel_terminal_error);
+                                alert(omnivalt_text.select_terminal_error);
                         }
                     }
                 });
@@ -728,8 +731,8 @@ var omnivaltDelivery = {
     },
     validate : function() {
         console.groupCollapsed('OMNIVA: Validating selected terminal');
-        let carrier_input = (omnivalt_ps_version.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
-        if ($(carrier_input).val() == omnivalt_parcel_terminal_carrier_id + ',' && $('select[name="omnivalt_parcel_terminal"]').val() == "")
+        let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
+        if ($(carrier_input).val() == omnivalt_params.methods.omniva_terminal + ',' && $('select[name="omnivalt_parcel_terminal"]').val() == "")
         {
             if (!!$.prototype.fancybox) {
                 $.fancybox.open([
@@ -737,14 +740,14 @@ var omnivaltDelivery = {
                     type: 'inline',
                     autoScale: true,
                     minHeight: 30,
-                    content: '<p class="fancybox-error">' + omnivadata.omnivalt_parcel_terminal_error + '</p>'
+                    content: '<p class="fancybox-error">' + omnivalt_text.select_terminal_error + '</p>'
                 }],
                 {
                     padding: 0
                 });
             }
             else {
-                alert(omnivadata.omnivalt_parcel_terminal_error);
+                alert(omnivalt_text.select_terminal_error);
             }
         }
         else {
@@ -757,6 +760,22 @@ var omnivaltDelivery = {
         console.groupEnd();
         return false;
     },
+    change_modal_theme : function() {
+        this.remove_all_classes_with_prefix($('#omnivaLtModal')[0], 'theme-');
+        if (omnivalt_current_country == 'FI') {
+            $('#omnivaltModalTitle').text(omnivalt_text.variables.matkahuolto.modal_title);
+            $('#omnivaLtModal').addClass('theme-matkahuolto');
+        } else {
+            $('#omnivaltModalTitle').text(omnivalt_text.variables.omniva.modal_title);
+            $('#omnivaLtModal').addClass('theme-omniva');
+        }
+    },
+    remove_all_classes_with_prefix : function(element, prefix) {
+        var classes = element.className.split(" ").filter(function(c) {
+            return c.lastIndexOf(prefix, 0) !== 0;
+        });
+        element.className = classes.join(" ").trim();
+    }
 }
 	
 //when document is loaded...
@@ -779,6 +798,7 @@ function launch_omniva(retry = 0) {
         $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').on('click',function(){
             omnivaltDelivery.init();
         });
+        omnivaltDelivery.change_modal_theme();
     } else {
         setTimeout(function() {
             launch_omniva(retry + 1);

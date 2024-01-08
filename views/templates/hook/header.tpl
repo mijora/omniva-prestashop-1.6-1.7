@@ -19,11 +19,11 @@
 *}
 
 <!--  omnivalt_parcel_terminal_carrier [begin] -->
-<div id="omnivaLtModal" class="modal">
+<div id="omnivaLtModal" class="modal modal-omnivalt theme-omniva">
     <div class="omniva-modal-content">
             <div class="omniva-modal-header">
             <span class="close" id="terminalsModal">&times;</span>
-            <h5 style="display: inline">{l s='Omniva parcel terminals' mod='omnivaltshipping'}</h5>
+            <h5 id="omnivaltModalTitle" style="display: inline">{l s='Omniva parcel terminals' mod='omnivaltshipping'}</h5>
             </div>
             <div class="omniva-modal-body" style="/*overflow: hidden;*/">
                 <div id = "omnivaMapContainer"></div>
