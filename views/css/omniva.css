@@ -1,3 +1,65 @@
+:root {
+    --omniva-main-color: #ff6600;
+    --matkahuolto-main-color: #001e60;
+}
+
+/*** START animations ***/
+@-webkit-keyframes omnivaltSlideIn {
+    from {
+        bottom: -300px;
+        opacity: 0
+    }
+    to {
+        bottom: 0;
+        opacity: 1
+    }
+}
+@keyframes omnivaltSlideIn {
+    from {
+        bottom: -300px;
+        opacity: 0
+    }
+    to {
+        bottom: 0;
+        opacity: 1
+    }
+}
+
+@-webkit-keyframes omnivaltFadeIn {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+@keyframes omnivaltFadeIn {
+    from {
+        opacity: 0
+    }
+    to {
+        opacity: 1
+    }
+}
+
+@-webkit-keyframes omnivaltBounce {
+    from {
+        top: 0px;
+    }
+    to {
+        top: -8px;
+    }
+}
+@keyframes omnivaltBounce {
+    from {
+        top: 0px;
+    }
+    to {
+        top: -8px;
+    }
+}
+/*** END animations ***/
+
 .select2-container {
     text-indent: 0px !important;
     max-width: 100%;
@@ -10,7 +72,7 @@
 
 /**Map */
 
-.modal {
+.modal-omnivalt {
     display: none;
     position: fixed;
     left: 0;
@@ -20,14 +82,18 @@
     overflow: auto;
     background-color: rgb(0, 0, 0);
     background-color: rgba(0, 0, 0, 0.4);
-    -webkit-animation-name: fadeIn;
+    -webkit-animation-name: omnivaltFadeIn;
     -webkit-animation-duration: 0.4s;
-    animation-name: fadeIn;
+    animation-name: omnivaltFadeIn;
     animation-duration: 0.4s;
     z-index: 9999;
 }
 
-.omniva-modal-content {
+.modal-omnivalt button {
+    cursor: pointer;
+}
+
+.modal-omnivalt .omniva-modal-content {
     z-index: 20;
     position: fixed;
     top: 10%;
@@ -36,13 +102,13 @@
     border-radius: 5px;
     width: 90%;
     height: 80%;
-    -webkit-animation-name: slideIn;
+    -webkit-animation-name: omnivaltSlideIn;
     -webkit-animation-duration: 0.4s;
-    animation-name: slideIn;
+    animation-name: omnivaltSlideIn;
     animation-duration: 0.4s;
 }
 
-.close {
+.modal-omnivalt .close {
     color: black;
     float: right;
     font-size: 28px;
@@ -52,14 +118,14 @@
     right: 20px;
 }
 
-.close:hover,
-.close:focus {
+.modal-omnivalt .close:hover,
+.modal-omnivalt .close:focus {
     color: #000;
     text-decoration: none;
     cursor: pointer;
 }
 
-.omniva-modal-header {
+.modal-omnivalt .omniva-modal-header {
     padding-top: 4px;
     padding-left: 26px;
     padding-right: 4px;
@@ -67,63 +133,23 @@
     height: 7%;
 }
 
-.omniva-modal-header h5 {
+.modal-omnivalt .omniva-modal-header h5 {
     padding: 0px;
     margin: 0px;
     font-weight: normal;
 }
 
-.omniva-modal-body {
+.modal-omnivalt .omniva-modal-body {
     padding: 10px;
     height: 92%;
 }
 
-.omniva-modal-footer {
+.modal-omnivalt .omniva-modal-footer {
     height: 6%;
     align-items: center;
 }
 
-@-webkit-keyframes slideIn {
-    from {
-        bottom: -300px;
-        opacity: 0
-    }
-    to {
-        bottom: 0;
-        opacity: 1
-    }
-}
-
-@keyframes slideIn {
-    from {
-        bottom: -300px;
-        opacity: 0
-    }
-    to {
-        bottom: 0;
-        opacity: 1
-    }
-}
-
-@-webkit-keyframes fadeIn {
-    from {
-        opacity: 0
-    }
-    to {
-        opacity: 1
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0
-    }
-    to {
-        opacity: 1
-    }
-}
-
-.btn-address {
+.modal-omnivalt .btn-address {
     background-color: #E47A2E;
     color: white;
     font-size: 15px;
@@ -134,12 +160,12 @@
     margin: 2px;
 }
 
-.btn-address:hover {
+.modal-omnivalt .btn-address:hover {
     background-color: #555555;
     color: white;
 }
 
-.btn-address-gps {
+.modal-omnivalt .btn-address-gps {
     background-color: #E94B3C;
     color: white;
     text-align: center;
@@ -152,12 +178,12 @@
     font-weight: 500;
 }
 
-.btn-address-gps:hover {
+.modal-omnivalt .btn-address-gps:hover {
     background-color: #555555;
     color: white;
 }
 
-#map-search-button {
+.modal-omnivalt #map-search-button {
     background-image: url("../img/search-w.png");
     background-repeat: no-repeat;
     background-size: 20px 20px;
@@ -167,42 +193,43 @@
     width: 36px;
     display: block;
     float: left;
-    background-color: #ff6319;
-    border: none;
+    background-color: var(--omniva-main-color);
+    border: 1px solid var(--omniva-main-color);
 }
 
-.pac-container {
+.modal-omnivalt .pac-container {
     z-index: 10511 !important;
 }
 
-.omniva-li, .omniva-li a {
+.modal-omnivalt .omniva-li,
+.modal-omnivalt .omniva-li a {
     font-size: 15px;
     color: black !important;
 }
 
-.omniva-li:hover {
+.modal-omnivalt .omniva-li:hover {
     cursor: pointer;
     color: #555 !important;
 }
 
-.omniva-modal-content .omniva-terminals-listing {
+.modal-omnivalt .omniva-modal-content .omniva-terminals-listing {
     margin: 0px;
     padding: 0px;
     color: black;
 }
 
-.omniva-modal-content .omniva-terminals-listing li {
+.modal-omnivalt .omniva-modal-content .omniva-terminals-listing li {
     padding: 5px;
     border-radius: 4px;
     list-style-type: none;
     width: 100% !important;
 }
 
-.omniva-modal-content .omniva-terminals-listing li:nth-child(even) {
+.modal-omnivalt .omniva-modal-content .omniva-terminals-listing li:nth-child(even) {
     background: #f2f2f2;
 }
 
-.omniva-search {
+.modal-omnivalt .omniva-search {
     width: 98%;
     padding: 2px 10px;
     border: 1px solid #555;
@@ -211,7 +238,7 @@
 
 }
 
-.btn-marker {
+.modal-omnivalt .btn-marker {
     background-color: white;
     color: black;
     padding: 4px;
@@ -219,33 +246,12 @@
     border-radius: 2px;
 }
 
-.btn-marker:hover {
+.modal-omnivalt .btn-marker:hover {
     background-color: #555555;
     color: white;
 }
 
-.omniva-btn {
-    max-height: 30px;
-    line-height: 100%;
-    position: relative;
-    padding: 5px;
-    padding-right: 30px;
-    margin-top: 5px;
-    width: 100%;
-    max-width: 440px;
-}
-
-.omniva-btn img {
-    max-height: 20px;
-    max-width: 18px;
-    display: inline-block;
-    right: 10px;
-    position: absolute;
-    top: 3px;
-}
-
-
-#omnivaMapContainer {
+.modal-omnivalt #omnivaMapContainer {
     width: 59%;
     height: 100%;
     border: 1px solid black;
@@ -253,16 +259,16 @@
     float: left;
 }
 
-#omnivaMap {
+.modal-omnivalt #omnivaMap {
     width: 100%;
     height: 100%;
 }
 
-.esri-feature__main-container {
+.modal-omnivalt .esri-feature__main-container {
     /*padding:20px;*/
 }
 
-.omniva-search-bar {
+.modal-omnivalt .omniva-search-bar {
     width: 40%;
     min-height: 400px;
     padding: 0px 10px;
@@ -274,29 +280,29 @@
 
 }
 
-.omniva-search-bar h4 {
+.modal-omnivalt .omniva-search-bar h4 {
     font-weight: normal;
 }
 
-.esri-popup__header-title {
+.modal-omnivalt .esri-popup__header-title {
     font: 15px arial, sans-serif !important;
     margin: 0px !important;
     padding: 0px !important;
 
 }
 
-.esri-popup__main-container {
+.modal-omnivalt .esri-popup__main-container {
     padding: 30px !important;
 }
 
 /** Tooltips*/
-.tooltip {
+.modal-omnivalt .tooltip {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted black;
 }
 
-.tooltip .tooltiptext {
+.modal-omnivalt .tooltip .tooltiptext {
     visibility: hidden;
     width: 200px;
     background-color: black;
@@ -312,7 +318,7 @@
     margin-left: -100px;
 }
 
-.tooltip .tooltiptext::afterr {
+.modal-omnivalt .tooltip .tooltiptext::afterr {
     content: "";
     position: absolute;
     top: 100%;
@@ -323,14 +329,14 @@
     border-color: black transparent transparent transparent;
 }
 
-.tooltip:hover .tooltiptext {
+.modal-omnivalt .tooltip:hover .tooltiptext {
     visibility: visible;
 }
 
 /*
  * Custom scrollbar 
  **/
-.scrollbar {
+.modal-omnivalt .scrollbar {
     overflow: auto;
     display: inline-block;
     vertical-align: top;
@@ -341,20 +347,20 @@
     margin-top: 5px;
 }
 
-#style-8::-webkit-scrollbar-track {
+.modal-omnivalt #style-8::-webkit-scrollbar-track {
     border: 1px solid rgba(0, 0, 0, 0.4);
     background-color: rgba(0, 0, 0, 0.4);
     border-radius: 5px;
 }
 
-#style-8::-webkit-scrollbar {
+.modal-omnivalt #style-8::-webkit-scrollbar {
     width: 5px;
     background-color: rgba(0, 0, 0, 0, 0.4);
     border: 1px solid rgba(0, 0, 0, 0.4);
     border-radius: 5px;
 }
 
-#style-8::-webkit-scrollbar-thumb {
+.modal-omnivalt #style-8::-webkit-scrollbar-thumb {
     border: 1px solid #000000;
     border-radius: 5px;
     background-color: #000000;
@@ -365,14 +371,14 @@
  **/
 
 @media only screen and (max-width: 808px) {
-    #omnivaMapContainer {
+    .modal-omnivalt #omnivaMapContainer {
         width: 99%;
         height: 30%;
         border: 1px solid black;
         background-color: lightgray !important;
     }
 
-    .omniva-search-bar {
+    .modal-omnivalt .omniva-search-bar {
         width: 99%;
         margin-top: 5px;
         padding: 0px 10px;
@@ -383,7 +389,7 @@
         width: 70%;
     }
 
-    .scrollbar {
+    .modal-omnivalt .scrollbar {
         overflow: auto;
         display: inline-block;
         vertical-align: top;
@@ -394,22 +400,22 @@
         margin-top: 5px;
     }
 
-    .esri-search__suggestions-menu {
+    .modal-omnivalt .esri-search__suggestions-menu {
         height: 150px;
     }
 }
 
-ol li {
+.modal-omnivalt ol li {
     list-style-type: decimal;
     list-style-type: upper-roman;
 }
 
-.omniva-modal-content form {
+.modal-omnivalt .omniva-modal-content form {
     margin-bottom: 10px;
 }
 
 @media only screen and (max-width: 768px) {
-    .omniva-modal-content {
+    .modal-omnivalt .omniva-modal-content {
         top: 0;
         left: 0;
         width: 100%;
@@ -417,25 +423,25 @@ ol li {
 
     }
 
-    #omnivaMapContainer {
+    .modal-omnivalt #omnivaMapContainer {
         width: 100%;
         height: 50%;
     }
 
-    .omniva-modal-body {
+    .modal-omnivalt .omniva-modal-body {
         padding: 0;
     }
 
-    .found_terminals.scrollbar {
+    .modal-omnivalt .found_terminals.scrollbar {
         max-height: 30vh;
     }
 
-    .terminal-container {
+    .modal-omnivalt .terminal-container {
 
         min-width: 170px;
     }
 
-    #omniva-search input {
+    .modal-omnivalt #omniva-search input {
         width: calc(100% - 50px);
     }
 }
@@ -443,7 +449,7 @@ ol li {
 
 @media screen and (min-width: 1500px) {
 
-    .omniva-modal-content {
+    .modal-omnivalt .omniva-modal-content {
         z-index: 20;
         position: fixed;
         top: 10%;
@@ -452,28 +458,28 @@ ol li {
         border-radius: 5px;
         width: 65%;
         height: 60%;
-        -webkit-animation-name: slideIn;
+        -webkit-animation-name: omnivaltSlideIn;
         -webkit-animation-duration: 0.4s;
-        animation-name: slideIn;
+        animation-name: omnivaltSlideIn;
         animation-duration: 0.4s;
     }
 
-    .scrollbar {
+    .modal-omnivalt .scrollbar {
         max-height: 40vh;
     }
 }
 
-#omniva-search {
+.modal-omnivalt #omniva-search {
     position: relative;
 }
 
-#omniva-search form:after {
+.modal-omnivalt #omniva-search form:after {
     content: "";
     clear: both;
     display: block;
 }
 
-#omniva-search form input {
+.modal-omnivalt #omniva-search form input {
     padding: 2px 10px;
     border: 1px solid #555;
     border-radius: 3px 0 0 3px;
@@ -484,11 +490,11 @@ ol li {
     background-color: #ffffff;
 }
 
-.esri-icon-zoom-in-magnifying-glass {
+.modal-omnivalt .esri-icon-zoom-in-magnifying-glass {
     display: none;
 }
 
-.omniva-autocomplete {
+.modal-omnivalt .omniva-autocomplete {
     position: absolute;
     background: #fff;
     z-index: 9;
@@ -498,36 +504,56 @@ ol li {
     max-width: 100%;
 }
 
-.omniva-autocomplete ul {
+.modal-omnivalt .omniva-autocomplete ul {
     list-style: none;
     margin: 0;
     width: 100%;
 }
 
-.omniva-autocomplete ul li {
+.modal-omnivalt .omniva-autocomplete ul li {
     cursor: pointer;
     padding: 5px;
     border-bottom: 1px solid #ccc;
     font-size: 14px;
 }
 
-.omniva-autocomplete ul li:nth-child(even) {
+.modal-omnivalt .omniva-autocomplete ul li:nth-child(even) {
     background-color: #f5f5f5;
 }
 
-.omniva-autocomplete ul li:hover {
+.modal-omnivalt .omniva-autocomplete ul li:hover {
     background-color: #efefef;;
 }
 
 
 /* omniva terminal selection */
-.omniva-terminals-list {
+.select-omnivalt .omniva-btn {
+    max-height: 30px;
+    line-height: 100%;
+    position: relative;
+    padding: 5px;
+    padding-right: 30px;
+    margin-top: 5px;
+    width: 100%;
+    max-width: 440px;
+}
+
+.select-omnivalt .omniva-btn img {
+    max-height: 20px;
+    max-width: 18px;
+    display: inline-block;
+    right: 10px;
+    position: absolute;
+    top: 3px;
+}
+
+.select-omnivalt .omniva-terminals-list {
     background-color: #fff;
     position: relative;
     max-width: 440px;
 }
 
-.omniva-terminals-list .inner-container {
+.select-omnivalt .omniva-terminals-list .inner-container {
     position: absolute;
     background: #fff;
     z-index: 100;
@@ -537,7 +563,7 @@ ol li {
     width: 100%;
 }
 
-.omniva-terminals-list .dropdown {
+.select-omnivalt .omniva-terminals-list .dropdown {
     border: 1px solid #aaa;
     border-radius: 4px;
     word-wrap: normal;
@@ -550,12 +576,12 @@ ol li {
     padding: 2px 20px 2px 5px;
 }
 
-.omniva-terminals-list.open .dropdown {
+.select-omnivalt .omniva-terminals-list.open .dropdown {
     border-bottom: none;
     border-radius: 4px 4px 0 0;
 }
 
-.omniva-terminals-list .dropdown:before {
+.select-omnivalt .omniva-terminals-list .dropdown:before {
     position: absolute;
     content: "";
     right: 0px;
@@ -565,7 +591,7 @@ ol li {
     background-color: #fff;
 }
 
-.omniva-terminals-list .dropdown:after {
+.select-omnivalt .omniva-terminals-list .dropdown:after {
     position: absolute;
     content: "";
     border-color: #888 transparent transparent transparent;
@@ -580,13 +606,13 @@ ol li {
     width: 0;
 }
 
-.omniva-terminals-list.open .dropdown:after {
+.select-omnivalt .omniva-terminals-list.open .dropdown:after {
     border-color: transparent transparent #888 transparent;
     border-width: 0px 4px 5px 4px;
 
 }
 
-.omniva-terminals-list ul {
+.select-omnivalt .omniva-terminals-list ul {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -594,7 +620,7 @@ ol li {
     overflow-y: auto;
 }
 
-.omniva-terminals-list ul li {
+.select-omnivalt .omniva-terminals-list ul li {
     background: none;
     border-radius: 0;
     border: none;
@@ -606,78 +632,60 @@ ol li {
     padding-left: 10px;
 }
 
-.omniva-terminals-list ul li.city {
+.select-omnivalt .omniva-terminals-list ul li.city {
     font-weight: 600;
     padding-left: 5px;
 }
 
-.omniva-terminals-list ul li.selected {
+.select-omnivalt .omniva-terminals-list ul li.selected {
     background-color: #ddd;
 }
 
-.omniva-terminals-list ul li a {
+.select-omnivalt .omniva-terminals-list ul li a {
     text-decoration: underline;
 }
 
-.omniva-terminals-list ul li:hover a,
-.omniva-terminals-list ul li:hover {
+.select-omnivalt .omniva-terminals-list ul li:hover a,
+.select-omnivalt .omniva-terminals-list ul li:hover {
     background-color: #0073aa;
     color: #ffffff;
 }
 
-.omniva-terminals-list .search-input:focus,
-.omniva-terminals-list .search-input {
+.select-omnivalt .omniva-terminals-list .search-input:focus,
+.select-omnivalt .omniva-terminals-list .search-input {
     display: inline-block;
     padding: 2px 5px;
     width: 100%;
     border-bottom: 1px solid #ccc;
     margin-bottom: 4px;
-    background-color: #ff6319 !important;
+    background-color: var(--omniva-main-color) !important;
     color: #ffffff;
 }
 
-.omniva-terminals-list .search-input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+.select-omnivalt .omniva-terminals-list .search-input::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
     color: inherit;
     opacity: 1; /* Firefox */
 }
 
-.omniva-terminals-list .search-input:-ms-input-placeholder { /* Internet Explorer 10-11 */
+.select-omnivalt .omniva-terminals-list .search-input:-ms-input-placeholder { /* Internet Explorer 10-11 */
     color: inherit;
 }
 
-.omniva-terminals-list .search-input::-ms-input-placeholder { /* Microsoft Edge */
+.select-omnivalt .omniva-terminals-list .search-input::-ms-input-placeholder { /* Microsoft Edge */
     color: inherit;
 }
 
-.omniva-terminals-list .show-more {
+.select-omnivalt .omniva-terminals-list .show-more {
     padding: 5px;
     text-align: center;
 }
 
-@keyframes bounce {
-    from {
-        top: 0px;
-    }
-    to {
-        top: -8px;
-    }
+.modal-omnivalt #omnivaMap img.active {
+    animation: omnivaltBounce 0.7s infinite alternate;
+    -webkit-animation: omnivaltBounce 0.7s infinite alternate;
 }
 
-@-webkit-keyframes bounce {
-    from {
-        top: 0px;
-    }
-    to {
-        top: -8px;
-    }
-}
-
-#omnivaMap img.active {
-    animation: bounce 0.7s infinite alternate;
-    -webkit-animation: bounce 0.7s infinite alternate;
-}
-
-.omniva-back-to-list {
+.modal-omnivalt .omniva-back-to-list {
     cursor: pointer;
     padding: 2px 10px;
     width: auto;
@@ -687,7 +695,7 @@ ol li {
     padding-left: 18px;
 }
 
-.omniva-back-to-list:before {
+.modal-omnivalt .omniva-back-to-list:before {
     content: "";
     display: block;
     width: 14px;
@@ -698,3 +706,27 @@ ol li {
     background-size: contain;
     position: absolute;
 }
+
+/*** START theme: Omniva ***/
+.modal-omnivalt.theme-omniva #map-search-button:hover {
+    border-color: #fff;
+}
+/*** END theme: Omniva ***/
+
+/*** START theme: Matkahuolto ***/
+.modal-omnivalt.theme-matkahuolto #map-search-button {
+    background-color: var(--matkahuolto-main-color);
+    border-color: var(--matkahuolto-main-color);
+}
+.modal-omnivalt.theme-matkahuolto #map-search-button:hover {
+    border-color: #fff;
+}
+.select-omnivalt.theme-matkahuolto .omniva-terminals-list .search-input:focus,
+.select-omnivalt.theme-matkahuolto .omniva-terminals-list .search-input {
+    background-color: var(--matkahuolto-main-color) !important;
+}
+.select-omnivalt.theme-matkahuolto .omniva-terminals-list ul li:hover a,
+.select-omnivalt.theme-matkahuolto .omniva-terminals-list ul li:hover {
+    background-color: var(--matkahuolto-main-color);
+}
+/*** END theme: Matkahuolto ***/
