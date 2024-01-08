@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.18 =
 # Fixed
 - Fixed bug when trying generate label from order edit page on PS 1.7.0-1.7.6
 
