@@ -32,6 +32,8 @@ class OmnivaltShipping extends CarrierModule
           'pt c' => 'PK',
           'c pt' => 'PU',
           'c c' => 'QH',
+          'c pt' => 'CD',
+          'pt pt' => 'CD',
           'courier_call' => 'QH',
         ),
         'estonia' => array(
@@ -467,7 +469,8 @@ class OmnivaltShipping extends CarrierModule
             $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
             $iso_code = strtoupper($iso_code);
             $contract_origin = Configuration::get('omnivalt_api_country');
-            if ($contract_origin !== 'ee' && $iso_code === 'FI') {
+            $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
+            if ($iso_code === 'FI' && $sender_iso_code === 'LT') {
                 return false;
             }
         }
@@ -989,15 +992,16 @@ class OmnivaltShipping extends CarrierModule
         return $helper->generateForm($fields_form);
     }
 
-    private function getTerminalsOptions($selected = '', $country = "")
+    private function getTerminalsOptions($selected = '', $country = "", $admin = false)
     {
         if (!$country) {
             $country = Country::getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
         }
 
         $contract_origin = Configuration::get('omnivalt_api_country');
+        $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
         $origin_allows = true;
-        if ($contract_origin !== 'ee' && $country === 'FI') {
+        if (!$admin && $country === 'FI' && $sender_iso_code === 'LT') {
             $origin_allows = false;
         }
 
@@ -1037,7 +1041,8 @@ class OmnivaltShipping extends CarrierModule
         }
      
         $contract_origin = Configuration::get('omnivalt_api_country');
-        if ($contract_origin !== 'ee' && $country === 'FI') {
+        $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
+        if ($country === 'FI' && $sender_iso_code === 'LT') {
             return [];
         }
 
@@ -1313,7 +1318,7 @@ class OmnivaltShipping extends CarrierModule
                 'packs' => $omnivaOrder->packs,
                 'total_paid_tax_incl' => $omnivaOrder->cod_amount,
                 'is_cod' => $omnivaOrder->cod,
-                'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode),
+                'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode, true),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
