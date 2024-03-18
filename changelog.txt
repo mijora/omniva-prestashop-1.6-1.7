@@ -1,3 +1,7 @@
+= 2.0.19 =
+# Changed
+- Allow FI terminals for LV senders
+
 = 2.0.18 =
 # Fixed
 - Fixed bug when trying generate label from order edit page on PS 1.7.0-1.7.6
