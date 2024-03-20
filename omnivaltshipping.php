@@ -32,8 +32,6 @@ class OmnivaltShipping extends CarrierModule
           'pt c' => 'PK',
           'c pt' => 'PU',
           'c c' => 'QH',
-          'c pt' => 'CD',
-          'pt pt' => 'CD',
           'courier_call' => 'QH',
         ),
         'estonia' => array(

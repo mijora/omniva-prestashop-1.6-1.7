@@ -283,7 +283,12 @@ class OmnivaApi
             }
         }
 
-        return 'baltic';
+        $country_iso = null;
+        if (Validate::isLoadedObject($address)) {
+            $country_iso = Country::getIsoById($address->id_country);
+        }
+
+        return $country_iso == 'FI' ? 'finland' : 'baltic';
     }
 
     private function getSenderContact()
