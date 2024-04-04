@@ -60,7 +60,6 @@ class OmnivaltShipping extends CarrierModule
 
     protected $_hooks = array(
         'actionCarrierUpdate', //For control change of the carrier's ID (id_carrier), the module must use the updateCarrier hook.
-        'displayAdminOrderContentShip',
         'displayBeforeCarrier',
         'displayAdminProductsExtra',
         'actionProductUpdate',

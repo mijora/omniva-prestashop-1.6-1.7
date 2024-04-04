@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Removed unused hook from list of registered hooks
+
 = 2.0.19 =
 # Changed
 - Allow FI terminals for LV senders
