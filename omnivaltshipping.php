@@ -1407,6 +1407,8 @@ class OmnivaltShipping extends CarrierModule
         $carrier = new Carrier($order->id_carrier);
         if($carrier->external_module_name == $this->name)
         {
+            $log_prefix = 'Cart #' . $order->id_cart . ' Order #' . $order->id . '. ';
+            OmnivaHelper::printToLog($log_prefix . 'Validating Order...', 'order');
             $omnivaOrder = new OmnivaOrder();
             $omnivaOrder->force_id = true;
             $omnivaOrder->packs = 1;
@@ -1422,6 +1424,7 @@ class OmnivaltShipping extends CarrierModule
                 $omnivaOrder->weight = 1;
             $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
             $omnivaOrder->add();
+            OmnivaHelper::printToLog($log_prefix . print_r(get_object_vars($omnivaOrder), true), 'order');
 
             // Add blank history, so that order would appear new orders tab in admin.
             $omnivaOrderHistory = new OmnivaOrderHistory();
