@@ -2,6 +2,9 @@
 # Fixed
 - Removed unused hook from list of registered hooks
 
+# Improved
+- Added a possibility to log actions
+
 = 2.0.19 =
 # Changed
 - Allow FI terminals for LV senders
