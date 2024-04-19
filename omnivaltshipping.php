@@ -60,7 +60,6 @@ class OmnivaltShipping extends CarrierModule
 
     protected $_hooks = array(
         'actionCarrierUpdate', //For control change of the carrier's ID (id_carrier), the module must use the updateCarrier hook.
-        'displayAdminOrderContentShip',
         'displayBeforeCarrier',
         'displayAdminProductsExtra',
         'actionProductUpdate',
@@ -93,7 +92,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.19';
+        $this->version = '2.0.20';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -544,7 +543,7 @@ class OmnivaltShipping extends CarrierModule
                 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city',
                 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
                 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
-                'omnivalt_label_comment_type'
+                'omnivalt_label_comment_type', 'omnivalt_autoselect'
             );
             $not_required = array('omnivalt_bank_account');
             $values = array();
@@ -846,6 +845,24 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
+                    'label' => $this->l('Autoselect terminal'),
+                    'name' => 'omnivalt_autoselect',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
+                    )
+                ),
+                array(
+                    'type' => 'switch',
                     'label' => $this->l('Send delivery email'),
                     'name' => 'send_delivery_email',
                     'is_bool' => true,
@@ -981,6 +998,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_pick_up_time_start'] = Configuration::get('omnivalt_pick_up_time_start') ? Configuration::get('omnivalt_pick_up_time_start') : '8:00';
         $helper->fields_value['omnivalt_pick_up_time_finish'] = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
+        $helper->fields_value['omnivalt_autoselect'] = Configuration::get('omnivalt_autoselect');
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
         $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') ? Configuration::get('omnivalt_send_return') : 'all';
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
@@ -1105,12 +1123,14 @@ class OmnivaltShipping extends CarrierModule
         }
 
         $showMap = Configuration::get('omnivalt_map');
+        $autoselect = Configuration::get('omnivalt_autoselect');
         $this->context->smarty->assign(array(
             'parcel_terminals' => $this->getTerminalsOptions($selected, $iso_code),
             'terminals_list' => $this->getTerminalForMap($selected, $iso_code),
             'omniva_current_country' => $iso_code,
             'omniva_postcode' => $address->postcode ?: '',
             'omniva_map' => $showMap,
+            'autoselect' => (int)$autoselect,
             'module_url' => $this->_path,
             'ps_version' => $this->getPsVersion(),
             'marker_img' => $marker_img,
@@ -1408,6 +1428,8 @@ class OmnivaltShipping extends CarrierModule
         $carrier = new Carrier($order->id_carrier);
         if($carrier->external_module_name == $this->name)
         {
+            $log_prefix = 'Cart #' . $order->id_cart . ' Order #' . $order->id . '. ';
+            OmnivaHelper::printToLog($log_prefix . 'Validating Order...', 'order');
             $omnivaOrder = new OmnivaOrder();
             $omnivaOrder->force_id = true;
             $omnivaOrder->packs = 1;
@@ -1423,6 +1445,7 @@ class OmnivaltShipping extends CarrierModule
                 $omnivaOrder->weight = 1;
             $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
             $omnivaOrder->add();
+            OmnivaHelper::printToLog($log_prefix . print_r(get_object_vars($omnivaOrder), true), 'order');
 
             // Add blank history, so that order would appear new orders tab in admin.
             $omnivaOrderHistory = new OmnivaOrderHistory();

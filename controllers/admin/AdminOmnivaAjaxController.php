@@ -100,6 +100,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             } else {
                 $omnivaCartTerminal->save();
             }
+            OmnivaHelper::printToLog('Cart #' . $order->id_cart . ' Order #' . $id_order . '. Changed terminal to ' . $id_terminal, 'admin');
         }
 
         $add_order = false;

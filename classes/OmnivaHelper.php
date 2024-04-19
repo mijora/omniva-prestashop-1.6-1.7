@@ -11,6 +11,8 @@ class OmnivaHelper
 
     const PARCELS_JSON_FILENAME = 'locations.json';
 
+    const ENABLE_LOGS = false;
+
     public function updateTerminals()
     {
         $omnivaPickupPoints = new PickupPoints();
@@ -42,5 +44,25 @@ class OmnivaHelper
     {
         json_decode($string);
         return json_last_error() === JSON_ERROR_NONE;
+    }
+
+    public static function printToLog($log_data, $file_name = 'debug')
+    {
+        if ( ! self::ENABLE_LOGS ) {
+            return;
+        }
+
+        if ( ! preg_match('/^[A-Za-z0-9_-]*$/', $file_name) ) {
+            $file_name = 'debug';
+        }
+        
+        $dir = self::PARCELS_JSON_DIR . 'logs';
+        if ( ! file_exists($dir) ) {
+            mkdir($dir, 0755, true);
+        }
+
+        $time = date('Y-m-d H:i:s');
+        $content = '[' . $time . '] ' . print_r($log_data, true);
+        file_put_contents($dir . '/' . $file_name . '.log', $content . PHP_EOL, FILE_APPEND);
     }
 }
