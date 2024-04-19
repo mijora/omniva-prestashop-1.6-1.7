@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.0.20 =
 # Fixed
 - Removed unused hook from list of registered hooks
 
