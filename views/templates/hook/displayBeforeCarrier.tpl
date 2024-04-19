@@ -21,6 +21,7 @@
     var omnivalt_current_country = '{$omniva_current_country}';
     var omnivalt_postcode = '{$omniva_postcode}';
     var omnivalt_show_map = {$omniva_map};
+    var omnivalt_autoselect = {$autoselect};
 </script>
 <script>
     var omnivalt_terminals = {$terminals_list|@json_encode nofilter};

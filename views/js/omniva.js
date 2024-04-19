@@ -97,7 +97,7 @@ var omniva_addrese_change = false;
                   
         });
         search.on('selectpostcode',function(){
-            findPosition(search.val(),true);    
+            findPosition(search.val(), omnivalt_autoselect);    
                   
         });
         

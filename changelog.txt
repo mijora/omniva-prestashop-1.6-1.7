@@ -4,6 +4,7 @@
 
 # Improved
 - Added a possibility to log actions
+- Added the option to disable automatic terminal selection
 
 = 2.0.19 =
 # Changed
