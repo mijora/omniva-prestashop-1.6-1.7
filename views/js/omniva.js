@@ -657,7 +657,8 @@ var omnivaltDelivery = {
             if($this[0].classList.contains('delivery_option_radio'))
             {
                 console.log('Block add method: Radio');
-                var moveTo = $this.closest('.delivery_option').find('.delivery_option_logo').next();
+                /* onepagecheckoutps v5 - 4.2.3 - presteamshop */
+                var moveTo = $this.closest((typeof OPC !== typeof undefined) ? '.delivery-option' : '.delivery_option').find('.delivery_option_logo').next();
                 $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo('#omnivalt_parcel_terminal_carrier_details');
                 $('#omnivalt_parcel_terminal_carrier_details').appendTo(moveTo);
             }
@@ -703,6 +704,13 @@ var omnivaltDelivery = {
                     {
                         //console.log(jsonData);
                         console.log('Terminal saved successfully');
+
+                        /* onepagecheckoutps - v4.2.3 - presteamshop */
+                        if (typeof OPC !== typeof undefined) {
+                            if ($('#btn-placer_order').is(':disabled')) {
+                                prestashop.emit('opc-payment-getPaymentList');
+                            }
+                        }
                     },
                     error: function(XMLHttpRequest, textStatus, errorThrown) {
                         console.log('Failed terminal save');
@@ -777,11 +785,18 @@ var omnivaltDelivery = {
         element.className = classes.join(" ").trim();
     }
 }
-	
+
 //when document is loaded...
-$(document).ready(function(){
-    launch_omniva();
-});
+/* onepagecheckoutps v5 - 4.2.3 - presteamshop */
+if (typeof OPC !== typeof undefined) {
+    prestashop.on('opc-shipping-getCarrierList-complete', () => {
+        launch_omniva();
+    });
+} else {
+    $(document).ready(function(){
+        launch_omniva();
+    });
+}
 
 function launch_omniva(retry = 0) {
     console.log('OMNIVA:', 'Loading map... Retry ' + retry);
