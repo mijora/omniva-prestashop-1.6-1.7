@@ -471,14 +471,16 @@ class OmnivaltShipping extends CarrierModule
                 return false;
             }
 
-            $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
-            $cart_size = OmnivaHelper::predictOrderSize($products, array(
-                'length' => (float) $carrier->max_depth,
-                'width' => (float) $carrier->max_width,
-                'height' => (float) $carrier->max_height,
-            ));
-            if ( ! $cart_size ) {
-                return false;
+            if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
+                $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
+                $cart_size = OmnivaHelper::predictOrderSize($products, array(
+                    'length' => (float) $carrier->max_depth,
+                    'width' => (float) $carrier->max_width,
+                    'height' => (float) $carrier->max_height,
+                ));
+                if ( ! $cart_size ) {
+                    return false;
+                }
             }
         }
 
