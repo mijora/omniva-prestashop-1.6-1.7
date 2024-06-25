@@ -1,6 +1,7 @@
 = Unreleased =
 # Improved
 - Added that Omniva delivery methods would not be displayed if the dimensions of the cart exceed the maximum dimensions specified in the carrier's settings
+- Added functions which allows to convert weight and dimension units to specified ones
 
 = 2.0.20 =
 # Fixed
