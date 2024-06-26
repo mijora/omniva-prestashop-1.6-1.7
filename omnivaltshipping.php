@@ -470,6 +470,18 @@ class OmnivaltShipping extends CarrierModule
             if ($iso_code === 'FI' && $sender_iso_code === 'LT') {
                 return false;
             }
+
+            if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
+                $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
+                $cart_size = OmnivaHelper::predictOrderSize($products, array(
+                    'length' => (float) $carrier->max_depth,
+                    'width' => (float) $carrier->max_width,
+                    'height' => (float) $carrier->max_height,
+                ));
+                if ( ! $cart_size ) {
+                    return false;
+                }
+            }
         }
 
         return $shipping_cost;
@@ -750,6 +762,11 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_sender',
+                    'html_content' => '<hr/>',
+                ),
+                array(
                     'type' => 'text',
                     'label' => $this->l('Company name'),
                     'name' => 'omnivalt_company',
@@ -826,6 +843,11 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_front',
+                    'html_content' => '<hr/>',
+                ),
+                array(
                     'type' => 'switch',
                     'label' => $this->l('Display map'),
                     'name' => 'omnivalt_map',
@@ -860,6 +882,11 @@ class OmnivaltShipping extends CarrierModule
                             'label' => $this->l('Disabled')
                         )
                     )
+                ),
+                array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_label',
+                    'html_content' => '<hr/>',
                 ),
                 array(
                     'type' => 'switch',
@@ -915,6 +942,11 @@ class OmnivaltShipping extends CarrierModule
                         'id' => 'id_option',
                         'name' => 'name'
                     )
+                ),
+                array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_manifest',
+                    'html_content' => '<hr/>',
                 ),
                 array(
                     'type' => 'select',
