@@ -1,3 +1,7 @@
+= Unreleased =
+# Improved
+- Added compatibility with One Page Checkout PS (onepagecheckoutps) module
+
 = 2.0.21 =
 # Improved
 - Added that Omniva delivery methods would not be displayed if the dimensions of the cart exceed the maximum dimensions specified in the carrier's settings
