@@ -363,6 +363,7 @@ class OmnivaApi
                     foreach ($barcodes as $barcode)
                     {
                         $order = new Order();
+                        $order->setOrderNumber($omnivaOrder->id);
                         $order->setTracking($barcode);
                         $order->setQuantity(1);
                         $order->setWeight(round($omnivaOrder->weight / $num_packages, 2));
