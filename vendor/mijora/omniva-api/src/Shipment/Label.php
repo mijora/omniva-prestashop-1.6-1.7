@@ -21,48 +21,26 @@ class Label
      * @param string $api_url
      */
 
-    public function setAuth($username, $password, $api_url = 'https://edixml.post.ee')
+    public function setAuth($username, $password, $api_url = 'https://edixml.post.ee', $debug = false)
     {
-        $this->request = new Request($username, $password, $api_url);
+        $this->request = new Request($username, $password, $api_url, $debug);
     }
 
-    /**
-     * @param array $barcodes Barcode or barcode array to get labels for
-     * @param string|null $send_to_email If email is set labels will be sent to that email. OMX API only.
-     * @param bool $use_legacy_api Should call be made using legacy api instead of OMX API. Default is FALSE
-     * 
+    /*
+     * @param array $barcodes
      * @return mixed
-     * 
-     * @throws OmnivaException
      */
-    public function getLabels($barcodes, $send_to_email = null, $use_legacy_api = false)
+
+    public function getLabels($barcodes)
     {
         if (!is_array($barcodes)) {
             $barcodes = [$barcodes];
         }
-
         if (empty($this->request)) {
             throw new OmnivaException("Please set username and password");
         }
-
-        $result = $use_legacy_api ? $this->request->get_labels($barcodes) : $this->request->getLabelsOmx($barcodes, $send_to_email);
-
+        $result = $this->request->getLabels($barcodes);
         return $result;
-    }
-
-    /**
-     * Sends given barcodes labels to set email. OMX API only.
-     * 
-     * @param array|string $barcodes
-     * @param string $email
-     * 
-     * @return mixed
-     * 
-     * @throws OmnivaException
-     */
-    public function sendLabelsToEmail($barcodes, $email)
-    {
-        return $this->getLabels($barcodes, $email);
     }
 
     /*
@@ -74,9 +52,9 @@ class Label
      * @return mixed
      */
 
-    public function downloadLabels($barcodes, $combine = true, $mode = 'I', $name = 'Omniva labels', $use_legacy_api = false)
+    public function downloadLabels($barcodes, $combine = true, $mode = 'I', $name = 'Omniva labels')
     {
-        $result = $this->getLabels($barcodes, $use_legacy_api);
+        $result = $this->getLabels($barcodes);
         if (is_array($result['labels'])) {
             $pdf = new Fpdi();
             $label_count = 0;
@@ -113,4 +91,5 @@ class Label
         }
         return false;
     }
+
 }

@@ -4,7 +4,6 @@ namespace Mijora\Omniva;
 
 class Helper
 {
-    const ESCAPE_FOR_API_TYPE_EMAIL = 1;
     /**
      * @var array
      */
@@ -78,18 +77,18 @@ class Helper
     
     public function extendTagWithAttributes($tag, $attributes, $close = true)
     {
-        $tag = "<" . $tag;
+        $tag = "<${tag}";
         if(is_array($attributes) && !empty($attributes))
         {
             foreach ($attributes as $attribute => $value)
             {
                 if($value)
-                    $tag .= " " . $attribute . "=\"" . $value . "\"";
+                    $tag .= " ${attribute}=\"${value}\"";
             }
         }
         $tag .= "> ";
         if($close)
-            $tag .= "</" . $tag . ">";
+            $tag .= "</${tag}>";
         return $tag;
     }
     
@@ -113,23 +112,5 @@ class Helper
             return $this->trackingMap[$msg];
         }
         return $msg;
-    }
-
-    /**
-     * @param string $value
-     * @param string $type
-     * @return string
-     */
-    public static function escapeForApi($value, $type = null)
-    {
-        switch ($type) {
-            case self::ESCAPE_FOR_API_TYPE_EMAIL:
-                return filter_var($value, FILTER_SANITIZE_EMAIL);
-
-            default:
-                return htmlspecialchars($value);
-        }
-
-        return $value;
     }
 }

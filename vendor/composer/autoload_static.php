@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit750038e411cce118e5fdedbf9b488d2c
+class ComposerStaticInit92f1885bd85045fec3f87a4f1ca3bcc7
 {
     public static $files = array (
         'e1af0acb87348aa51d89cfb77fc80e82' => __DIR__ . '/..' . '/mijora/omniva-api/overrides/tcpdf/tcpdf_config.php',
@@ -53,9 +53,9 @@ class ComposerStaticInit750038e411cce118e5fdedbf9b488d2c
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit750038e411cce118e5fdedbf9b488d2c::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit750038e411cce118e5fdedbf9b488d2c::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit750038e411cce118e5fdedbf9b488d2c::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit92f1885bd85045fec3f87a4f1ca3bcc7::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit92f1885bd85045fec3f87a4f1ca3bcc7::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit92f1885bd85045fec3f87a4f1ca3bcc7::$classMap;
 
         }, null, ClassLoader::class);
     }
