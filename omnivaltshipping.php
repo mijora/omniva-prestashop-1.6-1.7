@@ -1363,12 +1363,21 @@ class OmnivaltShipping extends CarrierModule
                 $error_msg = $error_msg ? $this->displayError($error_msg) : false;
             }
 
+            $shipment_additional_services = OmnivaApi::getAdditionalServices($order);
+            $shipment_additional_services_names = array();
+            if (! isset($shipment_additional_services['error'])) {
+                foreach ($shipment_additional_services as $additional_service_code) {
+                    $shipment_additional_services_names[$additional_service_code] = $this->getAdditionalServiceName($additional_service_code);
+                }
+            }
+
             $this->smarty->assign(array(
                 'total_weight' => $omnivaOrder->weight,
                 'packs' => $omnivaOrder->packs,
                 'total_paid_tax_incl' => $omnivaOrder->cod_amount,
                 'is_cod' => $omnivaOrder->cod,
                 'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode, true),
+                'active_additional_services' => implode(', ', $shipment_additional_services_names),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
@@ -1381,6 +1390,30 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, $omniva_tpl);
         }
+    }
+
+    private function getAdditionalServiceName($service_code)
+    {
+        $services = array(
+            'ST' => $this->l('Arrival SMS'),
+            'SF' => $this->l('Arrival email'),
+            'BP' => $this->l('Cash on delivery'),
+            'BC' => $this->l('Fragile'),
+            'CL' => $this->l('Delivery to private customer'),
+            'XT' => $this->l('Document return'),
+            'BS' => $this->l('Paid by receiver'),
+            'BI' => $this->l('Insurance'),
+            'BK' => $this->l('Personal delivery'),
+            'GN' => $this->l('Paid parcel SMS'),
+            'GM' => $this->l('Paid parcel email'),
+            'SB' => $this->l('Return notification SMS'),
+            'SG' => $this->l('Return notification email'),
+            'PC' => $this->l('Issue to persons at the age of 18+'),
+            'SS' => $this->l('Delivery confirmation SMS to sender'),
+            'SE' => $this->l('Delivery confirmation e-mail to sender'),
+        );
+
+        return (isset($services[$service_code])) ? $services[$service_code] : $service_code;
     }
 
     public static function getCarrierById($carrier_id)

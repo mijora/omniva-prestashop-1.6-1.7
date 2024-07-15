@@ -15,6 +15,8 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             'carrier_cal_url' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&callCourier=1',
             'finished_trans' => $this->module->l('Finished.'),
             'message_sent_trans' => $this->module->l('Message successfully sent.'),
+            'courier_call_success' => $this->module->l('Registered courier call'),
+            'courier_arrival_between' => $this->module->l('The courier will arrive between'),
             'incorrect_response_trans' => $this->module->l('Incorrect response.'),
             'ajaxCall' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&ajax=1',
             'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
@@ -43,7 +45,8 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             $this->cancelSkip();
             die();
         } else if (Tools::getValue('callCourier')) {
-            die($this->module->api->callCarrier());
+            $result = $this->module->api->callCarrier();
+            die(json_encode($result));
         }
     }
 

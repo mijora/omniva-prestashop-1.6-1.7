@@ -209,7 +209,7 @@
     </div>
 
 
-    <!-- Modal Carier call-->
+    <!-- Modal Courier call-->
     <div id="myModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <!-- Modal content-->
@@ -236,13 +236,15 @@
                         <div id="alertList"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="requestOmnivaltQourier"
+                        <button type="submit" id="requestOmnivaltCourier"
                             class="btn btn-default">{l s='Send' mod='omnivaltshipping'}</button>
                         <button type="button" class="btn btn-default"
                             data-dismiss="modal">{l s='Cancel' mod='omnivaltshipping'}</button>
+                        <button type="button" id="modalOmnivaltClose" class="btn btn-default"
+                            data-dismiss="modal" style="display:none">{l s='Close' mod='omnivaltshipping'}</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-<!--/ Modal Carier call-->
+<!--/ Modal Courier call-->

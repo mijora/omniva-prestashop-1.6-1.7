@@ -74,32 +74,7 @@ class OmnivaApi
 
             $is_terminal_service = ($service == "PA" || $service == "PU" || $service == 'CD');
 
-            $additionalServices = [];
-            if ($is_terminal_service)
-            {
-                $additionalServices[] = "ST";
-                if(Configuration::get('send_delivery_email'))
-                {
-                    $additionalServices[] = "SF";
-                }
-            }            
-            if ($omnivaOrder->cod) {
-                $additionalServices[] = "BP";
-                if ($country_iso == 'FI' && $is_terminal_service) {
-                    return ['msg' => 'Additional service COD is not available in this country'];
-                }
-            }
-
-            // 18+ check
-            foreach ($order->getProducts() as $orderProduct) {
-                $productId = (int) $orderProduct['product_id'];
-
-                $isProduct18Plus = Omniva18PlusProduct::get18PlusStatus($productId, true);
-
-                if ($isProduct18Plus) {
-                    $additionalServices[] = "PC";
-                }
-            }
+            $additionalServices = self::getAdditionalServices($order);
 
             // calculate weight
             $pack_weight = (float) $omnivaOrder->weight;
@@ -111,14 +86,26 @@ class OmnivaApi
                 $pack_weight = round($pack_weight / (int) $omnivaOrder->packs, 2);
             }
 
+            $is_consolidated = ($omnivaOrder->packs > 1 && $omnivaOrder->cod) ? true : false;
+
             for ($i = 0; $i < $omnivaOrder->packs; $i++)
             {
+                $package_id = (string) $id_order;
+                if ($omnivaOrder->packs > 1 && ! $is_consolidated) {
+                    $package_id .= '_' . ($i + 1);
+                }
+
                 $package = new Package();
-                $package->setId($id_order);
+                $package->setId($package_id);
                 $package->setService($service);
                 $additionalServiceObj = [];
                 foreach ($additionalServices as $additionalServiceCode)
                 {
+                    if ($is_consolidated && $i > 0) {
+                        if ($additionalServiceCode !== 'BC') {
+                            continue;
+                        }
+                    }
                     $additionalServiceObj[] = (new AdditionalService())->setServiceCode($additionalServiceCode);
                 }
                 $package->setAdditionalServices($additionalServiceObj);
@@ -128,7 +115,8 @@ class OmnivaApi
                 $package->setMeasures($measures);
 
                 //set COD
-                if($omnivaOrder->cod)
+                $allow_cod = ($is_consolidated && $i > 0) ? false : true;
+                if($omnivaOrder->cod && $allow_cod)
                 {
                     $company = Configuration::get('omnivalt_company');
                     $bank_account = Configuration::get('omnivalt_bank_account');
@@ -207,6 +195,45 @@ class OmnivaApi
         }
     }
 
+    public static function getAdditionalServices($order)
+    {
+        $omnivaOrder = new OmnivaOrder($order->id);
+        $orderAdress = new \Address($order->id_address_delivery);
+        $country_iso = Country::getIsoById($orderAdress->id_country);
+        $sendOffCountry = self::getSendOffCountry($orderAdress);
+        $service = self::getServiceCode($order->id_carrier, $sendOffCountry);
+        $additionalServices = [];
+
+        $is_terminal_service = ($service == "PA" || $service == "PU" || $service == 'CD');
+
+        if ($is_terminal_service) {
+            $additionalServices[] = "ST";
+            if(Configuration::get('send_delivery_email')) {
+                $additionalServices[] = "SF";
+            }
+        }            
+        
+        if ($omnivaOrder->cod) {
+            $additionalServices[] = "BP";
+            if ($country_iso == 'FI' && $is_terminal_service) {
+                return ['error' => 'Additional service COD is not available in this country'];
+            }
+        }
+
+        // 18+ check
+        foreach ($order->getProducts() as $orderProduct) {
+            $productId = (int) $orderProduct['product_id'];
+
+            $isProduct18Plus = Omniva18PlusProduct::get18PlusStatus($productId, true);
+
+            if ($isProduct18Plus) {
+                $additionalServices[] = "PC";
+            }
+        }
+
+        return $additionalServices;
+    }
+
     private function getReceiverName($orderAdress)
     {
         $reveicer_name = $orderAdress->firstname . ' ' . $orderAdress->lastname;
@@ -217,7 +244,7 @@ class OmnivaApi
         return trim($reveicer_name);
     }
 
-    public function getServiceCode($id_carrier, $sendOffCountry)
+    public static function getServiceCode($id_carrier, $sendOffCountry)
     {
         $send_method = '';
         $terminals = OmnivaltShipping::getCarrierIds(['omnivalt_pt']);
@@ -253,7 +280,7 @@ class OmnivaApi
         return $service;
     }
 
-    public function getSendOffCountry($address = null)
+    public static function getSendOffCountry($address = null)
     {
         $api_country = Configuration::get('omnivalt_api_country');
         $ee_service_enabled = Configuration::get('omnivalt_ee_service');
@@ -440,15 +467,25 @@ class OmnivaApi
         if (empty($pickup_start)) $pickup_start = '8:00';
         if (empty($pickup_end)) $pickup_end = '17:00';
 
-        $call = new CallCourier();
-        $call->setDestinationCountry($this->getSendOffCountry());
-        $call->setEarliestPickupTime($pickup_start);
-        $call->setLatestPickupTime($pickup_end);
-        $this->setAuth($call);
-        $call->setSender($this->getSenderContact());
-
         try {
-            return $call->callCourier();
+            $call = new CallCourier();
+            $call->setDestinationCountry($this->getSendOffCountry());
+            $call->setEarliestPickupTime($pickup_start);
+            $call->setLatestPickupTime($pickup_end);
+            $this->setAuth($call);
+            $call->setSender($this->getSenderContact());
+
+            $result = $call->callCourier();
+            if ($result) {
+                $result_data = $call->getResponseBody();
+                return array(
+                    'status' => true,
+                    'call_id' => $result_data['courierOrderNumber'],
+                    'start_time' => date('Y-m-d H:i:s', strtotime($result_data['startTime'])),
+                    'end_time' => date('Y-m-d H:i:s', strtotime($result_data['endTime'])),
+                );
+            }
+            return $result;
         }
         catch (OmnivaException $e)
         {
