@@ -478,11 +478,17 @@ class OmnivaApi
             $result = $call->callCourier();
             if ($result) {
                 $result_data = $call->getResponseBody();
+                $call_data = array(
+                    'id' => $result_data['courierOrderNumber'],
+                    'start' => date('Y-m-d H:i:s', strtotime($result_data['startTime'])),
+                    'end' => date('Y-m-d H:i:s', strtotime($result_data['endTime']))
+                );
+                OmnivaHelper::addScheduledCourierCall($call_data['id'], $call_data['start'], $call_data['end']);
                 return array(
                     'status' => true,
-                    'call_id' => $result_data['courierOrderNumber'],
-                    'start_time' => date('Y-m-d H:i:s', strtotime($result_data['startTime'])),
-                    'end_time' => date('Y-m-d H:i:s', strtotime($result_data['endTime'])),
+                    'call_id' => $call_data['id'],
+                    'start_time' => $call_data['start'],
+                    'end_time' => $call_data['end'],
                 );
             }
             return $result;

@@ -90,6 +90,33 @@ $(document).ready(() => {
         $('#modalOmnivaltClose').hide();
         $('#remove2').remove();
     });
+
+    $('#omnivalt-courier-calls-list button').on('click', function (e) {
+        e.preventDefault();
+        let call_id = $(this).attr('data-callid');
+        let row = $(this).closest('tr');
+        if (call_id) {
+            $.ajax({
+                url: cancel_courier_call + call_id,
+                type: 'get',
+                dataType: 'json',
+                beforeSend: function () {
+                    $('#alertList').empty();
+                },
+                success: function (data) {
+                    if (data) {
+                        row.find('td').css('background-color', '#f9000052');
+                        setTimeout(function () {
+                            row.hide();
+                        }, 1000);
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    });
     /* End of courier call */
 
     var params ={};

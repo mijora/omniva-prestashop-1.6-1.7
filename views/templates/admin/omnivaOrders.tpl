@@ -234,6 +234,24 @@
                         <b>{l s='Zipcode:' mod='omnivaltshipping'}</b> {$postcode}<br>
                         <b>{l s='Address:' mod='omnivaltshipping'}</b> {$address}<br><br>
                         <div id="alertList"></div>
+                        {if !empty($courier_calls)}
+                            <b>{l s='Scheduled courier arrivals:' mod='omnivaltshipping'}</b><br>
+                            <table id="omnivalt-courier-calls-list" class="table" style="width:auto;">
+                                {foreach $courier_calls as $courier_call}
+                                    <tr>
+                                        <td><small>{$courier_call['start_date']}</small></td>
+                                        <td>{$courier_call['start_time']}</td>
+                                        <td>
+                                        {if $courier_call['end_date'] != $courier_call['start_date']}
+                                            <small>{$courier_call['end_date']}</small>
+                                        {/if}
+                                        </td>
+                                        <td>{$courier_call['end_time']}</td>
+                                        <td><button type="button" class="btn btn-danger btn-xs" data-callid="{$courier_call['id']}" title="{l s='Cancel this courier call' mod='omnivaltshipping'}">&times;</button></td>
+                                    </tr>
+                                {/foreach}
+                            </table>
+                        {/if}
                     </div>
                     <div class="modal-footer">
                         <button type="submit" id="requestOmnivaltCourier"
