@@ -220,14 +220,18 @@ class OmnivaApi
             }
         }
 
-        // 18+ check
+        // Products services check
         foreach ($order->getProducts() as $orderProduct) {
             $productId = (int) $orderProduct['product_id'];
 
-            $isProduct18Plus = Omniva18PlusProduct::get18PlusStatus($productId, true);
-
+            $isProduct18Plus = OmnivaProduct::get18PlusStatus($productId, true);
             if ($isProduct18Plus) {
                 $additionalServices[] = "PC";
+            }
+
+            $isFragile = OmnivaProduct::getFragileStatus($productId, true);
+            if ($isFragile) {
+                $additionalServices[] = "BC";
             }
         }
 

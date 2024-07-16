@@ -1,10 +1,9 @@
 <style>
-
-    label[for='omnivaltshipping_is_18_plus'] {
+    .omniva-info label {
         font-weight: normal;
         margin-bottom: 0;
     }
-    input#omnivaltshipping_is_18_plus {
+    .omniva-info input {
         margin-left: 10px;
         margin-top: 0;
     }
@@ -23,6 +22,15 @@
         <input type="checkbox"
                name="omnivaltshipping_is_18_plus"
                id="omnivaltshipping_is_18_plus"
+                {if $is18Plus} checked {/if}>
+    </div>
+    <div class="form-group omniva-info">
+        <label for="omnivaltshipping_fragile">
+            {l s='Fragile' mod='omnivaltshipping'}
+        </label>
+        <input type="checkbox"
+               name="omnivaltshipping_fragile"
+               id="omnivaltshipping_fragile"
                 {if $is18Plus} checked {/if}>
     </div>
 

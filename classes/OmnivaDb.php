@@ -8,7 +8,7 @@ class OmnivaDb
         'omniva_order',
         'omniva_cart_terminal',
         'omniva_order_history',
-        'omniva_18_plus_product'
+        'omniva_product'
     ];
     /**
      * Create tables for module
