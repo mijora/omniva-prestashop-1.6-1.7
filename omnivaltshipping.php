@@ -7,7 +7,7 @@ require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
 require_once __DIR__ . "/classes/OmnivaOrderHistory.php";
-require_once __DIR__ . "/classes/Omniva18PlusProduct.php";
+require_once __DIR__ . "/classes/OmnivaProduct.php";
 
 require_once __DIR__ . "/classes/OmnivaHelper.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
@@ -92,7 +92,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.21';
+        $this->version = '2.1.0';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -175,10 +175,12 @@ class OmnivaltShipping extends CarrierModule
             $id_product = (int) $params['id_product'];
         }
 
-        $is18Plus = Omniva18PlusProduct::get18PlusStatus($id_product, true);
+        $is18Plus = OmnivaProduct::get18PlusStatus($id_product, true);
+        $isFragile = OmnivaProduct::getFragileStatus($id_product, true);
 
         $this->context->smarty->assign([
-            'is18Plus' => $is18Plus
+            'is18Plus' => $is18Plus,
+            'isFragile' => $isFragile,
         ]);
 
         if ($this->isPs17()) {
@@ -197,15 +199,15 @@ class OmnivaltShipping extends CarrierModule
         }
 
         $is18Plus = (bool) Tools::getValue('omnivaltshipping_is_18_plus');
+        $isFragile = (bool) Tools::getValue('omnivaltshipping_is_fragile');
 
-        $result = Omniva18PlusProduct::get18PlusStatus($productID);
-
-        if (!$result) {
+        if (!OmnivaProduct::isExists($productID)) {
             DB::getInstance()->insert(
-                Omniva18PlusProduct::$definition['table'],
+                OmnivaProduct::$definition['table'],
                 [
                     'id_product' => $productID,
-                    'is_18_plus' => (int) $is18Plus
+                    'is_18_plus' => (int) $is18Plus,
+                    'is_fragile' => (int) $isFragile
                 ]
             );
 
@@ -213,10 +215,12 @@ class OmnivaltShipping extends CarrierModule
         }
 
         DB::getInstance()->update(
-            Omniva18PlusProduct::$definition['table'],
+            OmnivaProduct::$definition['table'],
             [
-                'is_18_plus' => (int) $is18Plus
-            ]
+                'is_18_plus' => (int) $is18Plus,
+                'is_fragile' => (int) $isFragile
+            ],
+            'id_product = ' . $productID
         );
     }
 
