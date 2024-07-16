@@ -9,13 +9,10 @@ class OmnivaProduct extends ObjectModel
     public $id_product;
 
     /** @var bool $is_18_plus */
-    //public $is_18_plus;
+    public $is_18_plus;
 
-    /** @var string Object creation date */
-    //public $date_add;
-
-    /** @var string Object last modification date */
-    //public $date_upd;
+    /** @var bool $is_fragile */
+    public $is_fragile;
 
     /**
      * @see ObjectModel::$definition
