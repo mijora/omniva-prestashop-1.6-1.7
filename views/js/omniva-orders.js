@@ -61,6 +61,27 @@ $(document).ready(() => {
                     hide_after = 0;
                     $('#myModal .modal-footer button').hide();
                     $('#modalOmnivaltClose').show();
+                    $('.omnivalt-courier-calls').show();
+                    setTimeout(function () {
+                        let splited_start_time = data.start_time.split(" ");
+                        let splited_end_time = data.end_time.split(" ");
+                        let row = `<tr>
+                            <td><small>${splited_start_time[0]}</small></td>
+                            <td>${splited_start_time[1]}</td>
+                            <td>`;
+                        if (splited_start_time[0] !== splited_end_time[0]) {
+                            row += `<small>${splited_end_time[0]}</small>`
+                        }
+                        row += `</td>
+                            <td>${splited_end_time[1]}</td>
+                            <td><button class="btn btn-danger btn-xs" type="button" data-callid="${data.call_id}">&times;</button></td>
+                        </tr>`;
+                        if ($('#omnivalt-courier-calls-list > tbody > tr').length) {
+                            $('#omnivalt-courier-calls-list tr:last').after(row);
+                        } else {
+                            $('#omnivalt-courier-calls-list').append('<tbody/>').append(row);
+                        }
+                    }, 1000);
                 }
                 else
                 {
@@ -91,7 +112,7 @@ $(document).ready(() => {
         $('#remove2').remove();
     });
 
-    $('#omnivalt-courier-calls-list button').on('click', function (e) {
+    $(document).on('click', '#omnivalt-courier-calls-list button', function (e) {
         e.preventDefault();
         let call_id = $(this).attr('data-callid');
         let row = $(this).closest('tr');
@@ -107,7 +128,7 @@ $(document).ready(() => {
                     if (data) {
                         row.find('td').css('background-color', '#f9000052');
                         setTimeout(function () {
-                            row.hide();
+                            row.remove();
                         }, 1000);
                     }
                 },
