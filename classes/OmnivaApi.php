@@ -66,13 +66,17 @@ class OmnivaApi
 
             $sendOffCountry = $this->getSendOffCountry($orderAdress);
             $service = $this->getServiceCode($order->id_carrier, $sendOffCountry);
-
             $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-            if ($service === 'CD' && $sender_iso_code === 'LT') {
-                return ['msg' => 'Sending to Finland terminals is not available for LT senders'];
-            }
 
             $is_terminal_service = ($service == "PA" || $service == "PU" || $service == 'CD');
+            
+            if ($is_terminal_service && !self::isOmnivaMethodAllowed('pt', $country_iso)) {
+                $countries_txt = array('LT' => 'Lithuania', 'LV' => 'Latvia', 'EE' => 'Estonia', 'FI' => 'Finland');
+                $receiver_country_txt = (isset($countries_txt[$country_iso])) ? $countries_txt[$country_iso] : $country_iso;
+                $sender_country_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
+                $sender_country_txt = (isset($countries_txt[$sender_country_code])) ? $countries_txt[$sender_country_code] : $sender_country_code;
+                return ['msg' => 'Sending to ' . $receiver_country_txt . ' terminals from ' . $sender_country_txt . ' is not available for ' . $sender_iso_code . ' users'];
+            }
 
             $additionalServices = self::getAdditionalServices($order);
 
