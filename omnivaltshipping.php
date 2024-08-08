@@ -593,6 +593,8 @@ class OmnivaltShipping extends CarrierModule
     public function displayForm()
     {
         $default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
+        $countries_list = OmnivaHelper::getEuCountriesList(Context::getContext()->language->id);
+
         $lang_options = array(
             array(
                 'id_option' => 'en',
@@ -611,7 +613,7 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Lithuanian')
             ),
         );
-        $options = array(
+        $methods_options = array(
             array(
                 'id_option' => 'pt',
                 'name' => $this->l('Parcel terminal')
@@ -671,6 +673,13 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Do not send')
             ),
         );
+        $sender_countries_options = array();
+        foreach ( $countries_list as $country_code => $country_name ) {
+            $sender_countries_options[] = array(
+                'id_option' => $country_code,
+                'name' => $country_name
+            );
+        }
 
         $features = Feature::getFeatures(
             Context::getContext()->language->id
@@ -814,11 +823,15 @@ class OmnivaltShipping extends CarrierModule
                     'required' => true
                 ),
                 array(
-                    'type' => 'text',
+                    'type' => 'select',
                     'label' => $this->l('Company country code'),
                     'name' => 'omnivalt_countrycode',
-                    'size' => 20,
-                    'required' => true
+                    'required' => true,
+                    'options' => array(
+                        'query' => $sender_countries_options,
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    )
                 ),
                 array(
                     'type' => 'text',
@@ -849,7 +862,7 @@ class OmnivaltShipping extends CarrierModule
                     'desc' => $this->l('Please select send off from store type'),
                     'required' => true,
                     'options' => array(
-                        'query' => $options,
+                        'query' => $methods_options,
                         'id' => 'id_option',
                         'name' => 'name'
                     )

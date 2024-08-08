@@ -304,4 +304,19 @@ class OmnivaHelper
 
         return false;
     }
+
+    public static function getEuCountriesList( $lang_id )
+    {
+        $countries_list = array();
+        $all_countries = Country::getCountries($lang_id, false, false, false);
+        $eu_iso_codes = array('BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'GR', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE');
+
+        foreach ( $all_countries as $country ) {
+            if ( in_array(strtoupper($country['iso_code']), $eu_iso_codes) ) {
+                $countries_list[strtoupper($country['iso_code'])] = $country['name'];
+            }
+        }
+
+        return $countries_list;
+    }
 }
