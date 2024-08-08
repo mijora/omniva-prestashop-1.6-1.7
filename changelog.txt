@@ -1,6 +1,10 @@
-= Unreleased =
+= Unreleased (Preparing 2.1.0) =
 # Improved
 - Added compatibility with One Page Checkout PS (onepagecheckoutps) module
+- The module is adapted to work with Omniva OMX
+
+# Updated
+- API library to 1.1.0
 
 = 2.0.21 =
 # Improved

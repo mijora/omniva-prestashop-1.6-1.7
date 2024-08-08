@@ -7,7 +7,7 @@ require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
 require_once __DIR__ . "/classes/OmnivaOrderHistory.php";
-require_once __DIR__ . "/classes/Omniva18PlusProduct.php";
+require_once __DIR__ . "/classes/OmnivaProduct.php";
 
 require_once __DIR__ . "/classes/OmnivaHelper.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
@@ -92,7 +92,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.21';
+        $this->version = '2.1.0';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -175,10 +175,12 @@ class OmnivaltShipping extends CarrierModule
             $id_product = (int) $params['id_product'];
         }
 
-        $is18Plus = Omniva18PlusProduct::get18PlusStatus($id_product, true);
+        $is18Plus = OmnivaProduct::get18PlusStatus($id_product, true);
+        $isFragile = OmnivaProduct::getFragileStatus($id_product, true);
 
         $this->context->smarty->assign([
-            'is18Plus' => $is18Plus
+            'is18Plus' => $is18Plus,
+            'isFragile' => $isFragile,
         ]);
 
         if ($this->isPs17()) {
@@ -197,15 +199,15 @@ class OmnivaltShipping extends CarrierModule
         }
 
         $is18Plus = (bool) Tools::getValue('omnivaltshipping_is_18_plus');
+        $isFragile = (bool) Tools::getValue('omnivaltshipping_is_fragile');
 
-        $result = Omniva18PlusProduct::get18PlusStatus($productID);
-
-        if (!$result) {
+        if (!OmnivaProduct::isExists($productID)) {
             DB::getInstance()->insert(
-                Omniva18PlusProduct::$definition['table'],
+                OmnivaProduct::$definition['table'],
                 [
                     'id_product' => $productID,
-                    'is_18_plus' => (int) $is18Plus
+                    'is_18_plus' => (int) $is18Plus,
+                    'is_fragile' => (int) $isFragile
                 ]
             );
 
@@ -213,10 +215,12 @@ class OmnivaltShipping extends CarrierModule
         }
 
         DB::getInstance()->update(
-            Omniva18PlusProduct::$definition['table'],
+            OmnivaProduct::$definition['table'],
             [
-                'is_18_plus' => (int) $is18Plus
-            ]
+                'is_18_plus' => (int) $is18Plus,
+                'is_fragile' => (int) $isFragile
+            ],
+            'id_product = ' . $productID
         );
     }
 
@@ -459,26 +463,34 @@ class OmnivaltShipping extends CarrierModule
     public function getOrderShippingCost($params, $shipping_cost)
     {
         $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
-        $omniva_ref = (int) Configuration::get('omnivalt_pt_reference');
+        $omniva_terminal_ref = (int) Configuration::get('omnivalt_pt_reference');
+        $omniva_courier_ref = (int) Configuration::get('omnivalt_c_reference');
 
-        if (isset($this->context->cart->id_address_delivery) && (int) $carrier->id_reference === $omniva_ref) {
+        if (isset($this->context->cart->id_address_delivery)) {
             $address = new Address($this->context->cart->id_address_delivery);
             $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
             $iso_code = strtoupper($iso_code);
-            $contract_origin = Configuration::get('omnivalt_api_country');
-            $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-            if ($iso_code === 'FI' && $sender_iso_code === 'LT') {
-                return false;
+
+            if ((int) $carrier->id_reference === $omniva_terminal_ref) {
+                if (!OmnivaApi::isOmnivaMethodAllowed('pt', $iso_code)) {
+                    return false;
+                }
+
+                if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
+                    $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
+                    $cart_size = OmnivaHelper::predictOrderSize($products, array(
+                        'length' => (float) $carrier->max_depth,
+                        'width' => (float) $carrier->max_width,
+                        'height' => (float) $carrier->max_height,
+                    ));
+                    if ( ! $cart_size ) {
+                        return false;
+                    }
+                }
             }
 
-            if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
-                $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
-                $cart_size = OmnivaHelper::predictOrderSize($products, array(
-                    'length' => (float) $carrier->max_depth,
-                    'width' => (float) $carrier->max_width,
-                    'height' => (float) $carrier->max_height,
-                ));
-                if ( ! $cart_size ) {
+            if ((int) $carrier->id_reference === $omniva_courier_ref) {
+                if (!OmnivaApi::isOmnivaMethodAllowed('c', $iso_code)) {
                     return false;
                 }
             }
@@ -1049,7 +1061,7 @@ class OmnivaltShipping extends CarrierModule
         $contract_origin = Configuration::get('omnivalt_api_country');
         $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
         $origin_allows = true;
-        if (!$admin && $country === 'FI' && $sender_iso_code === 'LT') {
+        if (!$admin && !OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
             $origin_allows = false;
         }
 
@@ -1090,7 +1102,7 @@ class OmnivaltShipping extends CarrierModule
      
         $contract_origin = Configuration::get('omnivalt_api_country');
         $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-        if ($country === 'FI' && $sender_iso_code === 'LT') {
+        if (!OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
             return [];
         }
 
@@ -1363,12 +1375,21 @@ class OmnivaltShipping extends CarrierModule
                 $error_msg = $error_msg ? $this->displayError($error_msg) : false;
             }
 
+            $shipment_additional_services = OmnivaApi::getAdditionalServices($order);
+            $shipment_additional_services_names = array();
+            if (! isset($shipment_additional_services['error'])) {
+                foreach ($shipment_additional_services as $additional_service_code) {
+                    $shipment_additional_services_names[$additional_service_code] = $this->getAdditionalServiceName($additional_service_code);
+                }
+            }
+
             $this->smarty->assign(array(
                 'total_weight' => $omnivaOrder->weight,
                 'packs' => $omnivaOrder->packs,
                 'total_paid_tax_incl' => $omnivaOrder->cod_amount,
                 'is_cod' => $omnivaOrder->cod,
                 'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode, true),
+                'active_additional_services' => implode(', ', $shipment_additional_services_names),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
@@ -1381,6 +1402,30 @@ class OmnivaltShipping extends CarrierModule
 
             return $this->display(__FILE__, $omniva_tpl);
         }
+    }
+
+    private function getAdditionalServiceName($service_code)
+    {
+        $services = array(
+            'ST' => $this->l('Arrival SMS'),
+            'SF' => $this->l('Arrival email'),
+            'BP' => $this->l('Cash on delivery'),
+            'BC' => $this->l('Fragile'),
+            'CL' => $this->l('Delivery to private customer'),
+            'XT' => $this->l('Document return'),
+            'BS' => $this->l('Paid by receiver'),
+            'BI' => $this->l('Insurance'),
+            'BK' => $this->l('Personal delivery'),
+            'GN' => $this->l('Paid parcel SMS'),
+            'GM' => $this->l('Paid parcel email'),
+            'SB' => $this->l('Return notification SMS'),
+            'SG' => $this->l('Return notification email'),
+            'PC' => $this->l('Issue to persons at the age of 18+'),
+            'SS' => $this->l('Delivery confirmation SMS to sender'),
+            'SE' => $this->l('Delivery confirmation e-mail to sender'),
+        );
+
+        return (isset($services[$service_code])) ? $services[$service_code] : $service_code;
     }
 
     public static function getCarrierById($carrier_id)
