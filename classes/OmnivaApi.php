@@ -66,13 +66,17 @@ class OmnivaApi
 
             $sendOffCountry = $this->getSendOffCountry($orderAdress);
             $service = $this->getServiceCode($order->id_carrier, $sendOffCountry);
-
             $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-            if ($service === 'CD' && $sender_iso_code === 'LT') {
-                return ['msg' => 'Sending to Finland terminals is not available for LT senders'];
-            }
 
             $is_terminal_service = ($service == "PA" || $service == "PU" || $service == 'CD');
+            
+            if ($is_terminal_service && !self::isOmnivaMethodAllowed('pt', $country_iso)) {
+                $countries_txt = array('LT' => 'Lithuania', 'LV' => 'Latvia', 'EE' => 'Estonia', 'FI' => 'Finland');
+                $receiver_country_txt = (isset($countries_txt[$country_iso])) ? $countries_txt[$country_iso] : $country_iso;
+                $sender_country_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
+                $sender_country_txt = (isset($countries_txt[$sender_country_code])) ? $countries_txt[$sender_country_code] : $sender_country_code;
+                return ['msg' => 'Sending to ' . $receiver_country_txt . ' terminals from ' . $sender_country_txt . ' is not available for ' . $sender_iso_code . ' users'];
+            }
 
             $additionalServices = self::getAdditionalServices($order);
 
@@ -321,6 +325,84 @@ class OmnivaApi
         }
 
         return $country_iso == 'FI' ? 'finland' : 'baltic';
+    }
+
+    /**
+     * Check if the Omniva method is allowed to ship to the specified country
+     * 
+     * @param string $method_key - Method key. 'pt' for terminal, 'c' for courier
+     * @param string $receiver_country - The country code to which the delivery is being attempted
+     * @return boolean - Is allowed or not
+     */
+    public static function isOmnivaMethodAllowed($method_key, $receiver_country)
+    {
+        $api_country = Configuration::get('omnivalt_api_country');
+        $ee_service_enabled = Configuration::get('omnivalt_ee_service');
+        $fi_service_enabled = Configuration::get('omnivalt_fi_service');
+        $sender_country = Configuration::get('omnivalt_countrycode');
+
+        if (empty($api_country) || empty($sender_country)) {
+            return false;
+        }
+
+        $api_country = strtoupper($api_country);
+        $sender_country = strtoupper($sender_country);
+        $receiver_country = strtoupper($receiver_country);
+
+        if ($api_country == 'EE' && $receiver_country == 'EE' && !$ee_service_enabled) {
+            return false;
+        }
+        if ($api_country == 'EE' && $receiver_country == 'FI' && !$fi_service_enabled) {
+            return false;
+        }
+
+        /* Allowed countries structure:
+         * 'api_countries' => array(
+         *   'sender_country' => array('receiver_country')
+         *  )
+         */
+        $allowed_terminal_countries = array(
+            'LT,LV,EE' => array(
+                'LT' => array('LT', 'LV', 'EE', 'FI'),
+                'LV' => array('LT', 'LV', 'EE', 'FI'),
+                'EE' => array('LT', 'LV', 'EE', 'FI'),
+            ),
+        );
+        $allowed_courier_countries = array(
+            'LT,LV' => array(
+                'LT' => array('LT', 'LV', 'EE'),
+                'LV' => array('LT', 'LV', 'EE'),
+                'EE' => array('LT', 'LV', 'EE'),
+            ),
+            'EE' => array(
+                'LT' => array('LT', 'LV', 'EE', 'FI'),
+                'LV' => array('LT', 'LV', 'EE', 'FI'),
+                'EE' => array('LT', 'LV', 'EE', 'FI'),
+            ),
+        );
+
+        switch ($method_key) {
+            case 'pt':
+                $allowed_countries = $allowed_terminal_countries;
+                break;
+            case 'c':
+                $allowed_countries = $allowed_courier_countries;
+                break;
+            default:
+                $allowed_countries = array();
+        }
+        
+        $is_allow = false;
+        foreach ($allowed_countries as $api_countries => $shipping_countries) {
+            $splited_api_countries = explode(',', $api_countries);
+            if (in_array($api_country, $splited_api_countries) && isset($shipping_countries[$sender_country])) {
+                if (in_array($receiver_country, $shipping_countries[$sender_country])) {
+                    $is_allow = true;
+                }
+            }
+        }
+
+        return $is_allow;
     }
 
     private function getSenderContact()

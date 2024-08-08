@@ -463,26 +463,34 @@ class OmnivaltShipping extends CarrierModule
     public function getOrderShippingCost($params, $shipping_cost)
     {
         $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
-        $omniva_ref = (int) Configuration::get('omnivalt_pt_reference');
+        $omniva_terminal_ref = (int) Configuration::get('omnivalt_pt_reference');
+        $omniva_courier_ref = (int) Configuration::get('omnivalt_c_reference');
 
-        if (isset($this->context->cart->id_address_delivery) && (int) $carrier->id_reference === $omniva_ref) {
+        if (isset($this->context->cart->id_address_delivery)) {
             $address = new Address($this->context->cart->id_address_delivery);
             $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
             $iso_code = strtoupper($iso_code);
-            $contract_origin = Configuration::get('omnivalt_api_country');
-            $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-            if ($iso_code === 'FI' && $sender_iso_code === 'LT') {
-                return false;
+
+            if ((int) $carrier->id_reference === $omniva_terminal_ref) {
+                if (!OmnivaApi::isOmnivaMethodAllowed('pt', $iso_code)) {
+                    return false;
+                }
+
+                if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
+                    $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
+                    $cart_size = OmnivaHelper::predictOrderSize($products, array(
+                        'length' => (float) $carrier->max_depth,
+                        'width' => (float) $carrier->max_width,
+                        'height' => (float) $carrier->max_height,
+                    ));
+                    if ( ! $cart_size ) {
+                        return false;
+                    }
+                }
             }
 
-            if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
-                $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
-                $cart_size = OmnivaHelper::predictOrderSize($products, array(
-                    'length' => (float) $carrier->max_depth,
-                    'width' => (float) $carrier->max_width,
-                    'height' => (float) $carrier->max_height,
-                ));
-                if ( ! $cart_size ) {
+            if ((int) $carrier->id_reference === $omniva_courier_ref) {
+                if (!OmnivaApi::isOmnivaMethodAllowed('c', $iso_code)) {
                     return false;
                 }
             }
@@ -1053,7 +1061,7 @@ class OmnivaltShipping extends CarrierModule
         $contract_origin = Configuration::get('omnivalt_api_country');
         $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
         $origin_allows = true;
-        if (!$admin && $country === 'FI' && $sender_iso_code === 'LT') {
+        if (!$admin && !OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
             $origin_allows = false;
         }
 
@@ -1094,7 +1102,7 @@ class OmnivaltShipping extends CarrierModule
      
         $contract_origin = Configuration::get('omnivalt_api_country');
         $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-        if ($country === 'FI' && $sender_iso_code === 'LT') {
+        if (!OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
             return [];
         }
 
