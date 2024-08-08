@@ -1,6 +1,6 @@
 {
     "require": {
-        "mijora/omniva-api": "^1.0.7"
+        "mijora/omniva-api": "^1.1.0"
     },
     "config": {
         "prepend-autoloader": false

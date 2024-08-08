@@ -2,8 +2,8 @@
 
 function upgrade_module_2_1_0($module)
 {
-    $result = DB::getInstance()->execute('SHOW TABLES LIKE "' . _DB_PREFIX_ . 'omniva_18_plus_product"');
-    if ($result) {
+    $result = DB::getInstance()->executeS('SHOW TABLES LIKE "' . _DB_PREFIX_ . 'omniva_18_plus_product"');
+    if (!empty($result)) {
         $result = DB::getInstance()->execute('RENAME TABLE `' . _DB_PREFIX_ . 'omniva_18_plus_product` TO `' . _DB_PREFIX_ . 'omniva_product`');
         if (!$result) {
             return false;
