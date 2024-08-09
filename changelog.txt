@@ -1,7 +1,10 @@
-= Unreleased (Preparing 2.1.0) =
+= 2.1.0 =
 # Improved
 - Added compatibility with One Page Checkout PS (onepagecheckoutps) module
 - The module is adapted to work with Omniva OMX
+
+# Changed
+- Changed the type of the "Company country code" field to Select in the module settings to avoid an errors when entered an invalid value
 
 # Updated
 - API library to 1.1.0
