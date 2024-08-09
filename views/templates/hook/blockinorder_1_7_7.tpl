@@ -66,7 +66,12 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group col-md-12 d-flex justify-content-end">
+                        <div class="form-group col-md-8">
+                            {if !empty($active_additional_services)}
+                                <label class="text-muted">{l s="Active shipment additional services" mod='omnivaltshipping'}:</label> <i>{$active_additional_services}</i>
+                            {/if}
+                        </div>
+                        <div class="form-group col-md-4 d-flex justify-content-end">
                             <button type="button" name="omnivalt_save" id="omnivaltOrderSubmitBtn" class="btn btn-default"><i class="material-icons">save</i> {l s="Save"}</button>
                         </div>
                     </div>
@@ -77,7 +82,7 @@
                             {l s="Omniva Labels History" mod='omnivaltshipping'}
                         </h3>
                     </div>
-                    <div id="labels-history">
+                    <div id="labels-history" class="card-body">
                         <div class="col-md-3 col-xs-12">
                             <h4>{l s="Tracking numbers" mod='omnivaltshipping'}</h4>
                         </div>

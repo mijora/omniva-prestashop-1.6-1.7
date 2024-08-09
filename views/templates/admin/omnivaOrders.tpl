@@ -209,7 +209,7 @@
     </div>
 
 
-    <!-- Modal Carier call-->
+    <!-- Modal Courier call-->
     <div id="myModal" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <!-- Modal content-->
@@ -234,15 +234,37 @@
                         <b>{l s='Zipcode:' mod='omnivaltshipping'}</b> {$postcode}<br>
                         <b>{l s='Address:' mod='omnivaltshipping'}</b> {$address}<br><br>
                         <div id="alertList"></div>
+                        <div class="omnivalt-courier-calls" {if empty($courier_calls)}style="display:none"{/if}>
+                            <b>{l s='Scheduled courier arrivals:' mod='omnivaltshipping'}</b><br>
+                            <table id="omnivalt-courier-calls-list" class="table" style="width:auto;">
+                                {if !empty($courier_calls)}
+                                    {foreach $courier_calls as $courier_call}
+                                        <tr>
+                                            <td><small>{$courier_call['start_date']}</small></td>
+                                            <td>{$courier_call['start_time']}</td>
+                                            <td>
+                                            {if $courier_call['end_date'] != $courier_call['start_date']}
+                                                <small>{$courier_call['end_date']}</small>
+                                            {/if}
+                                            </td>
+                                            <td>{$courier_call['end_time']}</td>
+                                            <td><button type="button" class="btn btn-danger btn-xs" data-callid="{$courier_call['id']}" title="{l s='Cancel this courier call' mod='omnivaltshipping'}">&times;</button></td>
+                                        </tr>
+                                    {/foreach}
+                                {/if}
+                            </table>
+                        </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" id="requestOmnivaltQourier"
+                        <button type="submit" id="requestOmnivaltCourier"
                             class="btn btn-default">{l s='Send' mod='omnivaltshipping'}</button>
                         <button type="button" class="btn btn-default"
                             data-dismiss="modal">{l s='Cancel' mod='omnivaltshipping'}</button>
+                        <button type="button" id="modalOmnivaltClose" class="btn btn-default"
+                            data-dismiss="modal" style="display:none">{l s='Close' mod='omnivaltshipping'}</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-<!--/ Modal Carier call-->
+<!--/ Modal Courier call-->

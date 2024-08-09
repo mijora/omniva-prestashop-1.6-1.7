@@ -251,4 +251,72 @@ class OmnivaHelper
             'height' => (float) $all_order_dim_height,
         );
     }
+
+    public static function getScheduledCourierCalls()
+    {
+        $all_calls = unserialize(Configuration::get('omnivalt_courier_calls'));
+        if ( ! $all_calls ) {
+            return array();
+        }
+
+        foreach ( $all_calls as $id => $time ) {
+            if ( time() > strtotime($time['start']) && time() > strtotime($time['end']) ) {
+                unset($all_calls[$id]);
+            }
+        }
+
+        return $all_calls;
+    }
+
+    public static function splitScheduledCourierCalls( $calls )
+    {
+        $splited_calls = array();
+        foreach ( $calls as $id => $time ) {
+            $splited_calls[$id] = array(
+                'id' => $id,
+                'start_date' => date('Y-m-d', strtotime($time['start'])),
+                'start_time' => date('H:i', strtotime($time['start'])),
+                'end_date' => date('Y-m-d', strtotime($time['end'])),
+                'end_time' => date('H:i', strtotime($time['end'])),
+            );
+        }
+
+        return $splited_calls;
+    }
+
+    public static function addScheduledCourierCall( $id, $start_time, $end_time )
+    {
+        $all_calls = self::getScheduledCourierCalls();
+        $all_calls[$id] = array('start' => $start_time, 'end' => $end_time);
+
+        Configuration::updateValue('omnivalt_courier_calls', serialize($all_calls));
+    }
+
+    public static function removeScheduledCourierCall( $id )
+    {
+        $all_calls = self::getScheduledCourierCalls();
+        if ( isset($all_calls[$id]) ) {
+            unset($all_calls[$id]);
+            Configuration::updateValue('omnivalt_courier_calls', serialize($all_calls));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function getEuCountriesList( $lang_id )
+    {
+        $countries_list = array();
+        $all_countries = Country::getCountries($lang_id, false, false, false);
+        $eu_iso_codes = array('BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'GR', 'ES', 'FR', 'HR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL', 'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE');
+
+        foreach ( $all_countries as $country ) {
+            if ( in_array(strtoupper($country['iso_code']), $eu_iso_codes) ) {
+                $countries_list[strtoupper($country['iso_code'])] = $country['name'];
+            }
+        }
+
+        return $countries_list;
+    }
 }
