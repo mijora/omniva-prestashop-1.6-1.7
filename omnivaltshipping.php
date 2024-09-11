@@ -82,7 +82,7 @@ class OmnivaltShipping extends CarrierModule
     /**
      * COD modules
      */
-    public static $_codModules = array('ps_cashondelivery', 'venipakcod');
+    public static $_codModules = array('ps_cashondelivery', 'venipakcod', 'codpro');
 
     public $id_carrier;
 
