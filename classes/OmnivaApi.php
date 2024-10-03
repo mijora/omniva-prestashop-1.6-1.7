@@ -665,12 +665,15 @@ class OmnivaApi
                     $powerbi->setTerminalPrice($country, $prices['terminal']['min'], $prices['terminal']['max']);
                 }
             }
+            OmnivaHelper::printToLog("Sending data to PowerBi:\n" . print_r($powerbi, true), 'powerbi');
             $result = $powerbi->send();
             if ( $result ) {
+                OmnivaHelper::printToLog('Data sent successfully.', 'powerbi');
                 return true;
             }
+            OmnivaHelper::printToLog('Failed to send data.', 'powerbi');
         } catch (OmnivaException $e) {
-            //
+            OmnivaHelper::printToLog('An error occurred while preparing to send data or while sending.', 'powerbi');
         }
 
         return false;

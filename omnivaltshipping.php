@@ -1692,6 +1692,7 @@ class OmnivaltShipping extends CarrierModule
             'terminal' => array('omnivalt_pt'),
             'courier' => array('omnivalt_c'),
         );
+        OmnivaHelper::printToLog('Collecting orders data...', 'powerbi');
 
         // Get Orders
         $_orders = $this->getShipmentsDataFromDb('orders');
@@ -1791,11 +1792,13 @@ class OmnivaltShipping extends CarrierModule
         }
 
         // Add tracking date to orders
+        OmnivaHelper::printToLog('Marking orders as sended...', 'powerbi');
         foreach ( $_methods_keys as $method_name => $method_keys ) {
             foreach ( $_orders[$method_name] as $order ) {
                 $omnivaOrder = new OmnivaOrder($order['id_order']);
                 $omnivaOrder->date_track = date('Y-m-d H:i:s');
                 $omnivaOrder->update();
+                OmnivaHelper::printToLog(print_r(get_object_vars($omnivaOrder), true), 'powerbi');
             }
         }
 
@@ -1849,13 +1852,21 @@ class OmnivaltShipping extends CarrierModule
                     LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
                     INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . implode(',', self::getCarrierIds($method_keys)) . ") AND oo.date_track IS NULL
                     INNER JOIN (
-                        SELECT ooh.*, 
-                               ROW_NUMBER() OVER (PARTITION BY ooh.id_order ORDER BY ooh.date_add DESC) AS rn 
-                        FROM ps_omniva_order_history ooh 
+                        SELECT ooh.*
+                        FROM ps_omniva_order_history ooh
+                        INNER JOIN (
+                            -- collecting latest data for each order
+                            SELECT id_order, MAX(date_add) AS max_date_add
+                            FROM ps_omniva_order_history
+                            WHERE manifest IS NOT NULL 
+                              AND manifest != 0 
+                              AND manifest != -1
+                            GROUP BY id_order
+                        ) looh ON ooh.id_order = looh.id_order AND ooh.date_add = looh.max_date_add
                         WHERE ooh.manifest IS NOT NULL 
                           AND ooh.manifest != 0 
                           AND ooh.manifest != -1
-                    ) loh ON loh.id_order = a.id_order AND loh.rn = 1
+                    ) loh ON loh.id_order = a.id_order
                     ORDER BY loh.manifest DESC, a.id_order DESC";
                 $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
                 $orders[$method_name] = (is_array($sql_result)) ? $sql_result : array();
