@@ -114,6 +114,7 @@ class OmnivaltShipping extends CarrierModule
                 Configuration::updateValue('omnivalt_locations_update', time());
             }
         }
+        $this->sendStatistics();
     }
 
     /**
@@ -165,6 +166,23 @@ class OmnivaltShipping extends CarrierModule
             }
         }
         return true;
+    }
+
+    private function sendStatistics( $force = false, $test_mode = false )
+    {
+        $send_now = ($force) ? true : false;
+        $last_send = Configuration::get('omnivalt_last_statistics_send');
+        $date_minus_month = strtotime('-1 month', strtotime(date('Y-m-d')));
+
+        if ( date('j') == 2 && ( ! $last_send || ($last_send && $date_minus_month > $last_send) ) ) {
+            $send_now = true;
+        }
+        if ( $send_now ) {
+            $result = $this->api->sendStatistics($this->collectShipmentsData(), $test_mode);
+            if ( $result ) {
+                Configuration::updateValue('omnivalt_last_statistics_send', time());
+            }
+        }
     }
 
     public function hookDisplayAdminProductsExtra($params)
@@ -560,6 +578,10 @@ class OmnivaltShipping extends CarrierModule
             }
         }
 
+        if (Tools::getValue('forceSendStatistics')) {
+            $this->sendStatistics(true, true);
+        }
+
         if (Tools::isSubmit('submit' . $this->name)) {
             $fields = array(
                 'omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass',
@@ -694,6 +716,8 @@ class OmnivaltShipping extends CarrierModule
 
         $last_update_timestamp = Configuration::get('omnivalt_locations_update');
         $last_update_formated = !$last_update_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_update_timestamp);
+        $last_statistics_timestamp = Configuration::get('omnivalt_last_statistics_send');
+        $last_statistics_formated = !$last_statistics_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_statistics_timestamp);
 
         // Init Fields form array
         $fields_form[0]['form'] = array(
@@ -1000,6 +1024,16 @@ class OmnivaltShipping extends CarrierModule
                     'name' => 'updateTerminals',
                     'icon' => 'process-icon-refresh',
                     'title' => $this->l('Updated Terminals:') . ' ' . $last_update_formated
+                ],
+                [
+                    'href' => AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                    'js' => 'omivaltshippingForceSendStatistics(this); return false;',
+                    'class' => 'omniva-devtool hidden',
+                    'type' => 'button',
+                    'id'   => 'omniva-send-statistics',
+                    'name' => 'sendStatistics',
+                    'icon' => 'icon-suitcase',
+                    'title' => $this->l('Send statistics:') . ' ' . $last_statistics_formated
                 ],
             ]
         );
@@ -1753,8 +1787,16 @@ class OmnivaltShipping extends CarrierModule
             }
         }
 
+        // Add tracking date to orders
+        foreach ( $_methods_keys as $method_name => $method_keys ) {
+            foreach ( $_orders[$method_name] as $order ) {
+                $omnivaOrder = new OmnivaOrder($order['id_order']);
+                $omnivaOrder->date_track = date('Y-m-d H:i:s');
+                $omnivaOrder->update();
+            }
+        }
+
         return array(
-            'platform' => 'Prestashop',
             'platform_version' => _PS_VERSION_,
             'module_version' => $this->version,
             'client_api_user' => Configuration::get('omnivalt_api_user'),
@@ -1802,7 +1844,7 @@ class OmnivaltShipping extends CarrierModule
                         loh.date_upd AS omnivahistory_date_upd
                     FROM " . _DB_PREFIX_ . "orders a
                     LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
-                    INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . implode(',', self::getCarrierIds($method_keys)) . ") AND (oo.date_track IS NULL OR oo.date_track < '" . date('Y-m-d H:i:s') . "')
+                    INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . implode(',', self::getCarrierIds($method_keys)) . ") AND oo.date_track IS NULL
                     INNER JOIN (
                         SELECT ooh.*, 
                                ROW_NUMBER() OVER (PARTITION BY ooh.id_order ORDER BY ooh.date_add DESC) AS rn 

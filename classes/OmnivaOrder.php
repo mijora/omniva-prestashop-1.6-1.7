@@ -22,6 +22,8 @@ class OmnivaOrder extends ObjectModel
     /** @var string Object last modification date */
     public $date_upd;
 
+    public $date_track;
+
     /**
      * @see ObjectModel::$definition
      */
@@ -37,6 +39,7 @@ class OmnivaOrder extends ObjectModel
             'error' =>               ['type' => self::TYPE_STRING],
             'date_add' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
             'date_upd' =>            ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
+            'date_track' =>          ['type' => self::TYPE_DATE, 'validate' => 'isDate'],
         ],
     ];
 
