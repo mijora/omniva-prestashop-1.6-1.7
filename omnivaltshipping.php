@@ -172,9 +172,11 @@ class OmnivaltShipping extends CarrierModule
     {
         $send_now = ($force) ? true : false;
         $last_send = Configuration::get('omnivalt_last_statistics_send');
+        $last_try = Configuration::get('omnivalt_last_statistics_try');
         $date_minus_month = strtotime('-1 month', strtotime(date('Y-m-d')));
+        $date_minus_day = strtotime('-1 day', strtotime(date('Y-m-d')));
 
-        if ( date('j') == 2 && ( ! $last_send || ($last_send && $date_minus_month > $last_send) ) ) {
+        if ( date('j') == 2 && ( ! $last_send || ($last_send && $date_minus_month > $last_send) ) && ( ! $last_try || ($last_try && $date_minus_day > $last_try) ) ) {
             $send_now = true;
         }
         if ( $send_now ) {
@@ -182,6 +184,7 @@ class OmnivaltShipping extends CarrierModule
             if ( $result ) {
                 Configuration::updateValue('omnivalt_last_statistics_send', time());
             }
+            Configuration::updateValue('omnivalt_last_statistics_try', time()); // Try to send 1 time per day, if result false
         }
     }
 
