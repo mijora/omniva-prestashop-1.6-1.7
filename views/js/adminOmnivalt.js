@@ -35,7 +35,25 @@
             $('#omnivalt_fi_service_on').closest('.form-group').show();
         }
     });
+
+    $(window).bind('hashchange', function () {
+        var hash = window.location.hash.slice(1);
+        if (hash === 'dev') {
+            omnivaltShowDevButtons();
+        } else {
+            omnivaltShowDevButtons(false);
+        }
+    });
+    $(window).trigger('hashchange');
 });
+
+function omnivaltShowDevButtons(show = true) {
+    if (show) {
+        $('.omniva-devtool').removeClass('hidden');
+    } else {
+        $('.omniva-devtool').addClass('hidden');
+    }
+}
 
 function sendOmnivaltBulkAction(form, action, object, reload) {
     var order_ids = '';
@@ -77,6 +95,20 @@ function omivaltshippingForceTerminalUpdate(button) {
     const input = document.createElement('input');
     input.type = 'hidden';
     input.name = 'forceUpdateTerminals';
+    input.value = '1';
+    form.append(input);
+    document.body.append(form);
+    form.submit();
+}
+
+function omivaltshippingForceSendStatistics(button) {
+    const form = document.createElement('form');
+    form.action = button.href;
+    form.method = "post";
+    form.enctype = "multipart/form-data";
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'forceSendStatistics';
     input.value = '1';
     form.append(input);
     document.body.append(form);

@@ -8,7 +8,7 @@ function upgrade_module_2_1_0($module)
         if (!$result) {
             return false;
         }
-        $result = Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'omniva_product`ADD `is_fragile` TINYINT(1) NOT NULL');
+        $result = Db::getInstance()->execute('ALTER TABLE `' . _DB_PREFIX_ . 'omniva_product` ADD `is_fragile` TINYINT(1) NOT NULL');
         if (!$result) {
             return false;
         }

@@ -1,6 +1,10 @@
 = Unreleased =
 # Improved
 - Added recognition of COD module "Cash on delivery with order summary" (codpro).
+- Added sending of shipments data to the Omniva PowerBi system
+
+# Updated
+- API library to 1.2.0
 
 = 2.1.0 =
 # Improved
