@@ -1,4 +1,7 @@
 = Unreleased =
+# Fixed
+- Fixed return code sending parameter for OMX
+
 # Improved
 - Added recognition of COD module "Cash on delivery with order summary" (codpro).
 - Added sending of shipments data to the Omniva PowerBi system
