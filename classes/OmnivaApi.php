@@ -42,6 +42,7 @@ class OmnivaApi
         $omnivaCartTerminal = new OmnivaCartTerminal($order->id_cart);
         $id_terminal = $omnivaCartTerminal->id_terminal;
         $label_comment_type = (int) Configuration::get('omnivalt_label_comment_type');
+        $send_return_code = (in_array(Configuration::get('omnivalt_send_return'), array('all', 'sms', 'email'))) ? true : false;
         try {
             $shipment = new Shipment();
 
@@ -103,6 +104,7 @@ class OmnivaApi
                 $package = new Package();
                 $package->setId($package_id);
                 $package->setService($service);
+                $package->setReturnAllowed($send_return_code);
                 $additionalServiceObj = [];
                 foreach ($additionalServices as $additionalServiceCode)
                 {
@@ -174,21 +176,6 @@ class OmnivaApi
             }
 
             $shipment->setPackages($packages);
-
-            if (Configuration::get('omnivalt_send_return')) {
-                switch (Configuration::get('omnivalt_send_return')) {
-                    case 'sms':
-                        $shipment->setShowReturnCodeEmail(false);
-                        break;
-                    case 'email':
-                        $shipment->setShowReturnCodeSms(false);
-                        break;
-                    case 'dont':
-                        $shipment->setShowReturnCodeEmail(false);
-                        $shipment->setShowReturnCodeSms(false);
-                        break;
-                }
-            }
 
             //set auth data
             $this->setAuth($shipment);

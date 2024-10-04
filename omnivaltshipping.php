@@ -685,14 +685,14 @@ class OmnivaltShipping extends CarrierModule
                 'id_option' => 'all',
                 'name' => $this->l('Add to SMS and email')
             ),
-            array(
+            /*array(
                 'id_option' => 'sms',
                 'name' => $this->l('Add to SMS')
             ),
             array(
                 'id_option' => 'email',
                 'name' => $this->l('Add to email')
-            ),
+            ),*/
             array(
                 'id_option' => 'dont',
                 'name' => $this->l('Do not send')
