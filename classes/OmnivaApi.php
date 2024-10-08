@@ -14,6 +14,7 @@ use Mijora\Omniva\Shipment\Label;
 use Mijora\Omniva\Shipment\Manifest;
 use Mijora\Omniva\Shipment\Order;
 use Mijora\Omniva\Shipment\Tracking;
+use Mijora\Omniva\PowerBi\OmnivaPowerBi;
 
 class OmnivaApi
 {
@@ -41,6 +42,7 @@ class OmnivaApi
         $omnivaCartTerminal = new OmnivaCartTerminal($order->id_cart);
         $id_terminal = $omnivaCartTerminal->id_terminal;
         $label_comment_type = (int) Configuration::get('omnivalt_label_comment_type');
+        $send_return_code = (in_array(Configuration::get('omnivalt_send_return'), array('all', 'sms', 'email'))) ? true : false;
         try {
             $shipment = new Shipment();
 
@@ -102,6 +104,7 @@ class OmnivaApi
                 $package = new Package();
                 $package->setId($package_id);
                 $package->setService($service);
+                $package->setReturnAllowed($send_return_code);
                 $additionalServiceObj = [];
                 foreach ($additionalServices as $additionalServiceCode)
                 {
@@ -173,21 +176,6 @@ class OmnivaApi
             }
 
             $shipment->setPackages($packages);
-
-            if (Configuration::get('omnivalt_send_return')) {
-                switch (Configuration::get('omnivalt_send_return')) {
-                    case 'sms':
-                        $shipment->setShowReturnCodeEmail(false);
-                        break;
-                    case 'email':
-                        $shipment->setShowReturnCodeSms(false);
-                        break;
-                    case 'dont':
-                        $shipment->setShowReturnCodeEmail(false);
-                        $shipment->setShowReturnCodeSms(false);
-                        break;
-                }
-            }
 
             //set auth data
             $this->setAuth($shipment);
@@ -589,5 +577,92 @@ class OmnivaApi
     {
         if(method_exists($object, 'setAuth'))
             $object->setAuth($this->username, $this->password);
+    }
+
+    public function sendStatistics($shipments_data, $test_mode = false)
+    {
+        if ( empty($shipments_data) || ! is_array($shipments_data) ) {
+            return false;
+        }
+
+        $prepared_prices = array();
+        if ( isset($shipments_data['shipping_prices']) ) {
+            foreach ( $shipments_data['shipping_prices'] as $country => $country_methods ) {
+                $preparing_prices = array();
+                if ( ! in_array($country, array('LT', 'LV', 'EE', 'FI')) ) {
+                    continue;
+                }
+                foreach ( $country_methods as $method => $method_data ) {
+                    if ( ! $method_data['enabled'] ) {
+                        continue;
+                    }
+                    $price_values = array(
+                        'min' => null,
+                        'max' => null,
+                    );
+                    if ( is_array($method_data['prices']) ) {
+                        $min_price = 9999999;
+                        $max_price = 0;
+                        foreach ( $method_data['prices'] as $price_range ) {
+                            if ( $price_range['price'] < $min_price ) {
+                                $min_price = $price_range['price'];
+                            }
+                            if ( $price_range['price'] > $max_price ) {
+                                $max_price = $price_range['price'];
+                            }
+                        }
+                        $price_values['min'] = $min_price;
+                        $price_values['max'] = $max_price;
+                    } else {
+                        $price_values['min'] = $method_data['prices'];
+                    }
+                    $preparing_prices[] = array(
+                        'method' => $method,
+                        'prices' => $price_values,
+                    );
+                }
+                $prepared_prices[$country] = array(
+                    'courier' => null,
+                    'terminal' => null,
+                );
+                foreach ( $preparing_prices as $price ) {
+                    if ( ! array_key_exists($price['method'], $prepared_prices[$country]) ) {
+                        continue;
+                    }
+                    $prepared_prices[$country][$price['method']] = $price['prices'];
+                }
+            }
+        }
+
+        try {
+            $powerbi = new OmnivaPowerBi($this->username, $test_mode);
+            $powerbi
+                ->setPluginVersion($shipments_data['module_version'])
+                ->setPlatform('Prestashop v' .$shipments_data['platform_version'])
+                ->setSenderName($shipments_data['client_name'])
+                ->setSenderCountry($shipments_data['client_country'])
+                ->setDateTimeStamp($shipments_data['track_since'])
+                ->setOrderCountCourier((isset($shipments_data['total_orders']['courier'])) ? $shipments_data['total_orders']['courier'] : 0)
+                ->setOrderCountTerminal((isset($shipments_data['total_orders']['terminal'])) ? $shipments_data['total_orders']['terminal'] : 0);
+            foreach ( $prepared_prices as $country => $prices ) {
+                if ( $prices['courier'] !== null ) {
+                    $powerbi->setCourierPrice($country, $prices['courier']['min'], $prices['courier']['max']);
+                }
+                if ( $prices['terminal'] !== null ) {
+                    $powerbi->setTerminalPrice($country, $prices['terminal']['min'], $prices['terminal']['max']);
+                }
+            }
+            OmnivaHelper::printToLog("Sending data to PowerBi:\n" . print_r($powerbi, true), 'powerbi');
+            $result = $powerbi->send();
+            if ( $result ) {
+                OmnivaHelper::printToLog('Data sent successfully.', 'powerbi');
+                return true;
+            }
+            OmnivaHelper::printToLog('Failed to send data.', 'powerbi');
+        } catch (OmnivaException $e) {
+            OmnivaHelper::printToLog('An error occurred while preparing to send data or while sending.', 'powerbi');
+        }
+
+        return false;
     }
 }
