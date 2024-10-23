@@ -42,15 +42,15 @@
                                     <input type="text" name="weight" value="{$total_weight}"/>
                                 </span>
                             </div>
-                            <div class="field-row row">
+                            <div class="field-row row omnivalt-cod">
                                 <div class="col-sm-6">
                                     <span>{l s="C.O.D." mod='omnivaltshipping'}: </span>
                                     <span>
-                              <select name="is_cod">
-                                 <option value="0">{l s='No' mod='omnivaltshipping'}</option>
-                                 <option value="1" {if $is_cod} selected="selected" {/if}>{l s='Yes' mod='omnivaltshipping'}</option>
-                              </select>
-                           </span>
+                                        <select name="is_cod">
+                                            <option value="0">{l s='No' mod='omnivaltshipping'}</option>
+                                            <option value="1" {if $is_cod} selected="selected" {/if}>{l s='Yes' mod='omnivaltshipping'}</option>
+                                        </select>
+                                    </span>
                                 </div>
                                 <div class="col-sm-6">{l s="C.O.D. amount" mod='omnivaltshipping'}:
                                     <input type="text" name="cod_amount" value="{$total_paid_tax_incl}"/>

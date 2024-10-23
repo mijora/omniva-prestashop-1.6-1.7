@@ -22,9 +22,8 @@ class OmnivaApi
     const LABEL_COMMENT_TYPE_ORDER_ID = 1;
     const LABEL_COMMENT_TYPE_ORDER_REF = 2;
 
-    private $username;
-
-    private $password;
+    protected $username;
+    protected $password;
 
     public function __construct($username, $password)
     {
@@ -34,17 +33,20 @@ class OmnivaApi
 
     public function createShipment($id_order)
     {
-        $order = new \Order($id_order);
-        $customer = new Customer($order->id_customer);
-        $omnivaOrder = new OmnivaOrder($id_order);
-        $orderAdress = new \Address($order->id_address_delivery);
-        $country_iso = Country::getIsoById($orderAdress->id_country);
-        $omnivaCartTerminal = new OmnivaCartTerminal($order->id_cart);
-        $id_terminal = $omnivaCartTerminal->id_terminal;
-        $label_comment_type = (int) Configuration::get('omnivalt_label_comment_type');
-        $send_return_code = (in_array(Configuration::get('omnivalt_send_return'), array('all', 'sms', 'email'))) ? true : false;
+        try {
+            $orderObjs = $this->getOrderObjects($id_order);
+            $omnivaObjs = $this->getOmnivaObjects($orderObjs->order);
+            
+            $country_iso = $this->getCountryIso($orderObjs->address);
+            $id_terminal = $omnivaObjs->cart_terminal->id_terminal;
+            $receiver_data = $this->getReceiverData($orderObjs->address, $orderObjs->customer);
+        } catch (\Exception $e) {
+            return ['msg' => OmnivaHelper::buildExceptionMessage($e, 'Failed to get Order data')];
+        }
+
         try {
             $shipment = new Shipment();
+            $shipment->setComment($this->getLabelComment($orderObjs->order));
 
             $shipmentHeader = new ShipmentHeader();
             $shipmentHeader
@@ -52,22 +54,10 @@ class OmnivaApi
                 ->setFileId(date('Ymdhis'));
             $shipment->setShipmentHeader($shipmentHeader);
             
-            switch ($label_comment_type) {
-                case self::LABEL_COMMENT_TYPE_ORDER_ID:
-                    $shipment->setComment('Order ID: ' . $order->id);
-                    break;
-                case self::LABEL_COMMENT_TYPE_ORDER_REF:
-                    $shipment->setComment('Order Ref: ' . $order->getUniqReference());
-                    break;
-                default:
-                    // nothing
-                    break;
-            }
-
             $packages = [];
 
-            $sendOffCountry = $this->getSendOffCountry($orderAdress);
-            $service = $this->getServiceCode($order->id_carrier, $sendOffCountry);
+            $sendOffCountry = $this->getSendOffCountry($orderObjs->address);
+            $service = $this->getServiceCode($orderObjs->order->id_carrier, $sendOffCountry);
             $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
 
             $is_terminal_service = ($service == "PA" || $service == "PU" || $service == 'CD');
@@ -80,31 +70,22 @@ class OmnivaApi
                 return ['msg' => 'Sending to ' . $receiver_country_txt . ' terminals from ' . $sender_country_txt . ' is not available for ' . $sender_iso_code . ' users'];
             }
 
-            $additionalServices = self::getAdditionalServices($order);
+            $additionalServices = self::getAdditionalServices($orderObjs->order);
+            $pack_weight = $this->getPackageWeight($omnivaObjs->order);
 
-            // calculate weight
-            $pack_weight = (float) $omnivaOrder->weight;
-            if($pack_weight <= 0) {
-                $pack_weight = 1;
-            }
+            $is_consolidated = ($omnivaObjs->order->packs > 1 && $omnivaObjs->order->cod) ? true : false;
 
-            if ((int) $omnivaOrder->packs > 0) {
-                $pack_weight = round($pack_weight / (int) $omnivaOrder->packs, 2);
-            }
-
-            $is_consolidated = ($omnivaOrder->packs > 1 && $omnivaOrder->cod) ? true : false;
-
-            for ($i = 0; $i < $omnivaOrder->packs; $i++)
+            for ($i = 0; $i < $omnivaObjs->order->packs; $i++)
             {
                 $package_id = (string) $id_order;
-                if ($omnivaOrder->packs > 1 && ! $is_consolidated) {
+                if ($omnivaObjs->order->packs > 1 && ! $is_consolidated) {
                     $package_id .= '_' . ($i + 1);
                 }
 
                 $package = new Package();
                 $package->setId($package_id);
                 $package->setService($service);
-                $package->setReturnAllowed($send_return_code);
+                $package->setReturnAllowed($this->shouldSendReturnCode());
                 $additionalServiceObj = [];
                 foreach ($additionalServices as $additionalServiceCode)
                 {
@@ -123,13 +104,13 @@ class OmnivaApi
 
                 //set COD
                 $allow_cod = ($is_consolidated && $i > 0) ? false : true;
-                if($omnivaOrder->cod && $allow_cod)
+                if($omnivaObjs->order->cod && $allow_cod)
                 {
                     $company = Configuration::get('omnivalt_company');
                     $bank_account = Configuration::get('omnivalt_bank_account');
                     $cod = new Cod();
                     $cod
-                        ->setAmount($omnivaOrder->cod_amount)
+                        ->setAmount($omnivaObjs->order->cod_amount)
                         ->setBankAccount($bank_account)
                         ->setReceiverName($company)
                         ->setReferenceNumber(OmnivaltShipping::getReferenceNumber($id_order));
@@ -137,39 +118,29 @@ class OmnivaApi
                 }
 
                 // Receiver contact data
-                $receiverContact = new Contact();
                 $receiverAddress = new Address();
                 $receiverAddress
-                    ->setCountry($country_iso)
-                    ->setPostcode($orderAdress->postcode)
-                    ->setDeliverypoint($orderAdress->city)
-                    ->setStreet($orderAdress->address1)
-                    ;
+                    ->setCountry($receiver_data->country)
+                    ->setPostcode($receiver_data->postcode)
+                    ->setDeliverypoint($receiver_data->city)
+                    ->setStreet($receiver_data->street);
                 if ($is_terminal_service && $id_terminal)
                     $receiverAddress->setOffloadPostcode($id_terminal);
                 else
-                    $receiverAddress->setOffloadPostcode($orderAdress->postcode);
+                    $receiverAddress->setOffloadPostcode($receiver_data->postcode);
+
+                $receiverContact = new Contact();
                 $receiverContact
                     ->setAddress($receiverAddress)
-                    ->setPersonName($this->getReceiverName($orderAdress));
+                    ->setPersonName($receiver_data->name)
+                    ->setPhone($receiver_data->phone)
+                    ->setMobile($receiver_data->mobile);
                 if(Configuration::get('send_delivery_email'))
                 {
-                    $receiverContact->setEmail($customer->email);
+                    $receiverContact->setEmail($receiver_data->email);
                 }
-                if(isset($orderAdress->phone) && $orderAdress->phone)
-                {
-                    $receiverContact->setPhone($orderAdress->phone);
-                }
-                if(isset($orderAdress->phone_mobile) && $orderAdress->phone_mobile)
-                {
-                    $receiverContact->setMobile($orderAdress->phone_mobile);
-                }
-                elseif (isset($orderAdress->phone) && $orderAdress->phone)
-                {
-                    $receiverContact->setMobile($orderAdress->phone);
-                }
-                $package->setReceiverContact($receiverContact);
 
+                $package->setReceiverContact($receiverContact);
                 $package->setSenderContact($this->getSenderContact());
 
                 $packages[] = $package;
@@ -185,6 +156,94 @@ class OmnivaApi
         } catch (OmnivaException $e) {
             return ['msg' => $e->getMessage()];
         }
+    }
+
+    protected function getOrderObjects($id_order)
+    {
+        $order = new \Order((int)$id_order);
+        $customer = new \Customer((int)$order->id_customer);
+        $address = new \Address((int)$order->id_address_delivery);
+        $carrier = new \Carrier((int)$order->id_carrier);
+
+        return (object) array(
+            'order' => $order,
+            'customer' => $customer,
+            'address' => $address,
+            'carrier' => $carrier,
+        );
+    }
+
+    protected function getOmnivaObjects($order)
+    {
+        $omnivaOrder = new OmnivaOrder($order->id);
+        $cartTerminal = new OmnivaCartTerminal($order->id_cart);
+
+        return (object) array(
+            'order' => $omnivaOrder,
+            'cart_terminal' => $cartTerminal,
+        );
+    }
+
+    protected function getCountryIso($address)
+    {
+        return \Country::getIsoById($address->id_country);
+    }
+
+    protected function getLabelComment($order)
+    {
+        $label_comment_type = (int) Configuration::get('omnivalt_label_comment_type');
+        switch ($label_comment_type) {
+            case self::LABEL_COMMENT_TYPE_ORDER_ID:
+                return 'Order ID: ' . $order->id;
+                break;
+            case self::LABEL_COMMENT_TYPE_ORDER_REF:
+                return 'Order Ref: ' . $order->getUniqReference();
+                break;
+            default:
+                // nothing
+                break;
+        }
+        return '';
+    }
+
+    protected function shouldSendReturnCode()
+    {
+        return (in_array(Configuration::get('omnivalt_send_return'), array('all', 'sms', 'email'))) ? true : false;
+    }
+
+    protected function getPackageWeight($omnivaOrder)
+    {
+        $pack_weight = (float) $omnivaOrder->weight;
+        if ( $pack_weight <= 0 ) {
+            $pack_weight = 1;
+        }
+
+        if ( (int) $omnivaOrder->packs > 0 ) {
+            $pack_weight = round($pack_weight / (int) $omnivaOrder->packs, 2);
+        }
+
+        return $pack_weight;
+    }
+
+    protected function getReceiverData($address, $customer)
+    {
+        $mobile_phone = null;
+        if (isset($address->phone_mobile) && $address->phone_mobile) {
+            $mobile_phone = $address->phone_mobile;
+        } else if (isset($address->phone) && $address->phone) {
+            $mobile_phone = $address->phone;
+        }
+
+        return (object) array(
+            'name' => $this->getReceiverName($address),
+            'country' => $this->getCountryIso($address),
+            'postcode' => $address->postcode,
+            'city' => $address->city,
+            'street' => $address->address1,
+            'email' => $customer->email,
+            'phone' => (isset($address->phone) && $address->phone) ? $address->phone : null,
+            'mobile' => $mobile_phone
+        );
     }
 
     public static function getAdditionalServices($order)
@@ -393,7 +452,7 @@ class OmnivaApi
         return $is_allow;
     }
 
-    private function getSenderContact()
+    protected function getSenderContact()
     {
         $senderContact = new Contact();
         $senderAddress = new Address();
@@ -573,7 +632,7 @@ class OmnivaApi
         }
     }
 
-    private function setAuth($object)
+    protected function setAuth($object)
     {
         if(method_exists($object, 'setAuth'))
             $object->setAuth($this->username, $this->password);
