@@ -1,4 +1,7 @@
 = 2.2.0 =
+# Fixed
+- Fixed adding a new DB column in the Upgrade function of the version 2.1.0
+
 # Improved
 - Created the possibility to add/remove the desired delivery methods in the module settings
 - Created the ability to choose what actions will be performed during the module uninstall
