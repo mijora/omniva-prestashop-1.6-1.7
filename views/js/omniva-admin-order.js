@@ -1,9 +1,19 @@
 $(document).ready(function () {
     $('.omnivalt-carrier').on('change', 'select', function () {
-        if ($(this).val() == omnivalt_terminal_carrier)
-            $('.omnivalt-terminal').show();
-        else
+        for (var key in omnivalt_methods) {
+            if ($(this).val() != omnivalt_methods[key].carrier_id) {
+                continue;
+            }
+
             $('.omnivalt-terminal').hide();
+            $('.omnivalt-cod').hide();
+            if (key == 'pt') {
+                $('.omnivalt-terminal').show();
+            }
+            if (! omnivalt_methods[key].is_international) {
+                $('.omnivalt-cod').show();
+            }
+        }
     });
     $('.omnivalt-carrier select').trigger('change');
 
