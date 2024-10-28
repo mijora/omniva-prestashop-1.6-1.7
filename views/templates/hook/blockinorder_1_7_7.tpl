@@ -35,7 +35,7 @@
                             <input id="omniva-weight" type="text" name="weight" value="{$total_weight}" class="form-control" />
                         </div>
                     </div>
-                    <div class="form-row">
+                    <div class="form-row omniva-cod-block">
                         <div class="form-group col-md-6 col-xs-12">
                             <label for="omniva-cod">{l s="C.O.D." mod='omnivaltshipping'}:</label>
                             <select name="is_cod" id="omniva-cod" class="form-control">
@@ -65,13 +65,15 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-8">
-                            {if !empty($active_additional_services)}
+                    {if !empty($active_additional_services)}
+                        <div class="form-row omniva-additionalservices-block">
+                            <div class="form-group col-md-12">
                                 <label class="text-muted">{l s="Active shipment additional services" mod='omnivaltshipping'}:</label> <i>{$active_additional_services}</i>
-                            {/if}
+                            </div>
                         </div>
-                        <div class="form-group col-md-4 d-flex justify-content-end">
+                    {/if}
+                    <div class="form-row">
+                        <div class="form-group col-md-12 d-flex justify-content-end">
                             <button type="button" name="omnivalt_save" id="omnivaltOrderSubmitBtn" class="btn btn-default"><i class="material-icons">save</i> {l s="Save"}</button>
                         </div>
                     </div>

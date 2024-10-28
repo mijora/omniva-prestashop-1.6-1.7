@@ -115,8 +115,15 @@ class OmnivaHelper
         return $items;
     }
 
-    public static function convertWeightUnit( $value, $unit_from, $unit_to = 'kg')
+    public static function convertWeightUnit( $value, $unit_to, $unit_from = false )
     {
+        if ( ! $unit_from ) {
+            $unit_from = Configuration::get('PS_WEIGHT_UNIT');
+        }
+        if ( empty($unit_from) ) {
+            $unit_from = 'kg';
+        }
+
         $converted_weight = $value;
         if ( $unit_from === $unit_to ) {
             return $converted_weight;
@@ -158,8 +165,15 @@ class OmnivaHelper
         return $converted_weight;
     }
 
-    public static function convertDimensionsUnit( $value, $unit_from, $unit_to = 'kg' )
+    public static function convertDimensionsUnit( $value, $unit_to, $unit_from = false )
     {
+        if ( ! $unit_from ) {
+            $unit_from = Configuration::get('PS_DIMENSION_UNIT');
+        }
+        if ( empty($unit_from) ) {
+            $unit_from = 'cm';
+        }
+
         $converted_dim = $value;
         if ( $unit_from === $unit_to ) {
             return $converted_dim;
@@ -318,5 +332,15 @@ class OmnivaHelper
         }
 
         return $countries_list;
+    }
+
+    public static function buildExceptionMessage( $exception, $prefix = '' )
+    {
+        $msg = $prefix;
+        if ( ! empty($msg) ) {
+            $msg .= '. ';
+        }
+
+        return $msg . $exception->getMessage() . '. In ' . basename($exception->getFile()) . ':' . $exception->getLine();
     }
 }
