@@ -1,6 +1,6 @@
 <?php
 
-function upgrade_module_2_1_2($module)
+function upgrade_module_2_2_0($module)
 {
     $carriers = array('omnivalt_pt', 'omnivalt_c');
     foreach ($carriers as $key) {

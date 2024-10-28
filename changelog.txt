@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.2.0 =
 # Improved
 - Created the possibility to add/remove the desired delivery methods in the module settings
 - Created the ability to choose what actions will be performed during the module uninstall
