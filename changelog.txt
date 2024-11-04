@@ -1,3 +1,7 @@
+= Unreleased =
+# Updated
+- API library to 1.2.1
+
 = 2.2.0 =
 # Fixed
 - Fixed adding a new DB column in the Upgrade function of the version 2.1.0
