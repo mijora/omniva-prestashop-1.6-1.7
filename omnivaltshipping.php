@@ -1442,7 +1442,10 @@ class OmnivaltShipping extends CarrierModule
         $carriers = count($carriers) > 0 ? $carriers : array_keys(OmnivaCarrier::getAllMethods());
         $ref = [];
         foreach ($carriers as $value) {
-            $ref[] = OmnivaCarrier::getReference($value);
+            $carrier_ref_id = OmnivaCarrier::getReference($value);
+            if ($carrier_ref_id) {
+                $ref[] = OmnivaCarrier::getReference($value);
+            }
         }
         $data = [];
         if ($ref) {

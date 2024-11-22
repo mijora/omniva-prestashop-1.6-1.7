@@ -1,4 +1,7 @@
 = Unreleased =
+# Fixed
+- Fixed "Omniva orders" page error, when international carriers had never been created before
+
 # Updated
 - API library to 1.3.1
 
