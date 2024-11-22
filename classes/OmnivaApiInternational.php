@@ -169,11 +169,11 @@ class OmnivaApiInternational extends OmnivaApi
     /**************************** API related module functions ****************************/
     public static function getPackageKeyFromMethodKey( $method_key )
     {
-        if (str_contains($method_key, 'omnivalt_')) {
+        if (strpos($method_key, 'omnivalt_') !== false) {
             $method_key = str_replace('omnivalt_', '', $method_key);
         }
 
-        if (str_contains($method_key, 'int_')) {
+        if (strpos($method_key, 'int_') !== false) {
             $method_key = str_replace('int_', '', $method_key);
         }
 
@@ -194,7 +194,7 @@ class OmnivaApiInternational extends OmnivaApi
 
     public static function isInternationalMethod( $method_key )
     {
-        if (!str_contains($method_key, 'int_')) {
+        if (strpos($method_key, 'int_') === false) {
             return false;
         }
 

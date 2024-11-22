@@ -87,7 +87,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.2.0';
+        $this->version = '2.2.1';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -1442,7 +1442,10 @@ class OmnivaltShipping extends CarrierModule
         $carriers = count($carriers) > 0 ? $carriers : array_keys(OmnivaCarrier::getAllMethods());
         $ref = [];
         foreach ($carriers as $value) {
-            $ref[] = OmnivaCarrier::getReference($value);
+            $carrier_ref_id = OmnivaCarrier::getReference($value);
+            if ($carrier_ref_id) {
+                $ref[] = OmnivaCarrier::getReference($value);
+            }
         }
         $data = [];
         if ($ref) {
