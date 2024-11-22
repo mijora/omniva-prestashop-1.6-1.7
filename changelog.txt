@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.2.1 =
 # Fixed
 - Fixed "Omniva orders" page error, when international carriers had never been created before
 - Removed the use of the str_contains function, since this function only appeared in PHP 8.0
