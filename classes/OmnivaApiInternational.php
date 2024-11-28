@@ -154,7 +154,7 @@ class OmnivaApiInternational extends OmnivaApi
                 OmnivaHelper::convertWeightUnit($item['weight'], $units->weight),
                 OmnivaHelper::convertDimensionsUnit($item['length'], $units->dimensions),
                 OmnivaHelper::convertDimensionsUnit($item['width'], $units->dimensions),
-                OmnivaHelper::convertDimensionsUnit($item['height'], $units->dimensions),
+                OmnivaHelper::convertDimensionsUnit($item['height'], $units->dimensions)
             );
         }
 
