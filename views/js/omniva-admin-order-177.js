@@ -2,8 +2,23 @@ $(document).ready(function () {
     let omnivaltPanel = $('.omniva-block');
 
     $('#omniva-carrier').on('change', function () {
-        let action = $(this).val() == omnivalt_terminal_carrier ? 'remove' : 'add';
-        $('.omniva-terminal-block')[action + 'Class']('d-none');
+        for (var key in omnivalt_methods) {
+            if ($(this).val() != omnivalt_methods[key].carrier_id) {
+                continue;
+            }
+
+            $('.omniva-terminal-block').addClass('d-none');
+            $('.omniva-cod-block').addClass('d-none');
+            $('.omniva-additionalservices-block').addClass('d-none');
+
+            if (key == 'pt') {
+                $('.omniva-terminal-block').removeClass('d-none');
+            }
+            if (! omnivalt_methods[key].is_international) {
+                $('.omniva-cod-block').removeClass('d-none');
+                $('.omniva-additionalservices-block').removeClass('d-none');
+            }
+        }
     });
     $('#omniva-carrier').trigger('change');
 
@@ -94,7 +109,7 @@ $(document).ready(function () {
                     return;
                 }
 
-                showResponse(success_add_trans, 'alert-success');
+                showResponse(omnivalt_text.save_success, 'alert-success');
 
                 $("#omnivalt_print_btn").addClass('d-none');
             },

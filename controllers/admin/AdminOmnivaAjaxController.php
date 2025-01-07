@@ -164,6 +164,7 @@ class AdminOmnivaAjaxController extends ModuleAdminController
 
         $order = new Order($id_order);
         $orderAdress = new Address($order->id_address_delivery);
+        $carrier = OmnivaCarrier::getCarrierById($order->id_carrier);
         $omnivaOrder = new OmnivaOrder($id_order);
         if (!Validate::isLoadedObject($omnivaOrder)) {
             $error = $this->module->l('Order info not saved. Please save before generating labels');
@@ -180,6 +181,12 @@ class AdminOmnivaAjaxController extends ModuleAdminController
             if($omnivaOrder->update())
             {
                 $omnivaOrderHistory = OmnivaOrderHistory::getLatestOrderHistory($omnivaOrder->id);
+                $method_key = OmnivaCarrier::getCarrierMethodKey($carrier->id, $carrier->id_reference);
+
+                $international_service = false;
+                if (OmnivaApiInternational::isInternationalMethod($method_key)) {
+                    $international_service = OmnivaApiInternational::getPackageCode(OmnivaApiInternational::getPackageKeyFromMethodKey($method_key));
+                }
 
                 // If there is blank history, we update it with tracking info.
                 if(empty($omnivaOrderHistory) || $omnivaOrderHistory->tracking_numbers)
@@ -187,8 +194,12 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory->id_order = $omnivaOrder->id;
                 $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
 
-                $sendOffCountry = $this->module->api->getSendOffCountry($orderAdress);
-                $serviceCode = $this->module->api->getServiceCode($order->id_carrier, $sendOffCountry);
+                if ($international_service) {
+                    $serviceCode = $international_service;
+                } else {
+                    $sendOffCountry = $this->module->api->getSendOffCountry($orderAdress);
+                    $serviceCode = $this->module->api->getServiceCode($order->id_carrier, $sendOffCountry);
+                }
                 $omnivaOrderHistory->service_code = $serviceCode;
                 $omnivaOrderHistory->manifest = (int) Configuration::get('omnivalt_manifest');
                 $omnivaOrderHistory->save();

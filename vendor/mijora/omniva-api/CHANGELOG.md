@@ -1,3 +1,46 @@
+## [1.3.1]
+- added phone number conversion to international format for Lithuania
+
+## [1.3.0]
+- **Breaking change**: changed how Package::isOffloadPostcodeRequired() function works, now it expects to be given Package object, with main service, channel and servicePackage (if applied)
+- if offloadPostcode is set on receiver Address object, when getting receiver address for registration it will return array with offloadPostcode format
+- enabled LETTER main service, most validations left for Omniva API side
+- added additional services for LETTER main service
+
+## [1.2.1]
+- changed default date time for PowerBi to be 1990-01-01 00:00:00
+- Contact personName, altName and companyName fields now allows double quotes
+
+## [1.2.0]
+- created the ability to send statistical data to Omniva PowerBi
+- added that after the formatting function, the type of the measurement values is changed to string to avoid the problem when some servers provide a value with many numbers after the decimal point when converting to json
+- added COD amount value to be converted to string to avoid value with many decimal numbers issue on some servers
+- CallCourierOmxRequest (and CallCourier for backwards compatibility) now accepts timezone for better calculation of pickup datetime, if not set uses server timezone
+- altName tag support for sender contact. When setting sender contact onto package it will automaticaly fill altName with personName if altName was not set on sender contact
+- preparations for non Baltic states shipments (servicePackageHelper)
+
+## [1.1.0] - Improvements
+- adapted to work with the Omniva OMX server
+
+## [1.0.18] - Fixes
+- fixed filtering of locations by type
+- adapted to work with PHP 5.6
+- fixed the barcode show when using TCPDF library version 6.7.4 or newer
+
+## [1.0.17] - Improvements
+- added error message when receiving a "401 Unauthorized" error
+- added debug to all functions in Request class
+- added enableDebug function in Request class
+- unified names of all functions in Request class
+- deprecated function get_labels() in Request class. Replaced with getLabels().
+- deprecated function get_debug_data() in Request class. Replaced with getDebugData().
+- when initializing the Request class, all parameters became unnecessary, as the possibility to add them through separate functions was created
+- added possibility to register multi-parcels shipments (MPS)
+
+## [1.0.16] - Fixes
+- fixed server URl change
+- improved server URL management
+
 ## [1.0.15] - Improvements
 - changed to use local envelope scheme
 

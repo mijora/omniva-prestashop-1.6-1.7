@@ -24,7 +24,7 @@ $(document).ready(() => {
     });
 
     /* Start courier call */
-    $('#requestOmnivaltQourier').on('click', function (e) {
+    $('#requestOmnivaltCourier').on('click', function (e) {
         e.preventDefault();
         $.ajax({
             url: carrier_cal_url,
@@ -34,11 +34,12 @@ $(document).ready(() => {
                 $('#alertList').empty();
             },
             success: function (data) {
+                let hide_after = 3000;
                 if (data == '1')
                 {
                     $('#alertList').append(
                         `<div class="alert alert-success" id="remove2">
-                            <strong>${finished_trans}</strong>${message_sent_trans}
+                            <strong>${finished_trans}</strong> ${message_sent_trans}
                         </div>`
                     );
                 }
@@ -50,6 +51,38 @@ $(document).ready(() => {
                         </div>`
                     );
                 }
+                else if(typeof data.call_id !== 'undefined')
+                {
+                    $('#alertList').append(
+                        `<div class="alert alert-success" id="remove2">
+                            <strong>${finished_trans}</strong> ${courier_call_success} (ID: ${data.call_id}). ${courier_arrival_between} ${data.start_time} - ${data.end_time}.
+                        </div>`
+                    );
+                    hide_after = 0;
+                    $('#myModal .modal-footer button').hide();
+                    $('#modalOmnivaltClose').show();
+                    $('.omnivalt-courier-calls').show();
+                    setTimeout(function () {
+                        let splited_start_time = data.start_time.split(" ");
+                        let splited_end_time = data.end_time.split(" ");
+                        let row = `<tr>
+                            <td><small>${splited_start_time[0]}</small></td>
+                            <td>${splited_start_time[1]}</td>
+                            <td>`;
+                        if (splited_start_time[0] !== splited_end_time[0]) {
+                            row += `<small>${splited_end_time[0]}</small>`
+                        }
+                        row += `</td>
+                            <td>${splited_end_time[1]}</td>
+                            <td><button class="btn btn-danger btn-xs" type="button" data-callid="${data.call_id}">&times;</button></td>
+                        </tr>`;
+                        if ($('#omnivalt-courier-calls-list > tbody > tr').length) {
+                            $('#omnivalt-courier-calls-list tr:last').after(row);
+                        } else {
+                            $('#omnivalt-courier-calls-list').append('<tbody/>').append(row);
+                        }
+                    }, 1000);
+                }
                 else
                 {
                     $('#alertList').append(
@@ -59,18 +92,54 @@ $(document).ready(() => {
                     );
                 }
 
-                setTimeout(function () {
-                    $('#remove2').remove();
-                    $('#myModal').modal('hide');
-                }, 3000);
-
+                if (hide_after > 0) {
+                    setTimeout(function () {
+                        $('#remove2').remove();
+                        $('#myModal').modal('hide');
+                    }, hide_after);
+                }
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
             }
         });
     });
-    /*/End of courier call */
+
+    $('#modalOmnivaltClose').on('click', function (e) {
+        e.preventDefault();
+        $('#myModal .modal-footer button').show();
+        $('#modalOmnivaltClose').hide();
+        $('#remove2').remove();
+    });
+
+    $(document).on('click', '#omnivalt-courier-calls-list button', function (e) {
+        e.preventDefault();
+        let call_id = $(this).attr('data-callid');
+        let row = $(this).closest('tr');
+        if (call_id) {
+            $.ajax({
+                url: cancel_courier_call + call_id,
+                type: 'get',
+                dataType: 'json',
+                beforeSend: function () {
+                    $('#alertList').empty();
+                },
+                success: function (data) {
+                    if (data) {
+                        row.find('td').css('background-color', '#f9000052');
+                        setTimeout(function () {
+                            row.remove();
+                        }, 1000);
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            });
+        }
+    });
+    /* End of courier call */
+
     var params ={};
     window.location.search
         .replace(/[?&]+([^=&]+)=([^&]*)/gi, function (str, key, value) {

@@ -13,8 +13,11 @@ class AdminOmnivaOrdersController extends ModuleAdminController
         Media::addJsDef([
             'check_orders' => $this->module->l('Please select orders'),
             'carrier_cal_url' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&callCourier=1',
+            'cancel_courier_call' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&cancelCourier=',
             'finished_trans' => $this->module->l('Finished.'),
             'message_sent_trans' => $this->module->l('Message successfully sent.'),
+            'courier_call_success' => $this->module->l('Registered courier call'),
+            'courier_arrival_between' => $this->module->l('The courier will arrive between'),
             'incorrect_response_trans' => $this->module->l('Incorrect response.'),
             'ajaxCall' => $this->context->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_ORDERS) . '&ajax=1',
             'orderLink' => $this->context->link->getAdminLink('AdminOrders') . '&vieworder',
@@ -43,7 +46,11 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             $this->cancelSkip();
             die();
         } else if (Tools::getValue('callCourier')) {
-            die($this->module->api->callCarrier());
+            $result = $this->module->api->callCarrier();
+            die(json_encode($result));
+        } else if (Tools::getValue('cancelCourier')) {
+            $result = OmnivaHelper::removeScheduledCourierCall(Tools::getValue('cancelCourier'));
+            die(json_encode($result));
         }
     }
 
@@ -122,6 +129,8 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             $startGroup = 1;
         }
 
+        $courier_calls = OmnivaHelper::getScheduledCourierCalls();
+
         $this->context->smarty->assign(array(
             'orders' => $this->getOrders($page - 1, $perPage),
             'sender' => Configuration::get('omnivalt_company'),
@@ -142,6 +151,7 @@ class AdminOmnivaOrdersController extends ModuleAdminController
 
             'manifestNum' => strval(Configuration::get('omnivalt_manifest')),
             'total' => $this->_listTotal,
+            'courier_calls' => OmnivaHelper::splitScheduledCourierCalls($courier_calls),
         ));
         $this->context->smarty->assign(
             array(

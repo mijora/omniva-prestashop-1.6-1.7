@@ -7,10 +7,11 @@ require_once __DIR__ . "/classes/OmnivaDb.php";
 require_once __DIR__ . "/classes/OmnivaCartTerminal.php";
 require_once __DIR__ . "/classes/OmnivaOrder.php";
 require_once __DIR__ . "/classes/OmnivaOrderHistory.php";
-require_once __DIR__ . "/classes/Omniva18PlusProduct.php";
-
+require_once __DIR__ . "/classes/OmnivaProduct.php";
+require_once __DIR__ . "/classes/OmnivaCarrier.php";
 require_once __DIR__ . "/classes/OmnivaHelper.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
+require_once __DIR__ . "/classes/OmnivaApiInternational.php";
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -73,16 +74,10 @@ class OmnivaltShipping extends CarrierModule
         'actionObjectOrderUpdateAfter'
     );
 
-    private static $_carriers = array(
-        //"Public carrier name" => "technical name",
-        'Parcel terminal' => 'omnivalt_pt',
-        'Courier' => 'omnivalt_c',
-    );
-
     /**
      * COD modules
      */
-    public static $_codModules = array('ps_cashondelivery', 'venipakcod');
+    public static $_codModules = array('ps_cashondelivery', 'venipakcod', 'codpro');
 
     public $id_carrier;
 
@@ -92,7 +87,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.0.20';
+        $this->version = '2.2.1';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -105,15 +100,18 @@ class OmnivaltShipping extends CarrierModule
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
-        $this->helper = new OmnivaHelper();
-        $this->api = new OmnivaApi(Configuration::get('omnivalt_api_user'), Configuration::get('omnivalt_api_pass'));
-        if (!Configuration::get('omnivalt_api_url'))
+        if (!Configuration::get('omnivalt_api_user'))
             $this->warning = $this->l('Please set up module');
+
+        $this->helper = new OmnivaHelper();
+        $this->api = new OmnivaApiInternational(Configuration::get('omnivalt_api_user'), Configuration::get('omnivalt_api_pass'));
+
         if (!Configuration::get('omnivalt_locations_update') || (Configuration::get('omnivalt_locations_update') + 24 * 3600) < time() || !file_exists(dirname(__file__) . "/locations.json")) {
             if ($this->helper->updateTerminals()) {
                 Configuration::updateValue('omnivalt_locations_update', time());
             }
         }
+        $this->sendStatistics();
     }
 
     /**
@@ -167,6 +165,26 @@ class OmnivaltShipping extends CarrierModule
         return true;
     }
 
+    private function sendStatistics( $force = false, $test_mode = false )
+    {
+        $send_now = ($force) ? true : false;
+        $last_send = Configuration::get('omnivalt_last_statistics_send');
+        $last_try = Configuration::get('omnivalt_last_statistics_try');
+        $date_minus_month = strtotime('-1 month', strtotime(date('Y-m-d')));
+        $date_minus_day = strtotime('-1 day', strtotime(date('Y-m-d')));
+
+        if ( date('j') == 2 && ( ! $last_send || ($last_send && $date_minus_month > $last_send) ) && ( ! $last_try || ($last_try && $date_minus_day > $last_try) ) ) {
+            $send_now = true;
+        }
+        if ( $send_now ) {
+            $result = $this->api->sendStatistics($this->collectShipmentsData(), $test_mode);
+            if ( $result ) {
+                Configuration::updateValue('omnivalt_last_statistics_send', time());
+            }
+            Configuration::updateValue('omnivalt_last_statistics_try', time()); // Try to send 1 time per day, if result false
+        }
+    }
+
     public function hookDisplayAdminProductsExtra($params)
     {
         $id_product = Tools::getValue('id_product');
@@ -175,10 +193,12 @@ class OmnivaltShipping extends CarrierModule
             $id_product = (int) $params['id_product'];
         }
 
-        $is18Plus = Omniva18PlusProduct::get18PlusStatus($id_product, true);
+        $is18Plus = OmnivaProduct::get18PlusStatus($id_product, true);
+        $isFragile = OmnivaProduct::getFragileStatus($id_product, true);
 
         $this->context->smarty->assign([
-            'is18Plus' => $is18Plus
+            'is18Plus' => $is18Plus,
+            'isFragile' => $isFragile,
         ]);
 
         if ($this->isPs17()) {
@@ -197,15 +217,15 @@ class OmnivaltShipping extends CarrierModule
         }
 
         $is18Plus = (bool) Tools::getValue('omnivaltshipping_is_18_plus');
+        $isFragile = (bool) Tools::getValue('omnivaltshipping_is_fragile');
 
-        $result = Omniva18PlusProduct::get18PlusStatus($productID);
-
-        if (!$result) {
+        if (!OmnivaProduct::isExists($productID)) {
             DB::getInstance()->insert(
-                Omniva18PlusProduct::$definition['table'],
+                OmnivaProduct::$definition['table'],
                 [
                     'id_product' => $productID,
-                    'is_18_plus' => (int) $is18Plus
+                    'is_18_plus' => (int) $is18Plus,
+                    'is_fragile' => (int) $isFragile
                 ]
             );
 
@@ -213,10 +233,12 @@ class OmnivaltShipping extends CarrierModule
         }
 
         DB::getInstance()->update(
-            Omniva18PlusProduct::$definition['table'],
+            OmnivaProduct::$definition['table'],
             [
-                'is_18_plus' => (int) $is18Plus
-            ]
+                'is_18_plus' => (int) $is18Plus,
+                'is_fragile' => (int) $isFragile
+            ],
+            'id_product = ' . $productID
         );
     }
 
@@ -293,10 +315,6 @@ class OmnivaltShipping extends CarrierModule
             $this->registerTabs();
             Configuration::updateValue('omnivalt_manifest', 1);
 
-            if (!$this->createCarriers()) {
-                return false;
-            }
-
             //install of custom state
             $this->getCustomOrderState();
             $this->getErrorOrderState();
@@ -308,76 +326,23 @@ class OmnivaltShipping extends CarrierModule
 
     protected function createCarriers()
     {
-        foreach (self::$_carriers as $key => $value) {
-            //Create new carrier
-            $carrier = new Carrier();
-            $carrier->name = $key;
-            $carrier->active = true;
-            $carrier->deleted = 0;
-            $carrier->shipping_handling = true;
-            $carrier->range_behavior = 0;
-            $carrier->delay[Configuration::get('PS_LANG_DEFAULT')] = '1-2 business days';
-            $carrier->shipping_external = true;
-            $carrier->is_module = true;
-            $carrier->external_module_name = $this->name;
-            $carrier->need_range = true;
-            $carrier->url = "https://www.omniva.lt/verslo/siuntos_sekimas?barcode=@";
-
-            if ($carrier->add()) {
-                $groups = Group::getGroups(true);
-                foreach ($groups as $group) {
-                    Db::getInstance()->insert('carrier_group', array(
-                        'id_carrier' => (int)$carrier->id,
-                        'id_group' => (int)$group['id_group']
-                    ));
-                }
-
-                $rangePrice = new RangePrice();
-                $rangePrice->id_carrier = $carrier->id;
-                $rangePrice->delimiter1 = '0';
-                $rangePrice->delimiter2 = '1000';
-                $rangePrice->add();
-
-                $rangeWeight = new RangeWeight();
-                $rangeWeight->id_carrier = $carrier->id;
-                $rangeWeight->delimiter1 = '0';
-                $rangeWeight->delimiter2 = '1000';
-                $rangeWeight->add();
-
-                $zones = Zone::getZones(true);
-                foreach ($zones as $z) {
-                    Db::getInstance()->insert(
-                        'carrier_zone',
-                        array('id_carrier' => (int)$carrier->id, 'id_zone' => (int)$z['id_zone'])
-                    );
-                    Db::getInstance()->insert(
-                        'delivery',
-                        array('id_carrier' => $carrier->id, 'id_range_price' => (int)$rangePrice->id, 'id_range_weight' => NULL, 'id_zone' => (int)$z['id_zone'], 'price' => '0'),
-                        true
-                    );
-                    Db::getInstance()->insert(
-                        'delivery',
-                        array('id_carrier' => $carrier->id, 'id_range_price' => NULL, 'id_range_weight' => (int)$rangeWeight->id, 'id_zone' => (int)$z['id_zone'], 'price' => '0'),
-                        true
-                    );
-                }
-
-                copy(dirname(__FILE__) . '/views/img/omnivalt-logo.jpg', _PS_SHIP_IMG_DIR_ . '/' . (int)$carrier->id . '.jpg'); //assign carrier logo
-
-                Configuration::updateValue($value, $carrier->id);
-                Configuration::updateValue($value . '_reference', $carrier->id);
-            }
+        foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+            $this->createCarrier($key);
         }
 
         return true;
     }
 
+    protected function createCarrier($method_key)
+    {
+        $carrier_title = (isset(OmnivaCarrier::getAllMethods()[$method_key])) ? OmnivaCarrier::getAllMethods()[$method_key] : 'Omniva carrier';
+        return OmnivaCarrier::createCarrier($method_key, $carrier_title, $this->name, dirname(__FILE__) . '/views/img/omnivalt-logo.jpg');
+    }
+
     protected function deleteCarriers()
     {
-        foreach (self::$_carriers as $value) {
-            $tmp_carrier_id = Configuration::get($value);
-            $carrier = new Carrier($tmp_carrier_id);
-            $carrier->delete();
+        foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+            OmnivaCarrier::removeCarrier($key);
         }
 
         return true;
@@ -421,13 +386,19 @@ class OmnivaltShipping extends CarrierModule
     {
         if (parent::uninstall()) {
 
-            $cDb = new OmnivaDb();
-            $cDb->deleteTables();
             $this->deleteTabs();
 
-            if (!$this->deleteCarriers()) {
-                return false;
+            if (Configuration::get('omnivalt_uninstall_tables')) {
+                $cDb = new OmnivaDb();
+                $cDb->deleteTables();
             }
+
+            if (Configuration::get('omnivalt_uninstall_carriers')) {
+                $this->deleteCarriers();
+            }
+
+            Configuration::deleteByName('omnivalt_uninstall_tables');
+            Configuration::deleteByName('omnivalt_uninstall_carriers');
 
             return true;
         }
@@ -459,16 +430,46 @@ class OmnivaltShipping extends CarrierModule
     public function getOrderShippingCost($params, $shipping_cost)
     {
         $carrier = isset(self::$_omniva_cache[(int) $this->id_carrier]) ? self::$_omniva_cache[(int) $this->id_carrier] : new Carrier((int) $this->id_carrier);
-        $omniva_ref = (int) Configuration::get('omnivalt_pt_reference');
 
-        if (isset($this->context->cart->id_address_delivery) && (int) $carrier->id_reference === $omniva_ref) {
+        $omniva_references = array();
+        foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+            $omniva_references[$key] = (int) OmnivaCarrier::getReference($key);
+        }
+
+        if (isset($this->context->cart->id_address_delivery)) {
             $address = new Address($this->context->cart->id_address_delivery);
             $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
             $iso_code = strtoupper($iso_code);
-            $contract_origin = Configuration::get('omnivalt_api_country');
-            $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-            if ($iso_code === 'FI' && $sender_iso_code === 'LT') {
-                return false;
+
+            if ((int) $carrier->id_reference === $omniva_references['omnivalt_pt']) {
+                if (!OmnivaApi::isOmnivaMethodAllowed('pt', $iso_code)) {
+                    return false;
+                }
+
+                if ( (float) $carrier->max_depth > 0 && (float) $carrier->max_width > 0 && (float) $carrier->max_height ) {
+                    $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
+                    $cart_size = OmnivaHelper::predictOrderSize($products, array(
+                        'length' => (float) $carrier->max_depth,
+                        'width' => (float) $carrier->max_width,
+                        'height' => (float) $carrier->max_height,
+                    ));
+                    if ( ! $cart_size ) {
+                        return false;
+                    }
+                }
+            } else if (in_array((int) $carrier->id_reference, $omniva_references)) {
+                $method_key = array_search((int) $carrier->id_reference, $omniva_references);
+                $method_short_key = str_replace('omnivalt_', '', $method_key);
+                if (!OmnivaApiInternational::isOmnivaMethodAllowed($method_short_key, $iso_code)) {
+                    return false;
+                }
+                if (OmnivaApiInternational::isInternationalMethod($method_key)) {
+                    $package_key = OmnivaApiInternational::getPackageKeyFromMethodKey($method_key);
+                    $products = OmnivaHelper::getCartItems($params->getProducts(false, false), true);
+                    if (!OmnivaApiInternational::isPackageAvailableForItems($package_key, $iso_code, $products)) {
+                        return false;
+                    }
+                }
             }
         }
 
@@ -485,9 +486,9 @@ class OmnivaltShipping extends CarrierModule
         $id_carrier_old = (int)($params['id_carrier']);
         $id_carrier_new = (int)($params['carrier']->id);
 
-        foreach (self::$_carriers as $value) {
-            if ($id_carrier_old == (int)(Configuration::get($value)))
-                Configuration::updateValue($value, $id_carrier_new);
+        foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+            if ($id_carrier_old == (int)OmnivaCarrier::getId($key))
+                OmnivaCarrier::updateMappingValues($key, $id_carrier_new);
         }
     }
 
@@ -536,7 +537,11 @@ class OmnivaltShipping extends CarrierModule
             }
         }
 
-        if (Tools::isSubmit('submit' . $this->name)) {
+        if (Tools::getValue('forceSendStatistics')) {
+            $this->sendStatistics(true, true);
+        }
+
+        if (Tools::isSubmit($this->name . '_submit_settings')) {
             $fields = array(
                 'omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass',
                 'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off',
@@ -558,17 +563,46 @@ class OmnivaltShipping extends CarrierModule
             if (!$all_filled)
                 $output .= $this->displayError($this->l('All fields required'));
             else {
-                foreach ($values as $key => $val)
+                foreach ($values as $key => $val) {
                     Configuration::updateValue($key, $val);
+                }
                 $output .= $this->displayConfirmation($this->l('Settings updated'));
             }
         }
+
+        if (Tools::isSubmit($this->name . '_submit_refresh_carriers')) {
+            foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+                $field_value = strval(Tools::getValue($key));
+                if ($field_value) {
+                    $restored = OmnivaCarrier::unmarkAsDeleted($key);
+                    if (!$restored) {
+                        $created = $this->createCarrier($key);
+                    }
+                } else {
+                    $deleted = OmnivaCarrier::markAsDeleted($key);
+                }
+            }
+            $output .= $this->displayConfirmation($this->l('Carriers updated'));
+        }
+        if (Tools::isSubmit($this->name . '_submit_uninstall')) {
+            $fields = array(
+                'omnivalt_uninstall_tables', 'omnivalt_uninstall_carriers'
+            );
+
+            foreach ($fields as $field) {
+                Configuration::updateValue($field, strval(Tools::getValue($field)));
+            }
+            $output .= $this->displayConfirmation($this->l('Settings updated'));
+        }
+
         return $output . $this->displayForm();
     }
 
     public function displayForm()
     {
         $default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
+        $countries_list = OmnivaHelper::getEuCountriesList(Context::getContext()->language->id);
+
         $lang_options = array(
             array(
                 'id_option' => 'en',
@@ -587,7 +621,7 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Lithuanian')
             ),
         );
-        $options = array(
+        $methods_options = array(
             array(
                 'id_option' => 'pt',
                 'name' => $this->l('Parcel terminal')
@@ -634,19 +668,26 @@ class OmnivaltShipping extends CarrierModule
                 'id_option' => 'all',
                 'name' => $this->l('Add to SMS and email')
             ),
-            array(
+            /*array(
                 'id_option' => 'sms',
                 'name' => $this->l('Add to SMS')
             ),
             array(
                 'id_option' => 'email',
                 'name' => $this->l('Add to email')
-            ),
+            ),*/
             array(
                 'id_option' => 'dont',
                 'name' => $this->l('Do not send')
             ),
         );
+        $sender_countries_options = array();
+        foreach ( $countries_list as $country_code => $country_name ) {
+            $sender_countries_options[] = array(
+                'id_option' => $country_code,
+                'name' => $country_name
+            );
+        }
 
         $features = Feature::getFeatures(
             Context::getContext()->language->id
@@ -661,6 +702,8 @@ class OmnivaltShipping extends CarrierModule
 
         $last_update_timestamp = Configuration::get('omnivalt_locations_update');
         $last_update_formated = !$last_update_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_update_timestamp);
+        $last_statistics_timestamp = Configuration::get('omnivalt_last_statistics_send');
+        $last_statistics_formated = !$last_statistics_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_statistics_timestamp);
 
         // Init Fields form array
         $fields_form[0]['form'] = array(
@@ -669,22 +712,22 @@ class OmnivaltShipping extends CarrierModule
             ),
             'input' => array(
                 array(
-                    'type' => 'text',
+                    'type' => 'hidden', //Temporary hidden, after some time need remove this field
                     'label' => $this->l('Api URL'),
                     'name' => 'omnivalt_api_url',
                     'size' => 20,
-                    'required' => true
+                    'required' => false
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Api login user'),
+                    'label' => $this->l('API login user'),
                     'name' => 'omnivalt_api_user',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Api login password'),
+                    'label' => $this->l('API login password'),
                     'name' => 'omnivalt_api_pass',
                     'size' => 20,
                     'required' => true
@@ -692,7 +735,7 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
-                    'label' => $this->l('Api login country'),
+                    'label' => $this->l('API login country'),
                     'name' => 'omnivalt_api_country',
                     'desc' => $this->l('Select the Omniva department country, from which you got the logins.'),
                     'required' => true,
@@ -700,7 +743,11 @@ class OmnivaltShipping extends CarrierModule
                         'query' => array(
                             array(
                                 'id_option' => 'lt',
-                                'name' => $this->l('Lithuania / Latvia')
+                                'name' => $this->l('Lithuania')
+                            ),
+                            array(
+                                'id_option' => 'lv',
+                                'name' => $this->l('Latvia')
                             ),
                             array(
                                 'id_option' => 'ee',
@@ -750,6 +797,11 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_sender',
+                    'html_content' => '<hr/>',
+                ),
+                array(
                     'type' => 'text',
                     'label' => $this->l('Company name'),
                     'name' => 'omnivalt_company',
@@ -785,11 +837,15 @@ class OmnivaltShipping extends CarrierModule
                     'required' => true
                 ),
                 array(
-                    'type' => 'text',
+                    'type' => 'select',
                     'label' => $this->l('Company country code'),
                     'name' => 'omnivalt_countrycode',
-                    'size' => 20,
-                    'required' => true
+                    'required' => true,
+                    'options' => array(
+                        'query' => $sender_countries_options,
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    )
                 ),
                 array(
                     'type' => 'text',
@@ -820,10 +876,15 @@ class OmnivaltShipping extends CarrierModule
                     'desc' => $this->l('Please select send off from store type'),
                     'required' => true,
                     'options' => array(
-                        'query' => $options,
+                        'query' => $methods_options,
                         'id' => 'id_option',
                         'name' => 'name'
                     )
+                ),
+                array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_front',
+                    'html_content' => '<hr/>',
                 ),
                 array(
                     'type' => 'switch',
@@ -860,6 +921,11 @@ class OmnivaltShipping extends CarrierModule
                             'label' => $this->l('Disabled')
                         )
                     )
+                ),
+                array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_label',
+                    'html_content' => '<hr/>',
                 ),
                 array(
                     'type' => 'switch',
@@ -917,6 +983,11 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
+                    'type' => 'html',
+                    'name' => 'omnivalt_separator_manifest',
+                    'html_content' => '<hr/>',
+                ),
+                array(
                     'type' => 'select',
                     'lang' => true,
                     'label' => $this->l('Manifest language'),
@@ -931,7 +1002,8 @@ class OmnivaltShipping extends CarrierModule
             ),
             'submit' => array(
                 'title' => $this->l('Save'),
-                'class' => 'btn btn-default pull-right'
+                'class' => 'btn btn-default pull-right',
+                'name' => $this->name . '_submit_settings',
             ),
             'buttons' => [
                 [
@@ -944,7 +1016,106 @@ class OmnivaltShipping extends CarrierModule
                     'icon' => 'process-icon-refresh',
                     'title' => $this->l('Updated Terminals:') . ' ' . $last_update_formated
                 ],
+                [
+                    'href' => AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'),
+                    'js' => 'omivaltshippingForceSendStatistics(this); return false;',
+                    'class' => 'omniva-devtool hidden',
+                    'type' => 'button',
+                    'id'   => 'omniva-send-statistics',
+                    'name' => 'sendStatistics',
+                    'icon' => 'icon-suitcase',
+                    'title' => $this->l('Send statistics:') . ' ' . $last_statistics_formated
+                ],
             ]
+        );
+
+        $fields_form[1]['form'] = array(
+            'legend' => array(
+                'title' => $this->l('Carriers'),
+            ),
+            'description' => $this->l('After activating the shipping method below, a new Carrier is created in the Prestashop shipping carriers list. After deactivating the shipping method below, the shipping carrier is marked as "Deleted" in the Prestashop shipping carriers list and reactivating the shipping method removes mark for the "Deleted" parameter (the carrier is displayed again with the parameters it had before).'),
+            'input' => array(
+                //Carriers are added below
+            ),
+            'submit' => array(
+                'title' => $this->l('Save'),
+                'class' => 'btn btn-default pull-right',
+                'name' => $this->name . '_submit_refresh_carriers',
+            ),
+        );
+
+        foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+            $fields_form[1]['form']['input'][] = array(
+                'type' => 'switch',
+                'label' => $title,
+                'name' => $key,
+                'is_bool' => true,
+                'values' => array(
+                    array(
+                        'id' => 'carrier_on',
+                        'value' => 1,
+                        'label' => $this->l('Added')
+                    ),
+                    array(
+                        'id' => 'carrier_off',
+                        'value' => 0,
+                        'label' => $this->l('Removed')
+                    )
+                ),
+            );
+            $carrier = OmnivaCarrier::getCarrier($key);
+        }
+
+        $fields_form[2]['form'] = array(
+            'legend' => array(
+                'title' => $this->l('Module uninstall'),
+            ),
+            'warning' => $this->l('The enabled actions in this section will be performed when uninstalling the module. We recommend enabling this section parameters only when you intend to no longer use the module or planing a clean reinstallation of it.'),
+            'input' => array(
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Delete database tables'),
+                    'desc' => $this->l('Delete tables created by the module from the database.'),
+                    'name' => 'omnivalt_uninstall_tables',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
+                    )
+                ),
+                array(
+                    'type' => 'switch',
+                    'label' => $this->l('Completely delete carriers'),
+                    'desc' => $this->l('Completely delete carriers created by this module from the database. After a carrier is completely deleted, it will no longer show in existing Orders.'),
+                    'name' => 'omnivalt_uninstall_carriers',
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
+                    )
+                ),
+            ),
+            'submit' => array(
+                'title' => $this->l('Save'),
+                'class' => 'btn btn-default pull-right',
+                'name' => $this->name . '_submit_uninstall',
+            ),
         );
 
         $helper = new HelperForm();
@@ -1004,6 +1175,12 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
+        foreach (OmnivaCarrier::getAllMethods() as $key => $title) {
+            $carrier = OmnivaCarrier::getCarrier($key);
+            $helper->fields_value[$key] = ($carrier && !$carrier->deleted) ? 1 : 0;
+        }
+        $helper->fields_value['omnivalt_uninstall_tables'] = Configuration::get('omnivalt_uninstall_tables');
+        $helper->fields_value['omnivalt_uninstall_carriers'] = Configuration::get('omnivalt_uninstall_carriers');
 
         return $helper->generateForm($fields_form);
     }
@@ -1017,7 +1194,7 @@ class OmnivaltShipping extends CarrierModule
         $contract_origin = Configuration::get('omnivalt_api_country');
         $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
         $origin_allows = true;
-        if (!$admin && $country === 'FI' && $sender_iso_code === 'LT') {
+        if (!$admin && !OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
             $origin_allows = false;
         }
 
@@ -1058,7 +1235,7 @@ class OmnivaltShipping extends CarrierModule
      
         $contract_origin = Configuration::get('omnivalt_api_country');
         $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-        if ($country === 'FI' && $sender_iso_code === 'LT') {
+        if (!OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
             return [];
         }
 
@@ -1097,11 +1274,10 @@ class OmnivaltShipping extends CarrierModule
     private function getCarriersOptions($selected = '')
     {
         $carriers = '';
-        foreach ( self::$_carriers as $key => $value ) {
-            $tmp_carrier_id = Configuration::get($value);
-            $carrier = new Carrier($tmp_carrier_id);
+        foreach ( OmnivaCarrier::getAllMethods() as $key => $title ) {
+            $carrier = OmnivaCarrier::getCarrier($key);
             if ( ! empty($carrier->id) ) {
-                $carriers .= '<option value = "' . Configuration::get($value) . '" ' . (Configuration::get($value) == $selected ? 'selected' : '') . '>' . $this->l($key) . '</option>';
+                $carriers .= '<option value = "' . $carrier->id . '" ' . ($carrier->id == $selected ? 'selected' : '') . '>' . $this->l($title) . '</option>';
             }
         }
         return $carriers;
@@ -1166,10 +1342,12 @@ class OmnivaltShipping extends CarrierModule
                     'printLabelsUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=generateLabels',
                     'success_add_trans' => $this->l('Successfully added.'),
                     'moduleUrl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
-                    'omnivalt_terminal_carrier' => Configuration::get('omnivalt_pt'),
+                    'omnivalt_terminal_carrier' => OmnivaCarrier::getId('omnivalt_pt'),
+                    'omnivalt_methods' => OmnivaCarrier::getAllMethodsData(),
                     'omnivalt_text' => array(
                         'ajax_parsererror' => $this->l("An invalid response was received"),
                         'ajax_unknownerror' => $this->l("Unknown error"),
+                        'save_success' => $this->l('Successfully saved'),
                     ),
                     'omnivaltIsPS177Plus' => $this->isPs177(),
                 ]);
@@ -1200,7 +1378,7 @@ class OmnivaltShipping extends CarrierModule
                         'controller_ajax' => $this->context->link->getModuleLink('omnivaltshipping', 'ajax'),
                     ],
                     'methods' => [
-                        'omniva_terminal' => Configuration::get('omnivalt_pt')
+                        'omniva_terminal' => OmnivaCarrier::getId('omnivalt_pt')
                     ],
                     'prestashop' => [
                         'is_16' => $this->isPs16(),
@@ -1261,10 +1439,13 @@ class OmnivaltShipping extends CarrierModule
     public static function getCarrierIds($carriers = [])
     {
         // use only supplied or all
-        $carriers = count($carriers) > 0 ? $carriers : self::$_carriers;
+        $carriers = count($carriers) > 0 ? $carriers : array_keys(OmnivaCarrier::getAllMethods());
         $ref = [];
         foreach ($carriers as $value) {
-            $ref[] = Configuration::get($value . '_reference');
+            $carrier_ref_id = OmnivaCarrier::getReference($value);
+            if ($carrier_ref_id) {
+                $ref[] = OmnivaCarrier::getReference($value);
+            }
         }
         $data = [];
         if ($ref) {
@@ -1314,7 +1495,10 @@ class OmnivaltShipping extends CarrierModule
             return '';
         }
 
-        if ( self::isOmnivaCarrier($order->id_carrier, $carrier->id_reference) ) {
+        $method_key = OmnivaCarrier::getCarrierMethodKey($order->id_carrier, $carrier->id_reference);
+
+        if ( $method_key ) {
+            $international_package_key = (OmnivaApiInternational::isInternationalMethod($method_key)) ? OmnivaApiInternational::getPackageKeyFromMethodKey($method_key) : false;
             $id_terminal = $cart->id_terminal;
 
             $address = new Address($order->id_address_delivery);
@@ -1331,12 +1515,29 @@ class OmnivaltShipping extends CarrierModule
                 $error_msg = $error_msg ? $this->displayError($error_msg) : false;
             }
 
+            $shipment_additional_services_names = array();
+
+            try {
+                if ( ! $international_package_key ) {
+                    $shipment_additional_services = OmnivaApi::getAdditionalServices($order);
+                    if ( ! isset($shipment_additional_services['error']) ) {
+                        foreach ($shipment_additional_services as $additional_service_code) {
+                            $shipment_additional_services_names[$additional_service_code] = $this->getAdditionalServiceName($additional_service_code);
+                        }
+                    }
+                }
+            } catch(Exception $e) {
+                $error_msg = $this->displayError($e->getMessage());
+            }
+
             $this->smarty->assign(array(
+                'is_international' => ($international_package_key) ? true : false,
                 'total_weight' => $omnivaOrder->weight,
                 'packs' => $omnivaOrder->packs,
                 'total_paid_tax_incl' => $omnivaOrder->cod_amount,
                 'is_cod' => $omnivaOrder->cod,
                 'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode, true),
+                'active_additional_services' => implode(', ', $shipment_additional_services_names),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
                 'moduleurl' => $this->context->link->getAdminLink(self::CONTROLLER_OMNIVA_AJAX) . '&action=saveOrderInfo',
@@ -1351,25 +1552,35 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
+    private function getAdditionalServiceName($service_code)
+    {
+        $services = array(
+            'ST' => $this->l('Arrival SMS'),
+            'SF' => $this->l('Arrival email'),
+            'BP' => $this->l('Cash on delivery'),
+            'BC' => $this->l('Fragile'),
+            'CL' => $this->l('Delivery to private customer'),
+            'XT' => $this->l('Document return'),
+            'BS' => $this->l('Paid by receiver'),
+            'BI' => $this->l('Insurance'),
+            'BK' => $this->l('Personal delivery'),
+            'GN' => $this->l('Paid parcel SMS'),
+            'GM' => $this->l('Paid parcel email'),
+            'SB' => $this->l('Return notification SMS'),
+            'SG' => $this->l('Return notification email'),
+            'PC' => $this->l('Issue to persons at the age of 18+'),
+            'SS' => $this->l('Delivery confirmation SMS to sender'),
+            'SE' => $this->l('Delivery confirmation e-mail to sender'),
+        );
+
+        return (isset($services[$service_code])) ? $services[$service_code] : $service_code;
+    }
+
     public static function getCarrierById($carrier_id)
     {
         $carrier = new Carrier((int)$carrier_id);
 
         return (! empty($carrier->id)) ? $carrier : false;
-    }
-
-    public static function isOmnivaCarrier($carrier_id = false, $carrier_ref_id = false)
-    {
-        foreach ( self::$_carriers as $key => $value ) {
-            if ( $carrier_id && $carrier_id == Configuration::get($value) ) {
-                return true;
-            }
-            if ( $carrier_ref_id && $carrier_ref_id == Configuration::get($value . '_reference') ) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public function hookOrderDetailDisplayed($params)
@@ -1557,5 +1768,249 @@ class OmnivaltShipping extends CarrierModule
         
         $omnivaOrder->cod_amount = $order->total_paid_tax_incl;
         $omnivaOrder->update();
+    }
+
+    public function collectShipmentsData()
+    {
+        $_methods_keys = array(
+            'terminal' => array('omnivalt_pt'),
+            'courier' => array('omnivalt_c'),
+        );
+        OmnivaHelper::printToLog('Collecting orders data...', 'powerbi');
+
+        // Get Orders
+        $_orders = $this->getShipmentsDataFromDb('orders');
+
+        // Count Orders
+        $total_orders = array();
+        foreach ( $_methods_keys as $method_name => $method_keys ) {
+            $total_orders[$method_name] = count($_orders[$method_name]);
+        }
+
+        // Get Orders info
+        $oldest_order = date('Y-m-d H:i:s');
+        $total_shipments = array();
+        $shipments_income = array();
+        foreach ( $_methods_keys as $method_name => $method_keys ) {
+            if ( ! isset($total_shipments[$method_name]) ) $total_shipments[$method_name] = 0;
+            if ( ! isset($shipments_income[$method_name]) ) $shipments_income[$method_name] = 0;
+            foreach ( $_orders[$method_name] as $order ) {
+                if ( $order['omnivahistory_date_upd'] < $oldest_order ) {
+                    $oldest_order = $order['omnivahistory_date_upd'];
+                }
+                $barcodes = json_decode($order['omnivahistory_tracking_numbers']);
+                $barcodes = (is_array($barcodes)) ? $barcodes : array();
+                $total_shipments[$method_name] += count($barcodes);
+                $shipments_income[$method_name] += $order['shipping_cost_tax_incl'];
+            }
+        }
+
+        // Get Carriers Ids
+        $_carriers = $this->getShipmentsDataFromDb('carriers');
+
+        // Get Carriers prices
+        $_carriers_prices = $this->getShipmentsDataFromDb('prices', $_carriers);
+
+        // Get Carriers prices ranges
+        $_carriers_prices_ranges = $this->getShipmentsDataFromDb('prices_ranges', $_carriers);
+
+        // Get Carriers zones
+        $_carriers_zones = array();
+        foreach ( $_methods_keys as $method_name => $method_keys ) {
+            foreach ( $_carriers_prices[$method_name] as $carrier_price ) {
+                if ( ! in_array($carrier_price['id_zone'], $_carriers_zones) ) {
+                    $_carriers_zones[] = $carrier_price['id_zone'];
+                }
+            }
+        }
+
+        // Get Carriers zones countries
+        $_carriers_zones_countries = $this->getShipmentsDataFromDb('zones_countries', $_carriers_zones);
+
+        // Prepare shipping prices
+        $_shipping_prices = array();
+        foreach ( $_carriers_zones_countries as $zone_id => $countries ) {
+            foreach ( $countries as $country ) {
+                $_shipping_prices[$country['iso_code']] = array();
+                foreach ( $_methods_keys as $method_name => $method_keys ) {
+                    $_shipping_prices[$country['iso_code']][$method_name] = array();
+                    $carrier_id = 0;
+                    $ranges = array();
+                    $range_type = null;
+                    foreach ( $_carriers_prices[$method_name] as $prices ) {
+                        $range_id = (! empty($prices['id_range_price'])) ? $prices['id_range_price'] : $prices['id_range_weight'];
+                        if ( empty($range_id) ) {
+                            continue;
+                        }
+                        $carrier_id = $prices['id_carrier'];
+                        if ( $prices['id_zone'] == $zone_id ) {
+                            $ranges[$range_id] = $prices['price'];
+                        }
+                        foreach ( $_carriers_prices_ranges as $prices_range_type => $prices_ranges ) {
+                            if ( isset($prices_ranges[$carrier_id]) ) {
+                                $range_type = $prices_range_type;
+                            }
+                        }
+                    }
+                    $prices = array();
+                    foreach ( $ranges as $range_id => $price ) {
+                        foreach ( $_carriers_prices_ranges[$range_type][$carrier_id] as $range ) {
+                            if ( $range['id_range_' . $range_type] == $range_id ) {
+                                $minus = ($range_type == 'price') ? 0.01 : 0.001;
+                                $prices[] = array(
+                                    'from' => (float) $range['delimiter1'],
+                                    'to' => (float) $range['delimiter2'] - $minus,
+                                    'price' => (float) $price
+                                );
+                            }
+                        }
+                    }
+                    $_shipping_prices[$country['iso_code']][$method_name] = array(
+                        'carrier_id' => $carrier_id,
+                        'type' => $range_type,
+                        'enabled' => (bool) $_carriers[$method_name]['active'],
+                        'prices' => $prices
+                    );
+                }
+            }
+        }
+
+        // Add tracking date to orders
+        OmnivaHelper::printToLog('Marking orders as sended...', 'powerbi');
+        foreach ( $_methods_keys as $method_name => $method_keys ) {
+            foreach ( $_orders[$method_name] as $order ) {
+                $omnivaOrder = new OmnivaOrder($order['id_order']);
+                $omnivaOrder->date_track = date('Y-m-d H:i:s');
+                $omnivaOrder->update();
+                OmnivaHelper::printToLog(print_r(get_object_vars($omnivaOrder), true), 'powerbi');
+            }
+        }
+
+        return array(
+            'platform_version' => _PS_VERSION_,
+            'module_version' => $this->version,
+            'client_api_user' => Configuration::get('omnivalt_api_user'),
+            'client_name' => Configuration::get('omnivalt_company'),
+            'client_country' => Configuration::get('omnivalt_countrycode'),
+            'total_orders' => $total_orders,
+            'track_since' => $oldest_order,
+            'total_shipments' => $total_shipments,
+            'shipments_income' => $shipments_income,
+            'shipping_prices' => $_shipping_prices,
+        );
+    }
+
+    private function getShipmentsDataFromDb( $data_type, $additional_data = null )
+    {
+        $methods_keys = array(
+            'terminal' => array('omnivalt_pt'),
+            'courier' => array('omnivalt_c'),
+        );
+
+        if ( $data_type == 'orders' ) {
+            $orders = array();
+            foreach ( $methods_keys as $method_name => $method_keys ) {
+                $sql_query = "
+                    SELECT
+                        a.*,
+                        oc.id_order_invoice AS id_order_invoice,
+                        oc.weight AS weight,
+                        oc.shipping_cost_tax_excl AS shipping_cost_tax_excl,
+                        oc.shipping_cost_tax_incl AS shipping_cost_tax_incl,
+                        oc.tracking_number AS tracking_number,
+                        oo.packs AS omniva_packs,
+                        oo.cod AS omniva_cod,
+                        oo.cod_amount AS omniva_cod_amount,
+                        oo.weight AS omniva_weight,
+                        oo.error AS omniva_error,
+                        oo.tracking_numbers AS omniva_tracking_numbers,
+                        oo.date_track AS omniva_date_track,
+                        oo.date_add AS omniva_date_add,
+                        oo.date_upd AS omniva_date_upd,
+                        loh.service_code AS omnivahistory_service_code,
+                        loh.tracking_numbers AS omnivahistory_tracking_numbers,
+                        loh.manifest AS omnivahistory_manifest_id,
+                        loh.date_add AS omnivahistory_date_add,
+                        loh.date_upd AS omnivahistory_date_upd
+                    FROM " . _DB_PREFIX_ . "orders a
+                    LEFT JOIN " . _DB_PREFIX_ . "order_carrier oc ON a.id_order = oc.id_order
+                    INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . implode(',', self::getCarrierIds($method_keys)) . ") AND oo.date_track IS NULL
+                    INNER JOIN (
+                        SELECT ooh.*
+                        FROM ps_omniva_order_history ooh
+                        INNER JOIN (
+                            -- collecting latest data for each order
+                            SELECT id_order, MAX(date_add) AS max_date_add
+                            FROM ps_omniva_order_history
+                            WHERE manifest IS NOT NULL 
+                              AND manifest != 0 
+                              AND manifest != -1
+                            GROUP BY id_order
+                        ) looh ON ooh.id_order = looh.id_order AND ooh.date_add = looh.max_date_add
+                        WHERE ooh.manifest IS NOT NULL 
+                          AND ooh.manifest != 0 
+                          AND ooh.manifest != -1
+                    ) loh ON loh.id_order = a.id_order
+                    ORDER BY loh.manifest DESC, a.id_order DESC";
+                $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
+                $orders[$method_name] = (is_array($sql_result)) ? $sql_result : array();
+            }
+            return $orders;
+        }
+
+        if ( $data_type == 'carriers' ) {
+            $carriers = array();
+            foreach ( $methods_keys as $method_name => $method_keys ) {
+                $carriers_ref_ids = array();
+                foreach ( $method_keys as $method_key ) {
+                    $carriers_ref_ids[] = OmnivaCarrier::getReference($method_key);
+                }
+                $sql_query = "SELECT id_carrier AS id, active FROM " . _DB_PREFIX_ . "carrier WHERE id_reference IN(" . implode(',', $carriers_ref_ids) . ") AND deleted = 0";
+                $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->getRow($sql_query);
+                $sql_result = (is_array($sql_result)) ? $sql_result : array();
+                $carriers[$method_name] = $sql_result;
+            }
+            return $carriers;
+        }
+
+        if ( $data_type == 'prices' ) {
+            $prices = array();
+            foreach ( $methods_keys as $method_name => $method_keys ) {
+                $sql_query = "SELECT * FROM " . _DB_PREFIX_ . "delivery WHERE id_carrier = " . $additional_data[$method_name]['id'];
+                $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
+                $prices[$method_name] = (is_array($sql_result)) ? $sql_result : array();
+            }
+            return $prices;
+        }
+
+        if ( $data_type == 'prices_ranges' ) {
+            $prices_ranges = array();
+            foreach ( $additional_data as $carrier ) {
+                $sql_query = "SELECT * FROM " . _DB_PREFIX_ . "range_price WHERE id_carrier = " . $carrier['id'];
+                $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
+                if ( ! empty($sql_result) ) {
+                    $prices_ranges['price'][$carrier['id']] = $sql_result;
+                }
+
+                $sql_query = "SELECT * FROM " . _DB_PREFIX_ . "range_weight WHERE id_carrier = " . $carrier['id'];
+                $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
+                if ( ! empty($sql_result) ) {
+                    $prices_ranges['weight'][$carrier['id']] = $sql_result;
+                }
+            }
+            return $prices_ranges;
+        }
+
+        if ( $data_type == 'zones_countries' ) {
+            $zones_countries = array();
+            foreach ( $additional_data as $zone_id ) {
+                $sql_query = "SELECT id_country, iso_code FROM " . _DB_PREFIX_ . "country WHERE id_zone = " . $zone_id . " AND active != 0";
+                $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
+                $zones_countries[$zone_id] = (is_array($sql_result)) ? $sql_result : array();
+            }
+            return $zones_countries;
+        }
+
+        return array();
     }
 }

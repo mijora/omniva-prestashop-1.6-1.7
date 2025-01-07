@@ -2,6 +2,7 @@
 
 namespace Mijora\Omniva\Shipment\Package;
 
+use Mijora\Omniva\Helper;
 use Mijora\Omniva\OmnivaException;
 
 class Address
@@ -119,5 +120,27 @@ class Address
     {
         $this->country = $country;
         return $this;
+    }
+
+    public function getAddressForOmx($offloadPostcodeFormat = false)
+    {
+        if ($offloadPostcodeFormat || $this->getOffloadPostcode()) {
+            if (!$this->getOffloadPostcode()) {
+                throw new OmnivaException("Missing offloadPostcode");
+            }
+
+            return [
+                'country' => Helper::escapeForApi($this->getCountry()),
+                'offloadPostcode' => (string) $this->getOffloadPostcode(),
+            ];
+        }
+
+        // normal address
+        return [
+            'country' => Helper::escapeForApi($this->getCountry()),
+            'deliverypoint' => Helper::escapeForApi($this->getDeliverypoint()),
+            'postcode' => Helper::escapeForApi($this->getPostcode()),
+            'street' => Helper::escapeForApi($this->getStreet()),
+        ];
     }
 }

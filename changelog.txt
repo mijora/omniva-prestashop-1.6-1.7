@@ -1,3 +1,47 @@
+= 2.2.1 =
+# Fixed
+- Fixed "Omniva orders" page error, when international carriers had never been created before
+- Removed the use of the str_contains function, since this function only appeared in PHP 8.0
+
+# Updated
+- API library to 1.3.1
+
+= 2.2.0 =
+# Fixed
+- Fixed adding a new DB column in the Upgrade function of the version 2.1.0
+
+# Improved
+- Created the possibility to add/remove the desired delivery methods in the module settings
+- Created the ability to choose what actions will be performed during the module uninstall
+- Created an opportunity to register shipments to European countries
+
+= 2.1.1 =
+# Fixed
+- Fixed return code sending parameter for OMX
+
+# Improved
+- Added recognition of COD module "Cash on delivery with order summary" (codpro).
+- Added sending of shipments data to the Omniva PowerBi system
+
+# Updated
+- API library to 1.2.0
+
+= 2.1.0 =
+# Improved
+- Added compatibility with One Page Checkout PS (onepagecheckoutps) module
+- The module is adapted to work with Omniva OMX
+
+# Changed
+- Changed the type of the "Company country code" field to Select in the module settings to avoid an errors when entered an invalid value
+
+# Updated
+- API library to 1.1.0
+
+= 2.0.21 =
+# Improved
+- Added that Omniva delivery methods would not be displayed if the dimensions of the cart exceed the maximum dimensions specified in the carrier's settings
+- Added functions which allows to convert weight and dimension units to specified ones
+
 = 2.0.20 =
 # Fixed
 - Removed unused hook from list of registered hooks
