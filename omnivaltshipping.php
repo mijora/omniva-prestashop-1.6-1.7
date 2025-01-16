@@ -438,7 +438,10 @@ class OmnivaltShipping extends CarrierModule
 
         if (isset($this->context->cart->id_address_delivery)) {
             $address = new Address($this->context->cart->id_address_delivery);
-            $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $this->context->language->iso_code;
+            
+            $default_iso_code = Configuration::get('omnivalt_default_receiver_countrycode');
+            if (!$default_iso_code) $default_iso_code = $this->context->language->iso_code;
+            $iso_code = $address->id_country ? Country::getIsoById($address->id_country) : $default_iso_code;
             $iso_code = strtoupper($iso_code);
 
             if ((int) $carrier->id_reference === $omniva_references['omnivalt_pt']) {
@@ -548,7 +551,7 @@ class OmnivaltShipping extends CarrierModule
                 'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city',
                 'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
                 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
-                'omnivalt_label_comment_type', 'omnivalt_autoselect'
+                'omnivalt_label_comment_type', 'omnivalt_autoselect', 'omnivalt_default_receiver_countrycode'
             );
             $not_required = array('omnivalt_bank_account');
             $values = array();
@@ -681,13 +684,6 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Do not send')
             ),
         );
-        $sender_countries_options = array();
-        foreach ( $countries_list as $country_code => $country_name ) {
-            $sender_countries_options[] = array(
-                'id_option' => $country_code,
-                'name' => $country_name
-            );
-        }
 
         $features = Feature::getFeatures(
             Context::getContext()->language->id
@@ -842,7 +838,7 @@ class OmnivaltShipping extends CarrierModule
                     'name' => 'omnivalt_countrycode',
                     'required' => true,
                     'options' => array(
-                        'query' => $sender_countries_options,
+                        'query' => $this->buildCountriesFieldOptions($countries_list),
                         'id' => 'id_option',
                         'name' => 'name'
                     )
@@ -885,6 +881,17 @@ class OmnivaltShipping extends CarrierModule
                     'type' => 'html',
                     'name' => 'omnivalt_separator_front',
                     'html_content' => '<hr/>',
+                ),
+                array(
+                    'type' => 'select',
+                    'label' => $this->l('Default country of delivery'),
+                    'name' => 'omnivalt_default_receiver_countrycode',
+                    'options' => array(
+                        'query' => $this->buildCountriesFieldOptions($countries_list, $this->l('Not specified')),
+                        'id' => 'id_option',
+                        'name' => 'name'
+                    ),
+                    'desc' => $this->l('You can specify a default customer country that will be used until the delivery address is entered. This allows shipping methods to be loaded on the Cart and Checkout pages until the entered address is saved in the Shipping Address step.'),
                 ),
                 array(
                     'type' => 'switch',
@@ -1168,6 +1175,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_bank_account'] = Configuration::get('omnivalt_bank_account');
         $helper->fields_value['omnivalt_pick_up_time_start'] = Configuration::get('omnivalt_pick_up_time_start') ? Configuration::get('omnivalt_pick_up_time_start') : '8:00';
         $helper->fields_value['omnivalt_pick_up_time_finish'] = Configuration::get('omnivalt_pick_up_time_finish') ? Configuration::get('omnivalt_pick_up_time_finish') : '17:00';
+        $helper->fields_value['omnivalt_default_receiver_countrycode'] = Configuration::get('omnivalt_default_receiver_countrycode');
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
         $helper->fields_value['omnivalt_autoselect'] = Configuration::get('omnivalt_autoselect');
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
@@ -1183,6 +1191,25 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_uninstall_carriers'] = Configuration::get('omnivalt_uninstall_carriers');
 
         return $helper->generateForm($fields_form);
+    }
+
+    private function buildCountriesFieldOptions($countries_list, $empty_value_label = false)
+    {
+        $countries_options = array();
+        if ( $empty_value_label ) {
+            $countries_options[] = array(
+                'id_option' => '',
+                'name' => '- ' . $empty_value_label . ' -'
+            );
+        }
+        foreach ( $countries_list as $country_code => $country_name ) {
+            $countries_options[] = array(
+                'id_option' => $country_code,
+                'name' => $country_name
+            );
+        }
+
+        return $countries_options;
     }
 
     private function getTerminalsOptions($selected = '', $country = "", $admin = false)
