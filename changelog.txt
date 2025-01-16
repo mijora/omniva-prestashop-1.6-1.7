@@ -1,3 +1,7 @@
+= Unreleased =
+# Improved
+- Added a default shipping country parameter to the module settings, which allows to load Omniva shipping methods on the Cart and Checkout pages before a shipping address has been entered
+
 = 2.2.1 =
 # Fixed
 - Fixed "Omniva orders" page error, when international carriers had never been created before
