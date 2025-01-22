@@ -553,7 +553,9 @@ class OmnivaltShipping extends CarrierModule
                 'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
                 'omnivalt_label_comment_type', 'omnivalt_autoselect', 'omnivalt_default_receiver_countrycode'
             );
-            $not_required = array('omnivalt_bank_account');
+            $not_required = array(
+                'omnivalt_bank_account', 'omnivalt_default_receiver_countrycode'
+            );
             $values = array();
             $all_filled = true;
             foreach ($fields as $field) {
