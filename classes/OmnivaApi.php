@@ -126,8 +126,6 @@ class OmnivaApi
                     ->setStreet($receiver_data->street);
                 if ($is_terminal_service && $id_terminal)
                     $receiverAddress->setOffloadPostcode($id_terminal);
-                else
-                    $receiverAddress->setOffloadPostcode($receiver_data->postcode);
 
                 $receiverContact = new Contact();
                 $receiverContact

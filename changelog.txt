@@ -1,4 +1,7 @@
 = Unreleased =
+# Fixed
+- Fixed registration of shipments when the shipment is delivered by a courier
+
 # Improved
 - Added a default shipping country parameter to the module settings, which allows to load Omniva shipping methods on the Cart and Checkout pages before a shipping address has been entered
 
