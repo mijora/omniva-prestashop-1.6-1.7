@@ -4,6 +4,10 @@
 
 # Improved
 - Added a default shipping country parameter to the module settings, which allows to load Omniva shipping methods on the Cart and Checkout pages before a shipping address has been entered
+- Added platform and version identification to all requests to the Omniva server
+
+# Updated
+- API library to 1.3.2
 
 = 2.2.1 =
 # Fixed
