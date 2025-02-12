@@ -5,6 +5,8 @@
 # Improved
 - Added a default shipping country parameter to the module settings, which allows to load Omniva shipping methods on the Cart and Checkout pages before a shipping address has been entered
 - Added platform and version identification to all requests to the Omniva server
+- Added Box Calculator library
+- Changed to calculate shipment dimensions using the Box Calculator library
 
 # Updated
 - API library to 1.3.2

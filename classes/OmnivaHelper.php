@@ -2,6 +2,8 @@
 
 use Mijora\Omniva\Locations\PickupPoints;
 use Mijora\Omniva\OmnivaException;
+use Mijora\BoxCalculator\Elements\Item as BoxCalcItem;
+use Mijora\BoxCalculator\CalculateBox;
 
 class OmnivaHelper
 {
@@ -217,53 +219,26 @@ class OmnivaHelper
 
     public static function predictOrderSize( $items_data, $max_dimension = array() )
     {
-        $all_order_dim_length = 0;
-        $all_order_dim_width = 0;
-        $all_order_dim_height = 0;
-        $max_dim_length = (!empty($max_dimension['length'])) ? $max_dimension['length'] : 999999;
-        $max_dim_width = (!empty($max_dimension['width'])) ? $max_dimension['width'] : 999999;
-        $max_dim_height = (!empty($max_dimension['height'])) ? $max_dimension['height'] : 999999;
-
-        foreach ( $items_data as $item ) {
-            $item_dim_length = (!empty($item['length'])) ? $item['length'] : 0;
-            $item_dim_width = (!empty($item['width'])) ? $item['width'] : 0;
-            $item_dim_height = (!empty($item['height'])) ? $item['height'] : 0;
-
-            //Add to length
-            if ( ($item_dim_length + $all_order_dim_length) <= $max_dim_length 
-                && $item_dim_width <= $max_dim_width && $item_dim_height <= $max_dim_height )
-            {
-                $all_order_dim_length = $all_order_dim_length + $item_dim_length;
-                $all_order_dim_width = ($item_dim_width > $all_order_dim_width) ? $item_dim_width : $all_order_dim_width;
-                $all_order_dim_height = ($item_dim_height > $all_order_dim_height) ? $item_dim_height : $all_order_dim_height;
-            }
-            //Add to width
-            else if ( ($item_dim_width + $all_order_dim_width) <= $max_dim_width 
-                && $item_dim_length <= $max_dim_length && $item_dim_height <= $max_dim_height )
-            {
-                $all_order_dim_length = ($item_dim_length > $all_order_dim_length) ? $item_dim_length : $all_order_dim_length;
-                $all_order_dim_width = $all_order_dim_width + $item_dim_width;
-                $all_order_dim_height = ($item_dim_height > $all_order_dim_height) ? $item_dim_height : $all_order_dim_height;
-            }
-            //Add to height
-            else if ( ($item_dim_height + $all_order_dim_height) <= $max_dim_height 
-                && $item_dim_length <= $max_dim_length && $item_dim_width <= $max_dim_width )
-            {
-                $all_order_dim_length = ($item_dim_length > $all_order_dim_length) ? $item_dim_length : $all_order_dim_length;
-                $all_order_dim_width = ($item_dim_width > $all_order_dim_width) ? $item_dim_width : $all_order_dim_width;
-                $all_order_dim_height = $all_order_dim_height + $item_dim_height;
-            }
-            //If all fails
-            else {
-                return false;
-            }
+        $items_list = array();
+        foreach ( $items_data as $prod ) {
+            $items_list[] = new BoxCalcItem($prod['width'], $prod['height'], $prod['length']);
         }
 
-        return array(
-            'length' => (float) $all_order_dim_length,
-            'width' => (float) $all_order_dim_width,
-            'height' => (float) $all_order_dim_height,
-        );
+        $box_calculator = new CalculateBox($items_list);
+        $box_calculator->setBoxWallThickness(0);
+
+        if ( ! empty($max_dimension) ) {
+            $box_calculator->setMaxBoxSize(
+                (!empty($max_dimension['width'])) ? $max_dimension['width'] : 999999,
+                (!empty($max_dimension['height'])) ? $max_dimension['height'] : 999999,
+                (!empty($max_dimension['length'])) ? $max_dimension['length'] : 999999
+            );
+            $box_size = $box_calculator->findBoxSizeUntilMaxSize();
+        } else {
+            $box_size = $box_calculator->findMinBoxSize();
+        }
+
+        return (! $box_size) ? false : array('length' => $box_size->getLength(), 'width' => $box_size->getWidth(), 'height' => $box_size->getHeight());
     }
 
     public static function getScheduledCourierCalls()
