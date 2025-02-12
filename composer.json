@@ -1,9 +1,16 @@
 {
     "require": {
-        "mijora/omniva-api": "^1.2.0"
+        "mijora/omniva-api": "^1.2.0",
+        "mijora/box-calculator": "^1.0.0"
     },
     "config": {
         "prepend-autoloader": false
     },
-    "type": "prestashop-module"
+    "type": "prestashop-module",
+    "repositories": [
+        {
+            "type" : "vcs",
+            "url" : "git@github.com:mijora/box-calculator.git"
+        }
+    ]
 }
