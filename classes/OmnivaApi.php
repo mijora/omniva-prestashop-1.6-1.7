@@ -318,7 +318,7 @@ class OmnivaApi
             $send_method =  'c';
             if($sendOffCountry == 'estonia')
             {
-                $send_method =  'cp'; 
+                //$send_method =  'cp'; 
             }
             if($sendOffCountry == 'finland')
             {
