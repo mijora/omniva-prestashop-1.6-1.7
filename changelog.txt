@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Changed to use regular courier services for Estonian clients
+
 = 2.2.2 =
 # Fixed
 - Fixed registration of shipments when the shipment is delivered by a courier
