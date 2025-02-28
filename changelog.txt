@@ -5,6 +5,7 @@
 
 # Improved
 - Added use of address 2 field value
+- Added compatibility with the SuperCheckout by Knowband module
 
 = 2.2.2 =
 # Fixed
