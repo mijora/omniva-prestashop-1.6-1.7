@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.2.3 =
 # Fixed
 - Changed to use regular courier services for Estonian clients
 - It has been made so that the VAT number is not required for the registration of the shipment to the company
