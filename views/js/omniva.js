@@ -650,35 +650,27 @@ var omnivaltDelivery = {
         $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').each(function() {
             var $this = $(this),
                 value = $this.val(),
-                carrierIds = value.split(','),
-                moveTo;
+                carrierIds = value.split(',');
             if (value != omnivalt_params.methods.omniva_terminal + ',') {
                 return;
             }
             if($this[0].classList.contains('delivery_option_radio'))
             {
                 console.log('Block add method: Radio');
-                if (!omnivalt_params.prestashop.is_16 && typeof OPC !== typeof undefined) { /* onepagecheckoutps v5 - 4.2.3 - presteamshop */
-                    moveTo = $this.closest('.delivery-option').find('.delivery_option_logo').next();
-                } else {
-                    moveTo = $this.closest('.delivery_option').find('.delivery_option_logo').next();
-                }
                 $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo('#omnivalt_parcel_terminal_carrier_details');
-                $('#omnivalt_parcel_terminal_carrier_details').appendTo(moveTo);
+                $('#omnivalt_parcel_terminal_carrier_details').appendTo(self.get_moveto_radio($this));
             }
             else
             {
                 console.log('Block add method: Label');
                 var omnivaltLocation = $this.closest('.delivery-option').next();
-                moveTo = $this.closest('.delivery-option').find('label');
                 $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo(omnivaltLocation);
-                omnivaltLocation.find('#omnivalt_parcel_terminal_carrier_details').appendTo(moveTo);
+                omnivaltLocation.find('#omnivalt_parcel_terminal_carrier_details').appendTo(self.get_moveto_label($this));
             }
             console.log('Omniva block added to carrier');
         });
 
-        let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
-        if ($(carrier_input).val() == omnivalt_params.methods.omniva_terminal + ',') {
+        if (self.get_checked_input().val() == omnivalt_params.methods.omniva_terminal + ',') {
             $("#omnivalt_parcel_terminal_carrier_details").show();
             console.log('Omniva block shown');
         } else {
@@ -741,6 +733,35 @@ var omnivaltDelivery = {
         });
         console.groupEnd();
     },
+    get_moveto_radio : function(input) {
+        if (!omnivalt_params.prestashop.is_16) {
+            /* onepagecheckoutps v5 - 4.2.3 - presteamshop */
+            if (typeof OPC !== typeof undefined) {
+                return $(input).closest('.delivery-option').find('.delivery_option_logo').next();
+            }
+            /* supercheckout - 9.0.2 - Knowband */
+            if (!$(input).closest('.delivery_option').length && $('#module-supercheckout-supercheckout').length) {
+                return $(input).parent();
+            }
+        }
+
+        return $(input).closest('.delivery_option').find('.delivery_option_logo').next();
+    },
+    get_moveto_label : function(input) {
+        return $(input).closest('.delivery-option').find('label');
+    },
+    get_checked_input : function() {
+        let all_inputs = (!omnivalt_params.prestashop.is_16) ? '.delivery-options .delivery-option input[type="radio"]' : '.delivery_options .delivery_option input[type="radio"]';
+        
+        if (!omnivalt_params.prestashop.is_16) {
+            /* supercheckout - 9.0.2 - Knowband */
+            if (!$(all_inputs).length && $('#module-supercheckout-supercheckout').length) {
+                all_inputs = 'input.delivery_option_radio';
+            }
+        }
+
+        return $(all_inputs).filter(':checked');
+    },
     validate : function() {
         console.groupCollapsed('OMNIVA: Validating selected terminal');
         let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
@@ -798,6 +819,14 @@ if (!omnivalt_params.prestashop.is_16 && typeof OPC !== typeof undefined) { /* o
 } else {
     $(document).ready(function(){
         launch_omniva();
+    });
+}
+/* supercheckout - 9.0.2 - Knowband */
+if (!omnivalt_params.prestashop.is_16 && $('#module-supercheckout-supercheckout').length) {
+    $(document).ajaxComplete(function(event, xhr, settings) {
+        if (settings.url.includes('supercheckout') && settings.data && settings.data.includes('method=updateCheckoutBehaviour') && settings.data.includes('field_name=shipping_method')) {
+            launch_omniva();
+        }
     });
 }
 

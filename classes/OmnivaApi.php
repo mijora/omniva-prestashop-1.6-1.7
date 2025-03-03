@@ -246,7 +246,7 @@ class OmnivaApi
             'country' => $this->getCountryIso($address),
             'postcode' => $address->postcode,
             'city' => $address->city,
-            'street' => $address->address1,
+            'street' => $this->getReceiverStreet($address),
             'email' => $customer->email,
             'phone' => (isset($address->phone) && $address->phone) ? $address->phone : null,
             'mobile' => $mobile_phone
@@ -299,11 +299,21 @@ class OmnivaApi
     private function getReceiverName($orderAdress)
     {
         $reveicer_name = $orderAdress->firstname . ' ' . $orderAdress->lastname;
-        if ( ! empty($orderAdress->company) && ! empty($orderAdress->vat_number) ) {
+        if ( ! empty($orderAdress->company) ) {
             $reveicer_name = $orderAdress->company;
         }
 
         return trim($reveicer_name);
+    }
+
+    private function getReceiverStreet($orderAdress)
+    {
+        $receiver_street = $orderAdress->address1;
+        if ( ! empty($orderAdress->address2) ) {
+            $receiver_street .= ' - ' . $orderAdress->address2;
+        }
+
+        return trim($receiver_street);
     }
 
     public static function getServiceCode($id_carrier, $sendOffCountry)
@@ -318,7 +328,7 @@ class OmnivaApi
             $send_method =  'c';
             if($sendOffCountry == 'estonia')
             {
-                $send_method =  'cp'; 
+                //$send_method =  'cp'; 
             }
             if($sendOffCountry == 'finland')
             {
