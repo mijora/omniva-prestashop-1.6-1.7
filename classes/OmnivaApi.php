@@ -30,13 +30,13 @@ class OmnivaApi
         $this->username = $username;
         $this->password = $password;
 
-        if ( ! empty($this->username) && ! defined('_OMNIVA_INTEGRATION_AGENT_ID_') ) {
+        if ( ! defined('_OMNIVA_INTEGRATION_AGENT_ID_') ) {
             $module_version = DB::getInstance()->getValue("
                 SELECT version FROM " . _DB_PREFIX_ . "module 
                 WHERE name = 'omnivaltshipping'
             ");
             $version = (! empty($module_version)) ? $module_version : '0.0.0';
-            define('_OMNIVA_INTEGRATION_AGENT_ID_', $this->username . ' Prestashop v' . $version);
+            define('_OMNIVA_INTEGRATION_AGENT_ID_', '7005511 Prestashop v' . $version);
         }
     }
 
