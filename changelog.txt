@@ -1,3 +1,7 @@
+= 2.2.4 =
+# Fixed
+- Fixed agent ID
+
 = 2.2.3 =
 # Fixed
 - Changed to use regular courier services for Estonian clients
