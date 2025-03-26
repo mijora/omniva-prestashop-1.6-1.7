@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.2.5 =
 # Improved
 - Added display of selected parcel terminal on order confirmation and order prereview pages
 - New variables added to emails:
