@@ -159,6 +159,15 @@ class OmnivaCarrier
         return (self::getCarrierMethodKey($carrier_id, $carrier_ref_id)) ? true : false;
     }
 
+    public static function isOmnivaTerminalCarrier($carrier_id = false, $carrier_ref_id = false)
+    {
+        $method_key = self::getCarrierMethodKey($carrier_id, $carrier_ref_id);
+        if ( ! $method_key ) {
+            return false;
+        }
+        return in_array($method_key, array('omnivalt_pt'));
+    }
+
     public static function markAsDeleted($method_key)
     {
         $carrier = self::getCarrier($method_key);

@@ -1,3 +1,10 @@
+= Unreleased =
+# Improved
+- Added display of selected parcel terminal on order confirmation and order prereview pages
+- New variables added to emails:
+    {omniva_terminal_name} - show Omniva terminal name and address
+    {omniva_terminal_text} - show title "Omniva parcel terminal:" and Omniva terminal name and address
+
 = 2.2.4 =
 # Fixed
 - Fixed agent ID
