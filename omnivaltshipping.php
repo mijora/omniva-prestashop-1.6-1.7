@@ -71,7 +71,10 @@ class OmnivaltShipping extends CarrierModule
         'displayBackOfficeHeader',
         'actionValidateOrder',
         'actionAdminControllerSetMedia',
-        'actionObjectOrderUpdateAfter'
+        'actionObjectOrderUpdateAfter',
+        'displayOrderConfirmation',
+        'displayOrderDetail',
+        'actionEmailSendBefore'
     );
 
     /**
@@ -87,7 +90,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.2.4';
+        $this->version = '2.2.5';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -1645,6 +1648,83 @@ class OmnivaltShipping extends CarrierModule
             return $this->display(__file__, 'trackingInfo.tpl');
         }
         return '';
+    }
+
+    public function hookDisplayOrderConfirmation($params)
+    {
+        if ( ! Validate::isLoadedObject($params['order']) ||
+             ! OmnivaCarrier::isOmnivaTerminalCarrier($params['order']->id_carrier)
+        ) {
+            return '';
+        }
+
+        $cartTerminal = new OmnivaCartTerminal($params['order']->id_cart);
+        if ( ! Validate::isLoadedObject($cartTerminal) ) {
+            return '';
+        }
+
+        $terminal_address = self::getTerminalAddress($cartTerminal->id_terminal);
+
+        $this->context->smarty->assign([
+            'terminal_address' => $terminal_address
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/hook/orderconfirmation.tpl');
+    }
+
+    public function hookDisplayOrderDetail($params)
+    {
+        if ( ! Validate::isLoadedObject($params['order']) ||
+             ! OmnivaCarrier::isOmnivaTerminalCarrier($params['order']->id_carrier)
+        ) {
+            return '';
+        }
+
+        $cartTerminal = new OmnivaCartTerminal($params['order']->id_cart);
+        if ( ! Validate::isLoadedObject($cartTerminal) ) {
+            return '';
+        }
+
+        $terminal_address = self::getTerminalAddress($cartTerminal->id_terminal);
+
+        $this->context->controller->addCSS($this->_path . 'views/css/omniva-front.css');
+
+        $this->context->smarty->assign([
+            'terminal_address' => $terminal_address,
+            'logo' => $this->_path . 'views/img/omnivalt-logo-horizontal.png'
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/hook/orderdetail.tpl');
+    }
+
+    public function hookActionEmailSendBefore($params)
+    {
+        $params['templateVars']['{omniva_terminal_name}'] = '';
+        $params['templateVars']['{omniva_terminal_text}'] = '';
+
+        if ( empty($params['templateVars']['{id_order}']) ) {
+            return;
+        }
+
+        $order_id = (int)$params['templateVars']['{id_order}'];
+        $order = new Order($order_id);
+        if ( ! Validate::isLoadedObject($order) ||
+             ! OmnivaCarrier::isOmnivaTerminalCarrier($order->id_carrier)
+         ) {
+            return;
+        }
+
+        $cartTerminal = new OmnivaCartTerminal($order->id_cart);
+        if ( ! Validate::isLoadedObject($cartTerminal) ) {
+            return '';
+        }
+
+        $terminal_address = self::getTerminalAddress($cartTerminal->id_terminal);
+
+        if ( ! empty($terminal_address) ) {
+            $params['templateVars']['{omniva_terminal_name}'] = $terminal_address;
+            $params['templateVars']['{omniva_terminal_text}'] = '<span class="label" style="font-weight: bold;">' . $this->l('Omniva parcel terminal') . ':</span> ' . $terminal_address;
+        }
     }
 
     /**
