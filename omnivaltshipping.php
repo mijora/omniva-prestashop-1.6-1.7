@@ -1172,7 +1172,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
         $helper->fields_value['omnivalt_autoselect'] = Configuration::get('omnivalt_autoselect');
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
-        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') /*? Configuration::get('omnivalt_send_return') : 'all'*/;
+        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return');
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
