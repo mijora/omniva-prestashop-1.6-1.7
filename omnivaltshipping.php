@@ -671,24 +671,6 @@ class OmnivaltShipping extends CarrierModule
                 'name' => $this->l('Order reference')
             ),
         );
-        $send_return_options = array(
-            array(
-                'id_option' => 'all',
-                'name' => $this->l('Add to SMS and email')
-            ),
-            /*array(
-                'id_option' => 'sms',
-                'name' => $this->l('Add to SMS')
-            ),
-            array(
-                'id_option' => 'email',
-                'name' => $this->l('Add to email')
-            ),*/
-            array(
-                'id_option' => 'dont',
-                'name' => $this->l('Do not send')
-            ),
-        );
 
         $features = Feature::getFeatures(
             Context::getContext()->language->id
@@ -958,16 +940,22 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
-                    'type' => 'select',
-                    'lang' => true,
+                    'type' => 'switch',
                     'label' => $this->l('Send return code'),
                     'name' => 'omnivalt_send_return',
-                    'desc' => $this->l('Choose how to send the return code to the customer'),
-                    'required' => false,
-                    'options' => array(
-                        'query' => $send_return_options,
-                        'id' => 'id_option',
-                        'name' => 'name'
+                    'desc' => $this->l("Please note that extra charges may apply. For more information, contact your Omniva`s business customer support."),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
                     )
                 ),
                 array(
@@ -1184,7 +1172,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
         $helper->fields_value['omnivalt_autoselect'] = Configuration::get('omnivalt_autoselect');
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
-        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') ? Configuration::get('omnivalt_send_return') : 'all';
+        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') /*? Configuration::get('omnivalt_send_return') : 'all'*/;
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';

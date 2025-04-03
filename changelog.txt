@@ -1,3 +1,7 @@
+= Unreleased =
+# Improved
+- changed the "Send return code" parameter type to switcher, made disabled by default and indicated that this service may be charged additionally
+
 = 2.2.5 =
 # Improved
 - Added display of selected parcel terminal on order confirmation and order prereview pages
