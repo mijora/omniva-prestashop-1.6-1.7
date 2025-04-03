@@ -215,7 +215,12 @@ class OmnivaApi
 
     protected function shouldSendReturnCode()
     {
-        return (in_array(Configuration::get('omnivalt_send_return'), array('all', 'sms', 'email'))) ? true : false;
+        $value = Configuration::get('omnivalt_send_return');
+
+        if ( in_array($value, array('dont')) ) {
+            return false;
+        }
+        return $value ? true : false;
     }
 
     protected function getPackageWeight($omnivaOrder)
