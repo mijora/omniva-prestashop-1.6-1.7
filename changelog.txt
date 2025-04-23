@@ -1,6 +1,8 @@
 = Unreleased =
 # Improved
 - changed the "Send return code" parameter type to switcher, made disabled by default and indicated that this service may be charged additionally
+- migrated to the full OMX API structure
+- added new shipping method: Express Letter
 
 # Updated
 - API library to 1.3.3

@@ -180,14 +180,17 @@ class OmnivaApiInternational extends OmnivaApi
         return $method_key;
     }
 
-    public static function isOmnivaMethodAllowed( $method_key, $receiver_country )
+    public static function isOmnivaMethodAllowed( $keys, $receiver_country )
     {
-        $parent_result = parent::isOmnivaMethodAllowed($method_key, $receiver_country);
+        $parent_result = parent::isOmnivaMethodAllowed($keys, $receiver_country);
         if ($parent_result) {
             return true;
         }
+        if (!isset($keys['method'])) {
+            return false;
+        }
 
-        $package_key = self::getPackageKeyFromMethodKey($method_key);
+        $package_key = self::getPackageKeyFromMethodKey($keys['method']);
 
         return array_key_exists($package_key, self::getAvailablePackages());
     }
@@ -207,8 +210,8 @@ class OmnivaApiInternational extends OmnivaApi
     public function createShipment($id_order)
     {
         try {
-            $orderObjs = $this->getOrderObjects($id_order);
-            $omnivaObjs = $this->getOmnivaObjects($orderObjs->order);
+            $orderObjs = OmnivaData::getOrderObjects($id_order);
+            $omnivaObjs = OmnivaData::getOmnivaObjects($orderObjs->order);
             
             $method_key = OmnivaCarrier::getCarrierMethodKey($orderObjs->carrier->id, $orderObjs->carrier->id_reference);
 
@@ -217,8 +220,8 @@ class OmnivaApiInternational extends OmnivaApi
             }
 
             $package_key = self::getPackageKeyFromMethodKey($method_key);
-            $country_iso = $this->getCountryIso($orderObjs->address);
-            $receiver_data = $this->getReceiverData($orderObjs->address, $orderObjs->customer);
+            $country_iso = strtoupper(OmnivaData::getCountryIso($orderObjs->address));;
+            $receiver_data = OmnivaData::getReceiverData($orderObjs->address, $orderObjs->customer);
         } catch (\Exception $e) {
             return ['msg' => OmnivaHelper::buildExceptionMessage($e, 'Failed to get Order data')];
         }

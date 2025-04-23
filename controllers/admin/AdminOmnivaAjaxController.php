@@ -36,10 +36,10 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $this->printBulkLabels();
                 break;
             case 'printManifest':
-                $this->module->api->getManifest();
+                $this->printManifest();
                 break;
             case 'printAllManifests':
-                $this->module->api->getAllManifests();
+                $this->printBulkManifest();
                 break;
         }
     }
@@ -195,10 +195,10 @@ class AdminOmnivaAjaxController extends ModuleAdminController
                 $omnivaOrderHistory->tracking_numbers = json_encode($status['barcodes']);
 
                 if ($international_service) {
-                    $serviceCode = $international_service;
+                    $serviceCode = '[INT] ' . $international_service;
                 } else {
-                    $sendOffCountry = $this->module->api->getSendOffCountry($orderAdress);
-                    $serviceCode = $this->module->api->getServiceCode($order->id_carrier, $sendOffCountry);
+                    $shipment_codes = $this->module->api->getShipmentCodes($order->id_carrier);
+                    $serviceCode = '[' . $shipment_codes->main_service . '] ' . $shipment_codes->delivery_service;
                 }
                 $omnivaOrderHistory->service_code = $serviceCode;
                 $omnivaOrderHistory->manifest = (int) Configuration::get('omnivalt_manifest');
@@ -317,6 +317,30 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         {
             Tools::redirectAdmin(Context::getContext()->link->getAdminLink(OmnivaltShipping::CONTROLLER_OMNIVA_AJAX) . '&noLabelsError');
             die(json_encode(['error' => 'Could not fetch labels from the API.']));
+        }
+    }
+
+    protected function printManifest()
+    {
+        try {
+            $this->module->api->getManifest();
+        } catch ( \Mijora\Omniva\OmnivaException $e ) {
+            die(json_encode(['error' => $e->getMessage()]));
+        }
+    }
+
+    protected function printBulkManifest()
+    {
+        $order_ids = explode(',', Tools::getValue('order_ids'));
+        if (empty($order_ids))
+        {
+            die(json_encode(['error' => $this->module->l('No order ID\'s provided.')]));
+        }
+
+        try {
+            $this->module->api->getManifest($order_ids);
+        } catch ( \Mijora\Omniva\OmnivaException $e ) {
+            die(json_encode(['error' => $e->getMessage()]));
         }
     }
 
