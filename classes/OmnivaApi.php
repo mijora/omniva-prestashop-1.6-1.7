@@ -169,9 +169,6 @@ class OmnivaApi
                 $api_receiver_address->setStreet($receiver_data->street);
                 if ( $terminals_type ) {
                     $api_receiver_address->setOffloadPostcode($id_terminal);
-                    if ( $receiver_data->country == 'FI' ) {
-                        //$api_package->
-                    }
                 }
 
                 $api_receiver_contact = new Contact();
