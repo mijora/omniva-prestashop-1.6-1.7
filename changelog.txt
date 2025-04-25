@@ -1,4 +1,4 @@
-= Unreleased =
+= 2.3.0 =
 # Improved
 - changed the "Send return code" parameter type to switcher, made disabled by default and indicated that this service may be charged additionally
 - migrated to the full OMX API structure
