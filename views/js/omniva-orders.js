@@ -126,6 +126,10 @@ $(document).ready(() => {
                 },
                 success: function (data) {
                     if (data) {
+                        if (data.hasOwnProperty('error')) {
+                            alert('Error: ' + data.error);
+                            return;
+                        }
                         row.find('td').css('background-color', '#f9000052');
                         setTimeout(function () {
                             row.remove();

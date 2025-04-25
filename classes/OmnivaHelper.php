@@ -29,7 +29,7 @@ class OmnivaHelper
             $terminals = json_decode($pickups, true);
 
             $pickups = array_filter($terminals, function($item) {
-                return  (int) $item['TYPE'] !== 1 && (float) $item['X_COORDINATE'] > 0 && (float) $item['Y_COORDINATE'] > 0;
+                return (float) $item['X_COORDINATE'] > 0 && (float) $item['Y_COORDINATE'] > 0;
             });
 
             $pickupsJson = json_encode($pickups);
