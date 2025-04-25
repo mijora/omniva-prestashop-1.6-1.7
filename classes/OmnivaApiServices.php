@@ -37,6 +37,15 @@ class OmnivaApiServices
         );
     }
 
+    public static function getInternationalServiceCodes()
+    {
+        return array(
+            'economy' => self::getConstantValue('ServicePackage', 'CODE_ECONOMY'),
+            'standard' => self::getConstantValue('ServicePackage', 'CODE_STANDARD'),
+            'premium' => self::getConstantValue('ServicePackage', 'CODE_PREMIUM'),
+        );
+    }
+
     public static function getLetterServiceCodes()
     {
         return array(

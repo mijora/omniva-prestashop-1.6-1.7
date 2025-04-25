@@ -250,7 +250,7 @@ class OmnivaApiInternational extends OmnivaApi
                 $package
                     ->setId($package_id)
                     //->setComment('') //Not working yet
-                    ->setService(Package::MAIN_SERVICE_PARCEL, Package::CHANNEL_COURIER)
+                    ->setService($this->getShipmentTypeCode('parcel'), $this->getShipmentChannelCode('courier'))
                     ->setReturnAllowed($this->shouldSendReturnCode())
                     ->setServicePackage($servicePackage);
 
