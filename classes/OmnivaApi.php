@@ -186,6 +186,15 @@ class OmnivaApi
                 $api_package->setSenderContact($this->getSenderContact());
 
                 /* Set package service */
+                if ( $shipment_codes->type_key == 'parcel' ) {
+                    if ( $shipment_codes->channel_key == 'terminal' && $receiver_data->country == 'FI' ) {
+                        $int_service_code = $this->getInternationalServiceCode('standard');
+                        if ( $int_service_code ) {
+                            $api_service_package = new ServicePackage($int_service_code);
+                            $api_package->setServicePackage($api_service_package);
+                        }
+                    }
+                }
                 if ( $shipment_codes->type_key == 'letter' ) {
                     $letter_service_code = $this->getLetterServiceCode($shipment_codes->delivery_service);
                     if ( $letter_service_code ) {
@@ -507,6 +516,13 @@ class OmnivaApi
         return $api_sender_contact;
     }
 
+    protected function getInternationalServiceCode( $service_key )
+    {
+        $all_service_codes = OmnivaApiServices::getInternationalServiceCodes();
+
+        return (isset($all_service_codes[$service_key])) ? $all_service_codes[$service_key] : false;
+    }
+
     protected function getLetterServiceCode( $channel_code )
     {
         $all_letter_service_codes = OmnivaApiServices::getLetterServiceCodes();
@@ -562,7 +578,7 @@ class OmnivaApi
         return false;
     }
 
-    private function getShipmentTypeCode( $type_key )
+    protected function getShipmentTypeCode( $type_key )
     {
         $all_types = OmnivaApiServices::getShipmentTypes();
 
@@ -583,7 +599,7 @@ class OmnivaApi
         return false;
     }
 
-    private function getShipmentChannelCode( $channel_key )
+    protected function getShipmentChannelCode( $channel_key )
     {
         $all_channels = OmnivaApiServices::getChannels();
 
