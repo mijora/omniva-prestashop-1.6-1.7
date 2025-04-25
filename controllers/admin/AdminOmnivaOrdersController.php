@@ -49,7 +49,12 @@ class AdminOmnivaOrdersController extends ModuleAdminController
             $result = $this->module->api->callCarrier();
             die(json_encode($result));
         } else if (Tools::getValue('cancelCourier')) {
-            $result = OmnivaHelper::removeScheduledCourierCall(Tools::getValue('cancelCourier'));
+            $call_id = Tools::getValue('cancelCourier');
+            $result = $this->module->api->cancelCarrier($call_id);
+            if ( isset($result['error']) ) {
+                die(json_encode($result));
+            }
+            $result = OmnivaHelper::removeScheduledCourierCall($call_id);
             die(json_encode($result));
         }
     }

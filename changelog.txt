@@ -1,3 +1,13 @@
+= 2.3.0 =
+# Improved
+- changed the "Send return code" parameter type to switcher, made disabled by default and indicated that this service may be charged additionally
+- migrated to the full OMX API structure
+- added new shipping method: Express Letter
+
+# Updated
+- API library to 1.3.3
+- Box Calculator library to 1.1.0
+
 = 2.2.5 =
 # Improved
 - Added display of selected parcel terminal on order confirmation and order prereview pages

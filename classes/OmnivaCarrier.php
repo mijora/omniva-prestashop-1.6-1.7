@@ -11,6 +11,7 @@ class OmnivaCarrier
             'omnivalt_int_premium' => 'International (Premium)',
             'omnivalt_int_standard' => 'International (Standard)',
             'omnivalt_int_economy' => 'International (Economy)',
+            'omnivalt_el' => 'Express Letter',
         );
     }
 

@@ -10,8 +10,10 @@ require_once __DIR__ . "/classes/OmnivaOrderHistory.php";
 require_once __DIR__ . "/classes/OmnivaProduct.php";
 require_once __DIR__ . "/classes/OmnivaCarrier.php";
 require_once __DIR__ . "/classes/OmnivaHelper.php";
+require_once __DIR__ . "/classes/OmnivaData.php";
 require_once __DIR__ . "/classes/OmnivaApi.php";
 require_once __DIR__ . "/classes/OmnivaApiInternational.php";
+require_once __DIR__ . "/classes/OmnivaApiServices.php";
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -74,7 +76,8 @@ class OmnivaltShipping extends CarrierModule
         'actionObjectOrderUpdateAfter',
         'displayOrderConfirmation',
         'displayOrderDetail',
-        'actionEmailSendBefore'
+        'actionEmailSendBefore',
+        'displayCarrierExtraContent'
     );
 
     /**
@@ -90,7 +93,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.2.5';
+        $this->version = '2.3.0';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -441,6 +444,12 @@ class OmnivaltShipping extends CarrierModule
 
         if (isset($this->context->cart->id_address_delivery)) {
             $address = new Address($this->context->cart->id_address_delivery);
+
+            $shipment_codes = $this->api->getShipmentCodes($carrier->id);
+            $shipment_keys = array(
+                'type' => $shipment_codes->type_key,
+                'channel' => $shipment_codes->channel_key
+            );
             
             $default_iso_code = Configuration::get('omnivalt_default_receiver_countrycode');
             if (!$default_iso_code) $default_iso_code = $this->context->language->iso_code;
@@ -448,7 +457,8 @@ class OmnivaltShipping extends CarrierModule
             $iso_code = strtoupper($iso_code);
 
             if ((int) $carrier->id_reference === $omniva_references['omnivalt_pt']) {
-                if (!OmnivaApi::isOmnivaMethodAllowed('pt', $iso_code)) {
+                $terminals_type = OmnivaApiServices::getTerminalsType($shipment_codes->type_key, $shipment_codes->channel_key);
+                if (!$terminals_type || !OmnivaApiServices::haveTerminals($iso_code)) {
                     return false;
                 }
 
@@ -466,7 +476,8 @@ class OmnivaltShipping extends CarrierModule
             } else if (in_array((int) $carrier->id_reference, $omniva_references)) {
                 $method_key = array_search((int) $carrier->id_reference, $omniva_references);
                 $method_short_key = str_replace('omnivalt_', '', $method_key);
-                if (!OmnivaApiInternational::isOmnivaMethodAllowed($method_short_key, $iso_code)) {
+                $shipment_keys['method'] = $method_key;
+                if (!OmnivaApiInternational::isOmnivaMethodAllowed($shipment_keys, $iso_code)) {
                     return false;
                 }
                 if (OmnivaApiInternational::isInternationalMethod($method_key)) {
@@ -669,24 +680,6 @@ class OmnivaltShipping extends CarrierModule
             array(
                 'id_option' => OmnivaApi::LABEL_COMMENT_TYPE_ORDER_REF,
                 'name' => $this->l('Order reference')
-            ),
-        );
-        $send_return_options = array(
-            array(
-                'id_option' => 'all',
-                'name' => $this->l('Add to SMS and email')
-            ),
-            /*array(
-                'id_option' => 'sms',
-                'name' => $this->l('Add to SMS')
-            ),
-            array(
-                'id_option' => 'email',
-                'name' => $this->l('Add to email')
-            ),*/
-            array(
-                'id_option' => 'dont',
-                'name' => $this->l('Do not send')
             ),
         );
 
@@ -958,16 +951,22 @@ class OmnivaltShipping extends CarrierModule
                     )
                 ),
                 array(
-                    'type' => 'select',
-                    'lang' => true,
+                    'type' => 'switch',
                     'label' => $this->l('Send return code'),
                     'name' => 'omnivalt_send_return',
-                    'desc' => $this->l('Choose how to send the return code to the customer'),
-                    'required' => false,
-                    'options' => array(
-                        'query' => $send_return_options,
-                        'id' => 'id_option',
-                        'name' => 'name'
+                    'desc' => $this->l("Please note that extra charges may apply. For more information, contact your Omniva`s business customer support."),
+                    'is_bool' => true,
+                    'values' => array(
+                        array(
+                            'id' => 'label2_on',
+                            'value' => 1,
+                            'label' => $this->l('Enabled')
+                        ),
+                        array(
+                            'id' => 'label2_off',
+                            'value' => 0,
+                            'label' => $this->l('Disabled')
+                        )
                     )
                 ),
                 array(
@@ -1184,7 +1183,7 @@ class OmnivaltShipping extends CarrierModule
         $helper->fields_value['omnivalt_map'] = Configuration::get('omnivalt_map');
         $helper->fields_value['omnivalt_autoselect'] = Configuration::get('omnivalt_autoselect');
         $helper->fields_value['send_delivery_email'] = Configuration::get('send_delivery_email');
-        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return') ? Configuration::get('omnivalt_send_return') : 'all';
+        $helper->fields_value['omnivalt_send_return'] = Configuration::get('omnivalt_send_return');
         $helper->fields_value['omnivalt_print_type'] = Configuration::get('omnivalt_print_type') ? Configuration::get('omnivalt_print_type') : 'four';
         $helper->fields_value['omnivalt_label_comment_type'] = Configuration::get('omnivalt_label_comment_type') ? Configuration::get('omnivalt_label_comment_type') : OmnivaApi::LABEL_COMMENT_TYPE_NONE;
         $helper->fields_value['omnivalt_manifest_lang'] = Configuration::get('omnivalt_manifest_lang') ? Configuration::get('omnivalt_manifest_lang') : 'en';
@@ -1217,75 +1216,110 @@ class OmnivaltShipping extends CarrierModule
         return $countries_options;
     }
 
-    private function getTerminalsOptions($selected = '', $country = "", $admin = false)
+    private function getTerminalsList($carrier_id, $country = "LT")
     {
         if (!$country) {
             $country = Country::getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
         }
 
-        $contract_origin = Configuration::get('omnivalt_api_country');
-        $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-        $origin_allows = true;
-        if (!$admin && !OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
-            $origin_allows = false;
+        if ( ! OmnivaApiServices::haveTerminals($country) ) {
+            return [];
         }
+
+        $shipment_codes = $this->api->getShipmentCodes($carrier_id);
+        if ( ! $shipment_codes->_exists ) {
+            return [];
+        }
+
+        $terminals_type = OmnivaApiServices::getTerminalsType($shipment_codes->type_key, $shipment_codes->channel_key);
+        if ( ! $terminals_type ) {
+            return [];
+        }
+        $terminals_type_code = ($terminals_type === 'post') ? 1 : 0;
 
         $terminals = file_get_contents(__DIR__ . "/locations.json");
         $terminals = json_decode($terminals, true);
-        $parcel_terminals = '';
-        if ($origin_allows && is_array($terminals)) {
-            $grouped_options = array();
-            foreach ($terminals as $terminal) {
-                # closed ? exists on EE only
-                if (intval($terminal['TYPE'])) {
+        $terminals_list = array();
+        if ( is_array($terminals) ) {
+            foreach ( $terminals as $terminal ) {
+                if ( $terminal['A0_NAME'] != $country || intval($terminal['TYPE']) != $terminals_type_code )
                     continue;
-                }
-                if ($terminal['A0_NAME'] != $country)
-                    continue;
-                if (!isset($grouped_options[$terminal['A1_NAME']]))
-                    $grouped_options[(string)$terminal['A1_NAME']] = array();
-                $address = trim($terminal['A2_NAME'] . ' ' . ($terminal['A5_NAME'] != 'NULL' ? $terminal['A5_NAME'] : '') . ' ' . ($terminal['A7_NAME'] != 'NULL' ? $terminal['A7_NAME'] : ''));
-                $grouped_options[(string)$terminal['A1_NAME']][(string)$terminal['ZIP']] = $terminal['NAME'] . ' (' . $address . ')';
+
+                // Remove unnecessary info
+                unset($terminal['TYPE']);
+                unset($terminal['TEMP_SERVICE_HOURS']);
+                unset($terminal['TEMP_SERVICE_HOURS_UNTIL']);
+                unset($terminal['TEMP_SERVICE_HOURS_2']);
+                unset($terminal['TEMP_SERVICE_HOURS_2_UNTIL']);
+                unset($terminal['MODIFIED']);
+
+                $terminals_list[] = $terminal;
             }
-            ksort($grouped_options);
-            $this->context->smarty->assign([
-                'grouped_options' => $grouped_options,
-                'selected' => $selected,
-            ]);
         }
+        return $terminals_list;
+    }
+
+    private function getTerminalsOptions( $terminals_list, $selected = '' )
+    {
+        if ( empty($terminals_list) || ! is_array($terminals_list) ) {
+            return;
+        }
+
+        $grouped_options = array();
+        foreach ( $terminals_list as $terminal ) {
+            $group_name = (string) $terminal['A1_NAME'];
+            if ( ! isset($grouped_options[$group_name]) ) {
+                $grouped_options[$group_name] = array();
+            }
+            $address = trim($terminal['A2_NAME'] . ' ' . ($terminal['A5_NAME'] != 'NULL' ? $terminal['A5_NAME'] : '') . ' ' . ($terminal['A7_NAME'] != 'NULL' ? $terminal['A7_NAME'] : ''));
+            $grouped_options[$group_name][(string)$terminal['ZIP']] = $terminal['NAME'] . ' (' . $address . ')';
+        }
+        ksort($grouped_options);
+        
+        $this->context->smarty->assign([
+            'grouped_options' => $grouped_options,
+            'selected' => $selected,
+        ]);
+
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name .'/views/templates/front/omniva-terminals.tpl');
     }
 
     /**
      * Generate terminal list with coordinates info
      */
-    private function getTerminalForMap($selected = '', $country = "LT")
+    private function getTerminalForMap( $terminals_list, $selected = '', $country = "LT" )
     {
-        if (!$country) {
-            $country = Country::getIsoById(Configuration::get('PS_SHOP_COUNTRY_ID'));
-        }
-     
-        $contract_origin = Configuration::get('omnivalt_api_country');
-        $sender_iso_code = strtoupper((string) Configuration::get('omnivalt_countrycode'));
-        if (!OmnivaApi::isOmnivaMethodAllowed('pt', $country)) {
-            return [];
+        if ( empty($terminals_list) || ! is_array($terminals_list) ) {
+            return;
         }
 
-        $terminals = file_get_contents(__DIR__ . "/locations.json");
-        $terminals = json_decode($terminals, true);
-        $terminalsList = array();
-        if (is_array($terminals)) {
-            foreach ($terminals as $terminal) {
-                if ($terminal['A0_NAME'] != $country || intval($terminal['TYPE']) == 1)
-                    continue;
-                if (!isset($grouped_options[$terminal['A1_NAME']]))
-                    $grouped_options[(string)$terminal['A1_NAME']] = array();
-                $grouped_options[(string)$terminal['A1_NAME']][(string)$terminal['ZIP']] = $terminal['NAME'];
-
-                $terminalsList[] = [$terminal['NAME'], $terminal['Y_COORDINATE'], $terminal['X_COORDINATE'], $terminal['ZIP'], $terminal['A1_NAME'], $terminal['A2_NAME'], $terminal['comment_lit']];
+        $map_terminals = array();
+        foreach ( $terminals_list as $terminal ) {
+            switch ( $country ) {
+                case 'LT':
+                    $comment = $terminal['comment_lit'];
+                    break;
+                case 'LV':
+                    $comment = $terminal['comment_lav'];
+                    break;
+                case 'EE':
+                    $comment = $terminal['comment_est'];
+                    break;
+                default:
+                    $comment = $terminal['comment_lit'];
             }
+            $map_terminals[] = [
+                $terminal['NAME'],
+                $terminal['Y_COORDINATE'],
+                $terminal['X_COORDINATE'],
+                $terminal['ZIP'],
+                $terminal['A1_NAME'],
+                $terminal['A2_NAME'],
+                $comment
+            ];
         }
-        return $terminalsList;
+
+        return $map_terminals;
     }
 
     public static function getTerminalAddress($code)
@@ -1317,34 +1351,59 @@ class OmnivaltShipping extends CarrierModule
 
     public function hookDisplayBeforeCarrier($params)
     {
+        $address = new Address($params['cart']->id_address_delivery);
+        $iso_code = $this->getCartCountryCode($params['cart']);
+
+        $showMap = Configuration::get('omnivalt_map');
+        $autoselect = Configuration::get('omnivalt_autoselect');
+        $this->context->smarty->assign(array(
+            'omniva_current_country' => $iso_code,
+            'omniva_postcode' => $address->postcode ?: '',
+            'omniva_map' => $showMap,
+            'autoselect' => (int)$autoselect,
+            'ps_version' => $this->getPsVersion(),
+        ));
+        return $this->display(__file__, 'displayBeforeCarrier.tpl');
+    }
+
+    public function hookDisplayCarrierExtraContent($params)
+    {
+        if ( is_object($params['carrier']) ) {
+            $carrier_id = (int) $params['carrier']->id;
+        } else if ( is_array($params['carrier']) && isset($params['carrier']['id']) ) {
+            $carrier_id = (int) $params['carrier']['id'];
+        } else {
+            return '';
+        }
+
         $selected = '';
-        if (isset($params['cart']->id)) {
+        if ( isset($params['cart']->id) ) {
             $omnivaCart = new OmnivaCartTerminal($params['cart']->id);
             $selected = $omnivaCart->id_terminal;
         }
+
         $address = new Address($params['cart']->id_address_delivery);
         $iso_code = $this->getCartCountryCode($params['cart']);
+
+        $terminals = $this->getTerminalsList($carrier_id, $iso_code);
+        if ( empty($terminals) ) {
+            return '';
+        }
 
         $marker_img = 'sasi.png';
         if ($iso_code == 'FI') {
             $marker_img = 'sasi_mh.svg';
         }
 
-        $showMap = Configuration::get('omnivalt_map');
-        $autoselect = Configuration::get('omnivalt_autoselect');
         $this->context->smarty->assign(array(
-            'parcel_terminals' => $this->getTerminalsOptions($selected, $iso_code),
-            'terminals_list' => $this->getTerminalForMap($selected, $iso_code),
-            'omniva_current_country' => $iso_code,
-            'omniva_postcode' => $address->postcode ?: '',
-            'omniva_map' => $showMap,
-            'autoselect' => (int)$autoselect,
             'module_url' => $this->_path,
-            'ps_version' => $this->getPsVersion(),
+            'parcel_terminals' => $this->getTerminalsOptions($terminals, $selected),
+            'terminals_list' => $this->getTerminalForMap($terminals, $selected, $iso_code),
             'marker_img' => $marker_img,
             'select_block_theme' => ($iso_code == 'FI') ? 'matkahuolto' : 'omniva',
         ));
-        return $this->display(__file__, 'displayBeforeCarrier.tpl');
+
+        return $this->display(__file__, 'displayCarrierExtraContent.tpl');
     }
 
     private function getCartCountryCode( $cart )
@@ -1491,19 +1550,6 @@ class OmnivaltShipping extends CarrierModule
         return $data;
     }
 
-    public static function getReferenceNumber($order_number)
-    {
-        $order_number = str_pad((string)$order_number, 2, '0', STR_PAD_LEFT);
-        $kaal = array(7, 3, 1);
-        $sl = $st = strlen($order_number);
-        $total = 0;
-        while ($sl > 0 and substr($order_number, --$sl, 1) >= '0') {
-            $total += substr($order_number, ($st - 1) - $sl, 1) * $kaal[($sl % 3)];
-        }
-        $kontrollnr = ((ceil(($total / 10)) * 10) - $total);
-        return $order_number . $kontrollnr;
-    }
-
     public function changeOrderStatus($id_order, $status, $template_vars = false)
     {
         $order = new Order((int)$id_order);
@@ -1552,15 +1598,15 @@ class OmnivaltShipping extends CarrierModule
             try {
                 if ( ! $international_package_key ) {
                     $shipment_additional_services = OmnivaApi::getAdditionalServices($order);
-                    if ( ! isset($shipment_additional_services['error']) ) {
-                        foreach ($shipment_additional_services as $additional_service_code) {
-                            $shipment_additional_services_names[$additional_service_code] = $this->getAdditionalServiceName($additional_service_code);
-                        }
+                    foreach ($shipment_additional_services as $key => $service) {
+                        $shipment_additional_services_names[$key] = $service['title'];
                     }
                 }
             } catch(Exception $e) {
                 $error_msg = $this->displayError($e->getMessage());
             }
+
+            $terminals = $this->getTerminalsList($order->id_carrier, $countryCode);
 
             $this->smarty->assign(array(
                 'is_international' => ($international_package_key) ? true : false,
@@ -1568,7 +1614,7 @@ class OmnivaltShipping extends CarrierModule
                 'packs' => $omnivaOrder->packs,
                 'total_paid_tax_incl' => $omnivaOrder->cod_amount,
                 'is_cod' => $omnivaOrder->cod,
-                'parcel_terminals' => $this->getTerminalsOptions($id_terminal, $countryCode, true),
+                'parcel_terminals' => $this->getTerminalsOptions($terminals, $id_terminal),
                 'active_additional_services' => implode(', ', $shipment_additional_services_names),
                 'carriers' => $this->getCarriersOptions($order->id_carrier),
                 'order_id' => $order->id,
@@ -1584,30 +1630,6 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
-    private function getAdditionalServiceName($service_code)
-    {
-        $services = array(
-            'ST' => $this->l('Arrival SMS'),
-            'SF' => $this->l('Arrival email'),
-            'BP' => $this->l('Cash on delivery'),
-            'BC' => $this->l('Fragile'),
-            'CL' => $this->l('Delivery to private customer'),
-            'XT' => $this->l('Document return'),
-            'BS' => $this->l('Paid by receiver'),
-            'BI' => $this->l('Insurance'),
-            'BK' => $this->l('Personal delivery'),
-            'GN' => $this->l('Paid parcel SMS'),
-            'GM' => $this->l('Paid parcel email'),
-            'SB' => $this->l('Return notification SMS'),
-            'SG' => $this->l('Return notification email'),
-            'PC' => $this->l('Issue to persons at the age of 18+'),
-            'SS' => $this->l('Delivery confirmation SMS to sender'),
-            'SE' => $this->l('Delivery confirmation e-mail to sender'),
-        );
-
-        return (isset($services[$service_code])) ? $services[$service_code] : $service_code;
-    }
-
     public static function getCarrierById($carrier_id)
     {
         $carrier = new Carrier((int)$carrier_id);
@@ -1618,6 +1640,7 @@ class OmnivaltShipping extends CarrierModule
     public function hookOrderDetailDisplayed($params)
     {
         $order = $params['order'];
+        $order = new Order($order);
         $omnivaOrder = new OmnivaOrder($order->id);
         if (Validate::isLoadedObject($omnivaOrder) && $omnivaOrder->tracking_numbers)
         {
@@ -1675,23 +1698,37 @@ class OmnivaltShipping extends CarrierModule
     public function hookDisplayOrderDetail($params)
     {
         if ( ! Validate::isLoadedObject($params['order']) ||
-             ! OmnivaCarrier::isOmnivaTerminalCarrier($params['order']->id_carrier)
+             ! OmnivaCarrier::isOmnivaCarrier($params['order']->id_carrier)
         ) {
             return '';
         }
 
-        $cartTerminal = new OmnivaCartTerminal($params['order']->id_cart);
-        if ( ! Validate::isLoadedObject($cartTerminal) ) {
-            return '';
+        $terminal_address = '';
+        if ( OmnivaCarrier::isOmnivaTerminalCarrier($params['order']->id_carrier) ) {
+            $cartTerminal = new OmnivaCartTerminal($params['order']->id_cart);
+            if ( Validate::isLoadedObject($cartTerminal) ) {
+                $terminal_address = self::getTerminalAddress($cartTerminal->id_terminal);
+            }
         }
 
-        $terminal_address = self::getTerminalAddress($cartTerminal->id_terminal);
+        $tracking_info = array();
+        $omnivaOrder = new OmnivaOrder($params['order']->id);
+        if ( Validate::isLoadedObject($omnivaOrder) && $omnivaOrder->tracking_numbers) {
+            $tracking_info = $this->api->getTracking(json_decode($omnivaOrder->tracking_numbers));
+        }
+
+        $address = new Address($params['order']->id_address_delivery);
+        $iso_code = (Validate::isLoadedObject($address)) ? Country::getIsoById($address->id_country) : 'LT';
 
         $this->context->controller->addCSS($this->_path . 'views/css/omniva-front.css');
 
         $this->context->smarty->assign([
+            'logo' => $this->_path . 'views/img/omnivalt-logo-horizontal.png',
+            'country_code' => $iso_code,
             'terminal_address' => $terminal_address,
-            'logo' => $this->_path . 'views/img/omnivalt-logo-horizontal.png'
+            'tracking_info' => $tracking_info,
+            'tracking_url' => OmnivaApi::getTrackingUrl($iso_code),
+            'show' => (! empty($terminal_address) || ! empty($tracking_info))
         ]);
 
         return $this->display(__FILE__, 'views/templates/hook/orderdetail.tpl');
