@@ -93,7 +93,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.3.0';
+        $this->version = '2.3.1';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -2083,11 +2083,11 @@ class OmnivaltShipping extends CarrierModule
                     INNER JOIN " . _DB_PREFIX_ . "omniva_order oo ON oo.id = a.id_order AND a.id_carrier IN (" . implode(',', self::getCarrierIds($method_keys)) . ") AND oo.date_track IS NULL
                     INNER JOIN (
                         SELECT ooh.*
-                        FROM ps_omniva_order_history ooh
+                        FROM " . _DB_PREFIX_ . "omniva_order_history ooh
                         INNER JOIN (
                             -- collecting latest data for each order
                             SELECT id_order, MAX(date_add) AS max_date_add
-                            FROM ps_omniva_order_history
+                            FROM " . _DB_PREFIX_ . "omniva_order_history
                             WHERE manifest IS NOT NULL 
                               AND manifest != 0 
                               AND manifest != -1
