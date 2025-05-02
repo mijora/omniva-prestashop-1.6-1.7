@@ -93,7 +93,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.3.0';
+        $this->version = '2.3.1';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
