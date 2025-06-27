@@ -2,6 +2,10 @@
 # Fixed
 - Moved HTML block from page head to body
 
+# Updated
+- Omniva API library to 1.3.4
+- TCPDF library to 6.10.0
+
 = 2.3.1 =
 # Fixed
 - Fixed a bug by changing the DB prefix to dynamic in the shipment data retrieval function
