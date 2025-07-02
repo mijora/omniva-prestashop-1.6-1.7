@@ -1,6 +1,6 @@
 = Unreleased (2.3.2) =
 # Fixed
-- Moved HTML block from page head to body
+- Moved modal HTML block from page head to body
 - Fixed module upgrade functions
 
 # Updated

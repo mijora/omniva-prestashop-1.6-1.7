@@ -77,8 +77,7 @@ class OmnivaltShipping extends CarrierModule
         'displayOrderConfirmation',
         'displayOrderDetail',
         'actionEmailSendBefore',
-        'displayCarrierExtraContent',
-        'displayTop'
+        'displayCarrierExtraContent'
     );
 
     /**
@@ -1364,7 +1363,10 @@ class OmnivaltShipping extends CarrierModule
             'autoselect' => (int)$autoselect,
             'ps_version' => $this->getPsVersion(),
         ));
-        return $this->display(__file__, 'displayBeforeCarrier.tpl');
+        
+        $tpl1 = $this->display(__FILE__, 'displayBeforeCarrier.tpl');
+        $tpl2 = $this->display(__FILE__, 'modalMap.tpl');
+        return $tpl1 . $tpl2;
     }
 
     public function hookDisplayCarrierExtraContent($params)
@@ -1524,13 +1526,6 @@ class OmnivaltShipping extends CarrierModule
     public function hookDisplayHeader($params)
     {
         return $this->hookHeader($params);
-    }
-
-    public function hookDisplayTop($params)
-    {
-        if (in_array(Context::getContext()->controller->php_self, array('order-opc', 'order'))) {
-            return $this->display(__FILE__, 'displayTop.tpl');
-        }
     }
 
     public static function getCarrierIds($carriers = [])
