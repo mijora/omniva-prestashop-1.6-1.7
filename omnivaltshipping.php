@@ -93,7 +93,7 @@ class OmnivaltShipping extends CarrierModule
     {
         $this->name = 'omnivaltshipping';
         $this->tab = 'shipping_logistics';
-        $this->version = '2.3.1';
+        $this->version = '2.3.2';
         $this->author = 'Mijora';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -117,7 +117,12 @@ class OmnivaltShipping extends CarrierModule
                 Configuration::updateValue('omnivalt_locations_update', time());
             }
         }
-        $this->sendStatistics();
+        
+        try {
+            $this->sendStatistics();
+        } catch(Exception $e) {
+            OmnivaHelper::printToLog('Failed to send statistics. Error: ' . $e->getMessage(), 'powerbi');
+        }
     }
 
     /**
@@ -1363,7 +1368,10 @@ class OmnivaltShipping extends CarrierModule
             'autoselect' => (int)$autoselect,
             'ps_version' => $this->getPsVersion(),
         ));
-        return $this->display(__file__, 'displayBeforeCarrier.tpl');
+        
+        $tpl1 = $this->display(__FILE__, 'displayBeforeCarrier.tpl');
+        $tpl2 = $this->display(__FILE__, 'modalMap.tpl');
+        return $tpl1 . $tpl2;
     }
 
     public function hookDisplayCarrierExtraContent($params)
@@ -1517,8 +1525,6 @@ class OmnivaltShipping extends CarrierModule
             }
             $this->context->controller->addCSS($this->_path . '/views/css/leaflet.css');
             $this->context->controller->addCSS($this->_path . '/views/css/omniva.css');
-
-            return $this->display(__FILE__, 'header.tpl');
         }
     }
 
@@ -1963,7 +1969,13 @@ class OmnivaltShipping extends CarrierModule
         // Get Carriers zones
         $_carriers_zones = array();
         foreach ( $_methods_keys as $method_name => $method_keys ) {
+            if ( ! isset($_carriers_prices[$method_name]) ) {
+                continue;
+            }
             foreach ( $_carriers_prices[$method_name] as $carrier_price ) {
+                if ( empty($carrier_price) || ! isset($carrier_price['id_zone']) ) {
+                    continue;
+                }
                 if ( ! in_array($carrier_price['id_zone'], $_carriers_zones) ) {
                     $_carriers_zones[] = $carrier_price['id_zone'];
                 }
@@ -2122,6 +2134,9 @@ class OmnivaltShipping extends CarrierModule
         if ( $data_type == 'prices' ) {
             $prices = array();
             foreach ( $methods_keys as $method_name => $method_keys ) {
+                if ( empty($additional_data[$method_name]) || ! isset($additional_data[$method_name]['id']) ) {
+                    continue;
+                }
                 $sql_query = "SELECT * FROM " . _DB_PREFIX_ . "delivery WHERE id_carrier = " . $additional_data[$method_name]['id'];
                 $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
                 $prices[$method_name] = (is_array($sql_result)) ? $sql_result : array();
@@ -2132,6 +2147,9 @@ class OmnivaltShipping extends CarrierModule
         if ( $data_type == 'prices_ranges' ) {
             $prices_ranges = array();
             foreach ( $additional_data as $carrier ) {
+                if ( empty($carrier) || ! isset($carrier['id']) ) {
+                    continue;
+                }
                 $sql_query = "SELECT * FROM " . _DB_PREFIX_ . "range_price WHERE id_carrier = " . $carrier['id'];
                 $sql_result = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($sql_query);
                 if ( ! empty($sql_result) ) {
