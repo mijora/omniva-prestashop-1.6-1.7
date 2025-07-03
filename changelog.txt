@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Fixed so that all variables used in the hook are passed to the DisplayCarrierExtraContent hook
+
 = 2.3.2 =
 # Fixed
 - Moved modal HTML block from page head to body
