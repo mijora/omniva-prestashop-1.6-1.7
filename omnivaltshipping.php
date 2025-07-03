@@ -1403,12 +1403,15 @@ class OmnivaltShipping extends CarrierModule
             $marker_img = 'sasi_mh.svg';
         }
 
+        $showMap = Configuration::get('omnivalt_map');
+
         $this->context->smarty->assign(array(
             'module_url' => $this->_path,
             'parcel_terminals' => $this->getTerminalsOptions($terminals, $selected),
             'terminals_list' => $this->getTerminalForMap($terminals, $selected, $iso_code),
             'marker_img' => $marker_img,
             'select_block_theme' => ($iso_code == 'FI') ? 'matkahuolto' : 'omniva',
+            'omniva_map' => $showMap
         ));
 
         return $this->display(__file__, 'displayCarrierExtraContent.tpl');
