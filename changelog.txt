@@ -1,6 +1,10 @@
 = Unreleased =
 # Fixed
 - Fixed so that all variables used in the hook are passed to the DisplayCarrierExtraContent hook
+- Fixed to check if a value is entered only for required fields
+
+# Improved
+- Added the error message to the settings page to indicate the name of a field whose value is required but not filled
 
 = 2.3.2 =
 # Fixed

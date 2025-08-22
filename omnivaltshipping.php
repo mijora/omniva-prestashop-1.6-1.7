@@ -564,28 +564,26 @@ class OmnivaltShipping extends CarrierModule
         }
 
         if (Tools::isSubmit($this->name . '_submit_settings')) {
-            $fields = array(
-                'omnivalt_map', 'send_delivery_email', 'omnivalt_api_url', 'omnivalt_api_user', 'omnivalt_api_pass',
-                'omnivalt_api_country', 'omnivalt_ee_service', 'omnivalt_fi_service', 'omnivalt_send_off',
-                'omnivalt_bank_account', 'omnivalt_company', 'omnivalt_address', 'omnivalt_city',
-                'omnivalt_postcode', 'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
-                'omnivalt_pick_up_time_finish', 'omnivalt_send_return', 'omnivalt_print_type', 'omnivalt_manifest_lang',
-                'omnivalt_label_comment_type', 'omnivalt_autoselect', 'omnivalt_default_receiver_countrycode'
-            );
-            $not_required = array(
-                'omnivalt_bank_account', 'omnivalt_default_receiver_countrycode'
+            $fields = $this->getSettingsFields();
+            $required = array(
+                'omnivalt_api_user', 'omnivalt_api_pass', 'omnivalt_api_country',
+                'omnivalt_company', 'omnivalt_address', 'omnivalt_city', 'omnivalt_postcode',
+                'omnivalt_countrycode', 'omnivalt_phone', 'omnivalt_pick_up_time_start',
+                'omnivalt_pick_up_time_finish', 'omnivalt_send_off'
             );
             $values = array();
             $all_filled = true;
-            foreach ($fields as $field) {
-                $values[$field] = strval(Tools::getValue($field));
-                if ($values[$field] == '' && !in_array($field, $not_required)) {
+            $missing_fields = array();
+            foreach ($fields as $field_key => $title) {
+                $values[$field_key] = strval(Tools::getValue($field_key));
+                if ($values[$field_key] == '' && in_array($field_key, $required)) {
                     $all_filled = false;
+                    $missing_fields[] = $title;
                 }
             }
 
             if (!$all_filled)
-                $output .= $this->displayError($this->l('All fields required'));
+                $output .= $this->displayError(sprintf($this->l('Failed to save. These fields are required: %s'), '<br/><b>' .implode('<br/>', $missing_fields) . '</b>'));
             else {
                 foreach ($values as $key => $val) {
                     Configuration::updateValue($key, $val);
@@ -620,6 +618,36 @@ class OmnivaltShipping extends CarrierModule
         }
 
         return $output . $this->displayForm();
+    }
+
+    private function getSettingsFields()
+    {
+        return array(
+            'omnivalt_map' => $this->l('Display map'),
+            'send_delivery_email' => $this->l('Send delivery email'),
+            'omnivalt_api_url' => $this->l('Api URL'),
+            'omnivalt_api_user' => $this->l('API login user'),
+            'omnivalt_api_pass' => $this->l('API login password'),
+            'omnivalt_api_country' => $this->l('API login country'),
+            'omnivalt_ee_service' => $this->l('Estonia Carrier Service'),
+            'omnivalt_fi_service' => $this->l('Finland Carrier Service'),
+            'omnivalt_send_off' => $this->l('Send off type'),
+            'omnivalt_bank_account' => $this->l('Bank account'),
+            'omnivalt_company' => $this->l('Company name'),
+            'omnivalt_address' => $this->l('Company address'),
+            'omnivalt_city' => $this->l('Company city'),
+            'omnivalt_postcode' => $this->l('Company postcode'),
+            'omnivalt_countrycode' => $this->l('Company country code'),
+            'omnivalt_phone' => $this->l('Company phone number'),
+            'omnivalt_pick_up_time_start' => $this->l('Pick up time start'),
+            'omnivalt_pick_up_time_finish' => $this->l('Pick up time finish'),
+            'omnivalt_print_type' => $this->l('Labels print type'),
+            'omnivalt_send_return' => $this->l('Send return code'),
+            'omnivalt_manifest_lang' => $this->l('Manifest language'),
+            'omnivalt_label_comment_type' => $this->l('Label comment'),
+            'omnivalt_autoselect' => $this->l('Autoselect terminal'),
+            'omnivalt_default_receiver_countrycode' => $this->l('Default country of delivery')
+        );
     }
 
     public function displayForm()
@@ -704,6 +732,8 @@ class OmnivaltShipping extends CarrierModule
         $last_statistics_timestamp = Configuration::get('omnivalt_last_statistics_send');
         $last_statistics_formated = !$last_statistics_timestamp ? '--' : date('Y-m-d H:i:s', (int) $last_statistics_timestamp);
 
+        $settings_fields = $this->getSettingsFields();
+
         // Init Fields form array
         $fields_form[0]['form'] = array(
             'legend' => array(
@@ -712,21 +742,21 @@ class OmnivaltShipping extends CarrierModule
             'input' => array(
                 array(
                     'type' => 'hidden', //Temporary hidden, after some time need remove this field
-                    'label' => $this->l('Api URL'),
+                    'label' => $settings_fields['omnivalt_api_url'],
                     'name' => 'omnivalt_api_url',
                     'size' => 20,
                     'required' => false
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('API login user'),
+                    'label' => $settings_fields['omnivalt_api_user'],
                     'name' => 'omnivalt_api_user',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('API login password'),
+                    'label' => $settings_fields['omnivalt_api_pass'],
                     'name' => 'omnivalt_api_pass',
                     'size' => 20,
                     'required' => true
@@ -734,7 +764,7 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
-                    'label' => $this->l('API login country'),
+                    'label' => $settings_fields['omnivalt_api_country'],
                     'name' => 'omnivalt_api_country',
                     'desc' => $this->l('Select the Omniva department country, from which you got the logins.'),
                     'required' => true,
@@ -759,7 +789,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Estonia Carrier Service'),
+                    'label' => $settings_fields['omnivalt_ee_service'],
                     'name' => 'omnivalt_ee_service',
                     'desc' => $this->l('Activate this service, if your e-shop clients want to receive parcels in Estonia. Only available for Estonia API country.'),
                     'is_bool' => true,
@@ -778,7 +808,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Finland Carrier Service'),
+                    'label' => $settings_fields['omnivalt_fi_service'],
                     'name' => 'omnivalt_fi_service',
                     'desc' => $this->l('Activate this service, if you want to send parcels to Finland. Only available for Estonia API country.'),
                     'is_bool' => true,
@@ -802,42 +832,42 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Company name'),
+                    'label' => $settings_fields['omnivalt_company'],
                     'name' => 'omnivalt_company',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Bank account'),
+                    'label' => $settings_fields['omnivalt_bank_account'],
                     'name' => 'omnivalt_bank_account',
                     'size' => 20,
                     'required' => false
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Company address'),
+                    'label' => $settings_fields['omnivalt_address'],
                     'name' => 'omnivalt_address',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Company city'),
+                    'label' => $settings_fields['omnivalt_city'],
                     'name' => 'omnivalt_city',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Company postcode'),
+                    'label' => $settings_fields['omnivalt_postcode'],
                     'name' => 'omnivalt_postcode',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'select',
-                    'label' => $this->l('Company country code'),
+                    'label' => $settings_fields['omnivalt_countrycode'],
                     'name' => 'omnivalt_countrycode',
                     'required' => true,
                     'options' => array(
@@ -848,21 +878,21 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Company phone number'),
+                    'label' => $settings_fields['omnivalt_phone'],
                     'name' => 'omnivalt_phone',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Pick up time start'),
+                    'label' => $settings_fields['omnivalt_pick_up_time_start'],
                     'name' => 'omnivalt_pick_up_time_start',
                     'size' => 20,
                     'required' => true
                 ),
                 array(
                     'type' => 'text',
-                    'label' => $this->l('Pick up time finish'),
+                    'label' => $settings_fields['omnivalt_pick_up_time_finish'],
                     'name' => 'omnivalt_pick_up_time_finish',
                     'size' => 20,
                     'required' => true
@@ -870,7 +900,7 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
-                    'label' => $this->l('Send off type'),
+                    'label' => $settings_fields['omnivalt_send_off'],
                     'name' => 'omnivalt_send_off',
                     'desc' => $this->l('Please select send off from store type'),
                     'required' => true,
@@ -887,7 +917,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'select',
-                    'label' => $this->l('Default country of delivery'),
+                    'label' => $settings_fields['omnivalt_default_receiver_countrycode'],
                     'name' => 'omnivalt_default_receiver_countrycode',
                     'options' => array(
                         'query' => $this->buildCountriesFieldOptions($countries_list, $this->l('Not specified')),
@@ -898,7 +928,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Display map'),
+                    'label' => $settings_fields['omnivalt_map'],
                     'name' => 'omnivalt_map',
                     'is_bool' => true,
                     'values' => array(
@@ -916,7 +946,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Autoselect terminal'),
+                    'label' => $settings_fields['omnivalt_autoselect'],
                     'name' => 'omnivalt_autoselect',
                     'is_bool' => true,
                     'values' => array(
@@ -939,7 +969,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Send delivery email'),
+                    'label' => $settings_fields['send_delivery_email'],
                     'name' => 'send_delivery_email',
                     'is_bool' => true,
                     'values' => array(
@@ -957,7 +987,7 @@ class OmnivaltShipping extends CarrierModule
                 ),
                 array(
                     'type' => 'switch',
-                    'label' => $this->l('Send return code'),
+                    'label' => $settings_fields['omnivalt_send_return'],
                     'name' => 'omnivalt_send_return',
                     'desc' => $this->l("Please note that extra charges may apply. For more information, contact your Omniva`s business customer support."),
                     'is_bool' => true,
@@ -977,7 +1007,7 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
-                    'label' => $this->l('Labels print type'),
+                    'label' => $settings_fields['omnivalt_print_type'],
                     'name' => 'omnivalt_print_type',
                     'required' => false,
                     'options' => array(
@@ -989,7 +1019,7 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
-                    'label' => $this->l('Label comment'),
+                    'label' => $settings_fields['omnivalt_label_comment_type'],
                     'name' => 'omnivalt_label_comment_type',
                     'required' => false,
                     'options' => array(
@@ -1006,7 +1036,7 @@ class OmnivaltShipping extends CarrierModule
                 array(
                     'type' => 'select',
                     'lang' => true,
-                    'label' => $this->l('Manifest language'),
+                    'label' => $settings_fields['omnivalt_manifest_lang'],
                     'name' => 'omnivalt_manifest_lang',
                     'required' => false,
                     'options' => array(
