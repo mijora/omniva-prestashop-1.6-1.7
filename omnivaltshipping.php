@@ -575,8 +575,8 @@ class OmnivaltShipping extends CarrierModule
             $all_filled = true;
             $missing_fields = array();
             foreach ($fields as $field_key => $title) {
-                $values[$field_key] = strval(Tools::getValue($field_key));
-                if ($values[$field_key] == '' && in_array($field_key, $required)) {
+                $values[$field_key] = trim(strval(Tools::getValue($field_key)));
+                if ($values[$field_key] === '' && in_array($field_key, $required)) {
                     $all_filled = false;
                     $missing_fields[] = $title;
                 }
