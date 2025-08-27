@@ -672,6 +672,30 @@ class OmnivaApi
         return $pack_weight;
     }
 
+    protected static function getOrderProductsData( $psOrderId )
+    {
+        $products_data = array();
+
+        $order = new Order($psOrderId);
+        if ( ! Validate::isLoadedObject($order) ) {
+            return $products_data;
+        }
+
+        $order_products = $order->getProducts();
+        foreach ( $order_products as $order_product ) {
+            $id_prod = (int) $order_product['id_product'];
+            $id_lang = (int) $order->id_lang;
+            $product = new Product($id_prod, false, $id_lang);
+            
+            $products_data[$id_prod] = array(
+                'name' => $product->name,
+                'quantity' => (int) $order_product['product_quantity']
+            );
+        }
+
+        return $products_data;
+    }
+
     protected function shouldSendReturnCode()
     {
         $value = Configuration::get('omnivalt_send_return');
