@@ -222,6 +222,7 @@ class OmnivaApiInternational extends OmnivaApi
             $package_key = self::getPackageKeyFromMethodKey($method_key);
             $country_iso = strtoupper(OmnivaData::getCountryIso($orderObjs->address));;
             $receiver_data = OmnivaData::getReceiverData($orderObjs->address, $orderObjs->customer);
+            $products_data = self::getOrderProductsData($id_order);
         } catch (\Exception $e) {
             return ['msg' => OmnivaHelper::buildExceptionMessage($e, 'Failed to get Order data')];
         }
@@ -252,7 +253,8 @@ class OmnivaApiInternational extends OmnivaApi
                     //->setComment('') //Not working yet
                     ->setService($this->getShipmentTypeCode('parcel'), $this->getShipmentChannelCode('courier'))
                     ->setReturnAllowed($this->shouldSendReturnCode())
-                    ->setServicePackage($servicePackage);
+                    ->setServicePackage($servicePackage)
+                    ->setContentDescription($this->prepareShipmentContentDescription($products_data));
 
                 $measures = new Measures();
                 $measures->setWeight($package_weight);
@@ -291,5 +293,18 @@ class OmnivaApiInternational extends OmnivaApi
         } catch (OmnivaException $e) {
             return ['msg' => $e->getMessage()];
         }
+    }
+
+    private function prepareShipmentContentDescription( $products_data )
+    {
+        $products_names = array();
+        foreach ( $products_data as $prod_data ) {
+            $qty = (isset($prod_data['quantity'])) ? $prod_data['quantity'] : 1;
+            $name = (! empty($prod_data['name'])) ? $prod_data['name'] : 'Unknown product';
+            $name = substr($name, 0, 31);
+            $products_names[] = $qty . '×' . trim($name);
+        }
+
+        return implode('; ', $products_names);
     }
 }
