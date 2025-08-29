@@ -6,7 +6,7 @@ Download the omnivaltshipping.zip from the link below:
 
 ## Compatibility
 - Prestashop 1.6.x: Working (Tested 2023-11-22)
-- Prestashop 1.7.0-1.7.6: Working (Tested 2024-01-08)
+- Prestashop 1.7.0-1.7.6: Working (Tested 2025-08-06)
 - Prestashop 1.7.7-1.7.x: Working (Tested 2025-04-23)
 - Prestashop 8.0.x: Working
 - Prestashop 8.1.x: Working (Tested 2025-04-25)
@@ -14,7 +14,7 @@ Download the omnivaltshipping.zip from the link below:
 - PHP 5.6: Working
 - PHP 7.0: Working (Tested 2023-11-22)
 - PHP 7.1: Working
-- PHP 7.2: Working
+- PHP 7.2: Working (Tested 2025-08-06)
 - PHP 7.4: Working (Tested 2025-04-25)
 - PHP 8.0: Working
 - PHP 8.1: Working (Tested 2025-01-16)
