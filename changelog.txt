@@ -6,6 +6,11 @@
 
 # Improved
 - Added the error message to the settings page to indicate the name of a field whose value is required but not filled
+- Added description of shipment contents when registering a shipment
+
+# Updated
+- Omniva API library to 1.3.5
+- FPDI library to 2.6.4
 
 = 2.3.2 =
 # Fixed
