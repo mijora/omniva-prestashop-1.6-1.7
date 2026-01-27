@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Fixed so that the sender's details would be taken from the shop specified in the order (fix for multi shop)
+
 = 2.3.3 =
 # Fixed
 - Fixed so that all variables used in the hook are passed to the DisplayCarrierExtraContent hook
