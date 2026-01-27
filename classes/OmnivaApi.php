@@ -67,6 +67,7 @@ class OmnivaApi
             $country_iso = strtoupper(OmnivaData::getCountryIso($orderObjs->address));
             $id_terminal = $omnivaObjs->cart_terminal->id_terminal;
             $receiver_data = OmnivaData::getReceiverData($orderObjs->address, $orderObjs->customer);
+            $sender_data = $this->getSenderData($orderObjs->order);
         } catch (\Exception $e) {
             return ['msg' => OmnivaHelper::buildExceptionMessage($e, 'Failed to get Order data')];
         }
@@ -82,7 +83,7 @@ class OmnivaApi
 
             if ( ! self::isOmnivaMethodAllowed(array('type' => $shipment_codes->type_key, 'channel' => $shipment_codes->channel_key), $country_iso) ) {
                 $countries_txt = array('LT' => 'Lithuania', 'LV' => 'Latvia', 'EE' => 'Estonia', 'FI' => 'Finland');
-                $sender_country_code = Configuration::get('omnivalt_countrycode');
+                $sender_country_code = $sender_data->country;
                 if ( empty($sender_country_code) ) {
                     throw new OmnivaException('The sender country is not specified in the module settings');
                 }
@@ -134,13 +135,10 @@ class OmnivaApi
                     /* Add additional service */
                     $api_additional_service = new $service['class']();
 
-                    if ( $service_code == 'cod' ) {
-                        $company = Configuration::get('omnivalt_company');
-                        $bank_account = Configuration::get('omnivalt_bank_account');
-                        
+                    if ( $service_code == 'cod' ) {                        
                         $api_additional_service->setCodAmount($omnivaObjs->order->cod_amount);
-                        $api_additional_service->setCodReceiver($company);
-                        $api_additional_service->setCodIban($bank_account);
+                        $api_additional_service->setCodReceiver($sender_data->name);
+                        $api_additional_service->setCodIban($sender_data->bank_account);
                         $api_additional_service->setCodReference($api_additional_service::calculateReferenceNumber($id_order));
                     }
                     if ( $service_code == 'insurance' ) {
@@ -183,7 +181,7 @@ class OmnivaApi
                 $api_package->setReceiverContact($api_receiver_contact);
 
                 /* Set sender */
-                $api_package->setSenderContact($this->getSenderContact());
+                $api_package->setSenderContact($this->getSenderContact($sender_data));
 
                 /* Set package service */
                 if ( $shipment_codes->type_key == 'parcel' ) {
@@ -266,7 +264,7 @@ class OmnivaApi
         $manifest_orders = $this->getManifestOrders($omnivaOrderHistoryIds);
 
         $api_manifest = new Manifest();
-        $api_manifest->setSender($this->getSenderContact());
+        $api_manifest->setSender($this->getSenderContact($this->getSenderData()));
         $api_manifest->showBarcode(false);
 
         foreach ( $manifest_orders as $manifest_order ) {
@@ -309,7 +307,7 @@ class OmnivaApi
         try {
             $api_call = new CallCourier();
             $this->setAuth($api_call);
-            $api_call->setSender($this->getSenderContact());
+            $api_call->setSender($this->getSenderContact($this->getSenderData()));
             $api_call->setEarliestPickupTime($pickup_start);
             $api_call->setLatestPickupTime($pickup_end);
             $api_call->setTimezone('Europe/Tallinn');
@@ -498,20 +496,42 @@ class OmnivaApi
         );
     }
 
-    protected function getSenderContact()
+    protected function getSenderData($order = null)
+    {
+        if ($order) {
+            $idShop = (int) $order->id_shop;
+            $idShopGroup = (int) Shop::getGroupFromShop($idShop);
+        } else {
+            $context = Context::getContext();
+            $idShop = (int) $context->shop->id;
+            $idShopGroup = (int) $context->shop->id_shop_group;
+        }
+
+        return (object) [
+            'name' => Configuration::get('omnivalt_company', null, $idShopGroup, $idShop),
+            'address' => Configuration::get('omnivalt_address', null, $idShopGroup, $idShop),
+            'city' => Configuration::get('omnivalt_city', null, $idShopGroup, $idShop),
+            'postcode' => Configuration::get('omnivalt_postcode', null, $idShopGroup, $idShop),
+            'country' => Configuration::get('omnivalt_countrycode', null, $idShopGroup, $idShop),
+            'phone' => Configuration::get('omnivalt_phone', null, $idShopGroup, $idShop),
+            'bank_account' => Configuration::get('omnivalt_bank_account', null, $idShopGroup, $idShop)
+        ];
+    }
+
+    protected function getSenderContact($sender_data)
     {
         $api_sender_address = new Address();
-        $api_sender_address->setCountry(Configuration::get('omnivalt_countrycode'));
-        $api_sender_address->setPostcode(Configuration::get('omnivalt_postcode'));
-        $api_sender_address->setDeliverypoint(Configuration::get('omnivalt_city'));
-        $api_sender_address->setStreet(Configuration::get('omnivalt_address'));
+        $api_sender_address->setCountry($sender_data->country);
+        $api_sender_address->setPostcode($sender_data->postcode);
+        $api_sender_address->setDeliverypoint($sender_data->city);
+        $api_sender_address->setStreet($sender_data->address);
 
         $api_sender_contact = new Contact();
         $api_sender_contact->setAddress($api_sender_address);
-        $api_sender_contact->setPersonName(Configuration::get('omnivalt_company'));
+        $api_sender_contact->setPersonName($sender_data->name);
         //$api_sender_contact->setEmail();
         //$api_sender_contact->setPhone();
-        $api_sender_contact->setMobile(Configuration::get('omnivalt_phone'));
+        $api_sender_contact->setMobile($sender_data->phone);
 
         return $api_sender_contact;
     }
