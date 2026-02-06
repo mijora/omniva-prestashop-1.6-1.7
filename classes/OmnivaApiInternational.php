@@ -223,6 +223,7 @@ class OmnivaApiInternational extends OmnivaApi
             $country_iso = strtoupper(OmnivaData::getCountryIso($orderObjs->address));;
             $receiver_data = OmnivaData::getReceiverData($orderObjs->address, $orderObjs->customer);
             $products_data = self::getOrderProductsData($id_order);
+            $sender_data = $this->getSenderData($orderObjs->order);
         } catch (\Exception $e) {
             return ['msg' => OmnivaHelper::buildExceptionMessage($e, 'Failed to get Order data')];
         }
@@ -279,7 +280,7 @@ class OmnivaApiInternational extends OmnivaApi
                     $receiverContact->setEmail($receiver_data->email);
                 }
                 $package->setReceiverContact($receiverContact);
-                $package->setSenderContact($this->getSenderContact());
+                $package->setSenderContact($this->getSenderContact($sender_data));
 
                 $packages[] = $package;
             }
