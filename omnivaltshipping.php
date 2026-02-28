@@ -1464,7 +1464,11 @@ class OmnivaltShipping extends CarrierModule
 
     public function hookActionAdminControllerSetMedia()
     {
-        if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore'
+        $controller_class = get_class($this->context->controller);
+        $admin_controller = (string) Tools::getValue('controller');
+        $is_admin_orders_page = ($admin_controller === 'AdminOrders') || (strpos((string)Tools::getValue('route'), 'admin_orders') !== false);
+
+        if ($controller_class == 'AdminOrdersController' || $controller_class == 'AdminLegacyLayoutControllerCore' || $is_admin_orders_page
             || (isset($this->context->controller->module) && $this->context->controller->module == $this) || Tools::getValue('configure') == $this->name) {
                 Media::addJsDef([
                     'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),

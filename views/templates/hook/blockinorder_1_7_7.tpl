@@ -25,6 +25,8 @@
                     {$error}
                 {/if}
                 <form action="{$moduleurl}" method="POST" id="omnivaltOrderSubmitForm">
+                    <input type="hidden" name="order_id" value="{$order_id}" />
+                    <input type="hidden" name="id_order" value="{$order_id}" />
                     <div class="form-row">
                         <div class="form-group col-md-6 col-xs-12">
                             <label for="omniva-packs">{l s="Packets" mod='omnivaltshipping'}:</label>
@@ -74,7 +76,7 @@
                     {/if}
                     <div class="form-row">
                         <div class="form-group col-md-12 d-flex justify-content-end">
-                            <button type="button" name="omnivalt_save" id="omnivaltOrderSubmitBtn" class="btn btn-default"><i class="material-icons">save</i> {l s="Save"}</button>
+                            <button type="submit" name="omnivalt_save" id="omnivaltOrderSubmitBtn" class="btn btn-default"><i class="material-icons">save</i> {l s="Save"}</button>
                         </div>
                     </div>
                 </form>
@@ -116,9 +118,11 @@
                 <div class="omniva-response alert d-none" role="alert"></div>
             </div>
             <div class="card-footer omniva-footer d-flex justify-content-between">
-                <form method="POST" action="{$generateLabelsUrl}" id="omnivaltOrderPrintLabelsForm" target="_blank">
-                    <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels" class="btn btn-default"><i class="material-icons">tag</i> {l s="Generate label" mod='omnivaltshipping'}</button>
-                </form>
+                <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels" class="btn btn-default"
+                    form="omnivaltOrderSubmitForm"
+                    formaction="{$generateLabelsUrl}"
+                    formmethod="post"
+                    formtarget="_blank"><i class="material-icons">tag</i> {l s="Generate label" mod='omnivaltshipping'}</button>
             </div>
         </div>
     </div>
