@@ -410,7 +410,7 @@
     list-style-type: upper-roman;
 }
 
-.modal-omnivalt .omniva-modal-content form {
+.modal-omnivalt .omniva-modal-content .omniva-search-form {
     margin-bottom: 10px;
 }
 
@@ -473,13 +473,13 @@
     position: relative;
 }
 
-.modal-omnivalt #omniva-search form:after {
+.modal-omnivalt #omniva-search .omniva-search-form:after {
     content: "";
     clear: both;
     display: block;
 }
 
-.modal-omnivalt #omniva-search form input {
+.modal-omnivalt #omniva-search .omniva-search-form input {
     padding: 2px 10px;
     border: 1px solid #555;
     border-radius: 3px 0 0 3px;
@@ -730,3 +730,23 @@
     background-color: var(--matkahuolto-main-color);
 }
 /*** END theme: Matkahuolto ***/
+
+/*** Hummingbird theme (PS 9.x) compatibility ***/
+.carrier__extra-content-wrapper {
+    max-height: none !important;
+    overflow: unset !important;
+}
+.delivery-option__extra-content #omnivalt_parcel_terminal_carrier_details {
+    width: 100%;
+    max-width: 100%;
+}
+.delivery-option__extra-content .select-omnivalt .omniva-terminals-list {
+    max-width: 100%;
+}
+.delivery-option__extra-content .select-omnivalt .omniva-terminals-list .inner-container {
+    width: 100%;
+}
+.delivery-option__extra-content .select-omnivalt .omniva-btn {
+    max-width: 100%;
+}
+/*** END Hummingbird theme ***/

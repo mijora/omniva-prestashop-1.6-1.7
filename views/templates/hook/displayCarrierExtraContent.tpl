@@ -17,6 +17,14 @@
 * versions in the future.
 * ****************************************************
 *}
+{if isset($render_before_carrier) && $render_before_carrier}
+<script>
+    var omnivalt_current_country = '{$omniva_current_country}';
+    var omnivalt_postcode = '{$omniva_postcode}';
+    var omnivalt_show_map = {$omniva_map};
+    var omnivalt_autoselect = {$autoselect};
+</script>
+{/if}
 <script>
     var omnivalt_terminals = {$terminals_list|@json_encode nofilter};
 </script>
@@ -32,3 +40,6 @@
   <button type="button" id="show-omniva-map" class="btn btn-basic btn-sm omniva-btn" style = "display: none;">{l s='Show parcel terminals map' mod='omnivaltshipping'} <img src = "{$module_url}views/img/{$marker_img}" title = "{l s='Show parcel terminals map' mod='omnivaltshipping'}"/></button>
 {/if}
 </div>
+{if isset($render_before_carrier) && $render_before_carrier}
+{include file="module:omnivaltshipping/views/templates/hook/modalMap.tpl"}
+{/if}
