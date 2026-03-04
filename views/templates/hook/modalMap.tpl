@@ -30,10 +30,10 @@
                 <div class="omniva-search-bar" >
                     <h4 style="margin-top: 0px;">{l s='Parcel terminals addresses' mod='omnivaltshipping'}</h4>
                     <div id="omniva-search">
-                    <form>
+                    <div class="omniva-search-form">
                     <input type = "text" placeholder = "{l s='Enter postcode' mod='omnivaltshipping'}"/>
-                    <button type = "submit" id="map-search-button"></button>
-                    </form>                    
+                    <button type = "button" id="map-search-button"></button>
+                    </div>                    
                     <div class="omniva-autocomplete scrollbar" style = "display:none;"><ul></ul></div>
                     </div>
                     <div class = "omniva-back-to-list" style = "display:none;">{l s='Back to list' mod='omnivaltshipping'}</div>

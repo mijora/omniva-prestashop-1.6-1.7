@@ -25,6 +25,8 @@
                 <div class="omnivalt_order_config"
                      style="border:1px solid #eee; border-radius: 4px; padding:4px; margin-bottom:8px;">
                     <form action="{$moduleurl}" method="post" id="omnivaltOrderSubmitForm">
+                        <input type="hidden" name="order_id" value="{$order_id}" />
+                        <input type="hidden" name="id_order" value="{$order_id}" />
                         <div class="col-md-6">
                             <div class="field-row">
                                 <span>
@@ -76,18 +78,21 @@
                             {/if}
                         </div>
                         <div class="clearfix"></div>
-                        <button type="button" name="omnivalt_save" style="float:left; margin:5px;"
+                        <button type="submit" name="omnivalt_save" style="float:left; margin:5px;"
                                 id="omnivaltOrderSubmitBtn" class="btn btn-default">
                             <i class="icon-save"></i> {l s="Save"}
                         </button>
                     </form>
-                    <form method="POST" action="{$generateLabelsUrl}" id="omnivaltOrderPrintLabelsForm" target="_blank"
-                          style="display:inlne-block; margin:5px;">
+                    <div style="display:inline-block; margin:5px;">
                         <button type="submit" name="omnivalt_printlabel" id="omnivaltOrderPrintLabels"
-                                class="btn btn-default">
+                                class="btn btn-default"
+                                form="omnivaltOrderSubmitForm"
+                                formaction="{$generateLabelsUrl}"
+                                formmethod="post"
+                                formtarget="_blank">
                             <i class="icon-tag"></i> {l s="Generate label" mod='omnivaltshipping'}
                         </button>
-                    </form>
+                    </div>
                     {if !empty($orderHistory) && ($orderHistory[0]->tracking_numbers)}
                         <hr>
                         <div class="card-header">

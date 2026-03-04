@@ -433,14 +433,14 @@ var omniva_addrese_change = false;
           $('#show-omniva-map').show(); 
           
           $('#terminalsModal').on('click',function(){$('#omnivaLtModal').hide();});
-          $('#omniva-search form input').off('keyup focus').on('keyup focus',function(){
+          $('#omniva-search .omniva-search-form input').off('keyup focus').on('keyup focus',function(){
                 clearTimeout(timeoutID);      
-                timeoutID = setTimeout(function(){ autoComplete($('#omniva-search form input').val())}, 500);    
+                timeoutID = setTimeout(function(){ autoComplete($('#omniva-search .omniva-search-form input').val())}, 500);    
                       
             });
             
             $('.omniva-autocomplete ul').off('click').on('click','li',function(){
-                $('#omniva-search form input').val($(this).text());
+                $('#omniva-search .omniva-search-form input').val($(this).text());
                 /*
                 if ($(this).attr('data-location-y') !== undefined){
                     setCurrentLocation([$(this).attr('data-location-y'),$(this).attr('data-location-x')]);
@@ -448,7 +448,7 @@ var omniva_addrese_change = false;
                     refreshList(false);
                 }
                 */
-                $('#omniva-search form').trigger('submit');
+                $('#map-search-button').trigger('click');
                 $('.omniva-autocomplete').hide();
             });
             $(document).click(function(e){
@@ -460,10 +460,16 @@ var omniva_addrese_change = false;
             $('#terminalsModal').on('click',function(){
                 $('#omnivaLtModal').hide();
             });
-            $('#omniva-search form').off('submit').on('submit',function(e){
+            $('#map-search-button').off('click').on('click',function(e){
               e.preventDefault();
-              var postcode = $('#omniva-search form input').val();
+              var postcode = $('#omniva-search .omniva-search-form input').val();
               findPosition(postcode,false);
+            });
+            $('#omniva-search .omniva-search-form input').off('keypress.omniva').on('keypress.omniva',function(e){
+              if (e.which == 13) {
+                e.preventDefault();
+                $('#map-search-button').trigger('click');
+              }
             });
             $('.found_terminals').on('click','li',function(){
                 zoomTo(JSON.parse($(this).attr('data-pos')),$(this).attr('data-id'));
@@ -478,7 +484,7 @@ var omniva_addrese_change = false;
             $('.omniva-autocomplete ul').html('');
             $('.omniva-autocomplete').hide();
             if (address == "" || address.length < 3) return false;
-            $('#omniva-search form input').val(address);
+            $('#omniva-search .omniva-search-form input').val(address);
             //$.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal,StAddr&maxLocations=5&forStorage=false&f=pjson", function( data ) {
             $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omnivalt_current_country+"&f=pjson&maxSuggestions=4", function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
@@ -647,7 +653,7 @@ var omnivaltDelivery = {
     init : function() {
         console.groupCollapsed('OMNIVA: Initializing Omniva terminal carrier');
         var self = this;
-        $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').each(function() {
+        self.get_all_inputs().each(function() {
             var $this = $(this),
                 value = $this.val(),
                 carrierIds = value.split(',');
@@ -659,6 +665,11 @@ var omnivaltDelivery = {
                 console.log('Block add method: Radio');
                 $("#hook-display-before-carrier #omnivalt_parcel_terminal_carrier_details").appendTo('#omnivalt_parcel_terminal_carrier_details');
                 $('#omnivalt_parcel_terminal_carrier_details').appendTo(self.get_moveto_radio($this));
+            }
+            else if ($this.closest('.delivery-option__item').length)
+            {
+                console.log('Block add method: Hummingbird extra content');
+                /* Hummingbird theme: block is already inside carrier extra content */
             }
             else
             {
@@ -672,6 +683,8 @@ var omnivaltDelivery = {
 
         if (self.get_checked_input().val() == omnivalt_params.methods.omniva_terminal + ',') {
             $("#omnivalt_parcel_terminal_carrier_details").show();
+            /* Hummingbird theme: ensure the parent extra content wrapper is visible */
+            $('#omnivalt_parcel_terminal_carrier_details').closest('.delivery-option__extra').attr('data-active', '');
             console.log('Omniva block shown');
         } else {
             $("#omnivalt_parcel_terminal_carrier_details").hide();
@@ -679,8 +692,12 @@ var omnivaltDelivery = {
         }
         
         console.log('Updating events...');
-        $('form#js-delivery').off('submit').on('submit', function(){
-            return self.validate();
+        $('form#js-delivery').off('submit.omniva').on('submit.omniva', function(e){
+            if (!self.validate()) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
         });
         $('select[name="omnivalt_parcel_terminal"]').off('change.Omniva').on('change.Omniva', function(e) {
             console.groupCollapsed('OMNIVA: Saving selected terminal');
@@ -750,22 +767,33 @@ var omnivaltDelivery = {
     get_moveto_label : function(input) {
         return $(input).closest('.delivery-option').find('label');
     },
-    get_checked_input : function() {
-        let all_inputs = (!omnivalt_params.prestashop.is_16) ? '.delivery-options .delivery-option input[type="radio"]' : '.delivery_options .delivery_option input[type="radio"]';
-        
-        if (!omnivalt_params.prestashop.is_16) {
-            /* supercheckout - 9.0.2 - Knowband */
-            if (!$(all_inputs).length && $('#module-supercheckout-supercheckout').length) {
-                all_inputs = 'input.delivery_option_radio';
-            }
+    get_all_inputs : function() {
+        if (omnivalt_params.prestashop.is_16) {
+            return $('.delivery_options .delivery_option input[type="radio"]');
         }
-
-        return $(all_inputs).filter(':checked');
+        /* Try #js-delivery form first (works for both classic and hummingbird themes) */
+        var inputs = $('#js-delivery input[type="radio"]');
+        if (inputs.length) {
+            return inputs;
+        }
+        /* Fallback to class-based selectors */
+        inputs = $('.delivery-options .delivery-option input[type="radio"], .delivery-option__item input[type="radio"]');
+        if (inputs.length) {
+            return inputs;
+        }
+        /* supercheckout - 9.0.2 - Knowband */
+        if ($('#module-supercheckout-supercheckout').length) {
+            return $('input.delivery_option_radio');
+        }
+        return inputs;
+    },
+    get_checked_input : function() {
+        return this.get_all_inputs().filter(':checked');
     },
     validate : function() {
         console.groupCollapsed('OMNIVA: Validating selected terminal');
-        let carrier_input = (omnivalt_params.prestashop.is_17) ? '.delivery-options .delivery-option input[type="radio"]:checked' : '.delivery_options .delivery_option input[type="radio"]:checked';
-        if ($(carrier_input).val() == omnivalt_params.methods.omniva_terminal + ',' && $('select[name="omnivalt_parcel_terminal"]').val() == "")
+        var checked_val = this.get_checked_input().val();
+        if (checked_val == omnivalt_params.methods.omniva_terminal + ',' && $('select[name="omnivalt_parcel_terminal"]').val() == "")
         {
             if (!!$.prototype.fancybox) {
                 $.fancybox.open([
@@ -842,10 +870,14 @@ function launch_omniva(retry = 0) {
     if ($('#omnivalt_parcel_terminal_carrier_details select').length){
         $('#omnivalt_parcel_terminal_carrier_details select').omniva({showMap: omnivalt_show_map});
         omnivaltDelivery.init();
-        $('.delivery-options .delivery-option input[type="radio"], input.delivery_option_radio').on('click',function(){
+        omnivaltDelivery.get_all_inputs().on('click',function(){
             omnivaltDelivery.init();
         });
         omnivaltDelivery.change_modal_theme();
+        /* Move modal outside delivery form to prevent nested <form> issues in PS9 */
+        if ($('#omnivaLtModal').closest('form').length) {
+            $('#omnivaLtModal').appendTo('body');
+        }
     } else {
         setTimeout(function() {
             launch_omniva(retry + 1);

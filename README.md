@@ -1,4 +1,4 @@
-# Omniva module for Prestahop 1.6, 1.7 and 8.x
+# Omniva module for Prestashop 1.6, 1.7, 8.x and 9.x
 
 Download the omnivaltshipping.zip from the link below:
 
@@ -11,6 +11,7 @@ Download the omnivaltshipping.zip from the link below:
 - Prestashop 8.0.x: Working
 - Prestashop 8.1.x: Working (Tested 2025-04-25)
 - Prestashop 8.2.x: Working (Tested 2025-01-16)
+- Prestashop 9.0.x: Working (Tested 2026-02-28)
 - PHP 5.6: Working
 - PHP 7.0: Working (Tested 2023-11-22)
 - PHP 7.1: Working

@@ -53,7 +53,7 @@ $(document).ready(function () {
     function labelOrderInfo() {
         disableButton('#omnivaltOrderPrintLabels', true);
 
-        let formData = $("#omnivaltOrderPrintLabelsForm")
+        let formData = $("#omnivaltOrderSubmitForm")
             .serialize() + '&' + $.param({
             'ajax': "1",
             'id_order': id_order

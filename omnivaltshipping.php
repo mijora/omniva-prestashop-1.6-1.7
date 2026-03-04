@@ -1406,6 +1406,8 @@ class OmnivaltShipping extends CarrierModule
 
     public function hookDisplayCarrierExtraContent($params)
     {
+        static $beforeCarrierRendered = false;
+
         if ( is_object($params['carrier']) ) {
             $carrier_id = (int) $params['carrier']->id;
         } else if ( is_array($params['carrier']) && isset($params['carrier']['id']) ) {
@@ -1434,6 +1436,7 @@ class OmnivaltShipping extends CarrierModule
         }
 
         $showMap = Configuration::get('omnivalt_map');
+        $autoselect = Configuration::get('omnivalt_autoselect');
 
         $this->context->smarty->assign(array(
             'module_url' => $this->_path,
@@ -1441,8 +1444,15 @@ class OmnivaltShipping extends CarrierModule
             'terminals_list' => $this->getTerminalForMap($terminals, $selected, $iso_code),
             'marker_img' => $marker_img,
             'select_block_theme' => ($iso_code == 'FI') ? 'matkahuolto' : 'omniva',
-            'omniva_map' => $showMap
+            'omniva_map' => $showMap,
+            'omniva_current_country' => $iso_code,
+            'omniva_postcode' => $address->postcode ?: '',
+            'autoselect' => (int) $autoselect,
+            'ps_version' => $this->getPsVersion(),
+            'render_before_carrier' => !$beforeCarrierRendered,
         ));
+
+        $beforeCarrierRendered = true;
 
         return $this->display(__file__, 'displayCarrierExtraContent.tpl');
     }
@@ -1464,7 +1474,11 @@ class OmnivaltShipping extends CarrierModule
 
     public function hookActionAdminControllerSetMedia()
     {
-        if (get_class($this->context->controller) == 'AdminOrdersController' || get_class($this->context->controller) == 'AdminLegacyLayoutControllerCore'
+        $controller_class = get_class($this->context->controller);
+        $admin_controller = (string) Tools::getValue('controller');
+        $is_admin_orders_page = ($admin_controller === 'AdminOrders') || (strpos((string)Tools::getValue('route'), 'admin_orders') !== false);
+
+        if ($controller_class == 'AdminOrdersController' || $controller_class == 'AdminLegacyLayoutControllerCore' || $is_admin_orders_page
             || (isset($this->context->controller->module) && $this->context->controller->module == $this) || Tools::getValue('configure') == $this->name) {
                 Media::addJsDef([
                     'omnivalt_bulk_labels' => $this->l("Print Omnivalt labels"),

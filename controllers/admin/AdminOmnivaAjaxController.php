@@ -52,6 +52,9 @@ class AdminOmnivaAjaxController extends ModuleAdminController
         }
 
         $id_order = (int) Tools::getValue('order_id');
+        if (!$id_order) {
+            $id_order = $this->resolveOrderIdFromRequest();
+        }
 
         $omnivaOrder = new OmnivaOrder($id_order);
 
@@ -152,11 +155,26 @@ class AdminOmnivaAjaxController extends ModuleAdminController
     /**
      * Call API to get register shipment.
      */
+    protected function resolveOrderIdFromRequest()
+    {
+        $possible_keys = ['id_order', 'order_id', 'orderId', 'id'];
+
+        foreach ($possible_keys as $key) {
+            $id_order = (int) Tools::getValue($key);
+            if ($id_order > 0) {
+                return $id_order;
+            }
+        }
+
+        return 0;
+    }
+
     protected function generateLabels($id_order = null, $return_on_die = false)
     {
         if(!$id_order)
         {
-            if (!($id_order = (int) Tools::getValue('id_order'))) {
+            $id_order = $this->resolveOrderIdFromRequest();
+            if (!$id_order) {
                 $error = $this->module->l('No order ID provided.');
                 return $return_on_die ? ['error' => $error] : die(json_encode(['error' => $error]));
             }
