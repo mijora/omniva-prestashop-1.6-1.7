@@ -360,19 +360,32 @@ var omniva_addrese_change = false;
                 refreshList(autoselect);
                 return false;
             }
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal&maxLocations=1&forStorage=false&f=pjson", function( data ) {
-              if (data.candidates != undefined && data.candidates.length > 0){
-                calculateDistance(data.candidates[0].location.y,data.candidates[0].location.x);
-                refreshList(autoselect);
-                if(settings.showMap == true){                  
-                  list.prepend(showMapBtn);
+            const url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?" + $.param({
+                singleLine: address,
+                sourceCountry: omnivalt_current_country,
+                category: "",
+                outFields: "Postal",
+                maxLocations: 1,
+                forStorage: false,
+                f: "pjson"
+            });
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    if (data.candidates && data.candidates.length > 0){
+                        calculateDistance(data.candidates[0].location.y, data.candidates[0].location.x);
+                        refreshList(autoselect);
+                        if(settings.showMap == true){                  
+                            list.prepend(showMapBtn);
+                        }
+                        showMore.show();
+                        if (settings.showMap == true){
+                            setCurrentLocation([data.candidates[0].location.y,data.candidates[0].location.x]);
+                        }
+                    }
                 }
-                //console.log('add');
-                showMore.show();
-                if (settings.showMap == true){
-                    setCurrentLocation([data.candidates[0].location.y,data.candidates[0].location.x]);
-                }
-              }
             });
         }
         
