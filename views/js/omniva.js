@@ -360,27 +360,47 @@ var omniva_addrese_change = false;
                 refreshList(autoselect);
                 return false;
             }
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal&maxLocations=1&forStorage=false&f=pjson", function( data ) {
-              if (data.candidates != undefined && data.candidates.length > 0){
-                calculateDistance(data.candidates[0].location.y,data.candidates[0].location.x);
-                refreshList(autoselect);
-                if(settings.showMap == true){                  
-                  list.prepend(showMapBtn);
+            const url = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?" + $.param({
+                singleLine: address,
+                sourceCountry: omnivalt_current_country,
+                category: "",
+                outFields: "Postal",
+                maxLocations: 1,
+                forStorage: false,
+                f: "pjson"
+            });
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "json",
+                data: '',
+                success: function(data) {
+                    if (data.candidates && data.candidates.length > 0){
+                        calculateDistance(data.candidates[0].location.y, data.candidates[0].location.x);
+                        refreshList(autoselect);
+                        if(settings.showMap == true){                  
+                            list.prepend(showMapBtn);
+                        }
+                        showMore.show();
+                        if (settings.showMap == true){
+                            setCurrentLocation([data.candidates[0].location.y,data.candidates[0].location.x]);
+                        }
+                    }
                 }
-                //console.log('add');
-                showMore.show();
-                if (settings.showMap == true){
-                    setCurrentLocation([data.candidates[0].location.y,data.candidates[0].location.x]);
-                }
-              }
             });
         }
         
         function suggest(address){
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry="+omnivalt_current_country+"&maxSuggestions=1", function( data ) {
-              if (data.suggestions != undefined && data.suggestions.length > 0){
-                findPosition(data.suggestions[0].text,false);
-              }
+            $.ajax({
+                url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&f=pjson&sourceCountry="+omnivalt_current_country+"&maxSuggestions=1",
+                type: "GET",
+                dataType: "json",
+                data: '',
+                success: function( data ) {
+                    if (data.suggestions != undefined && data.suggestions.length > 0){
+                        findPosition(data.suggestions[0].text,false);
+                    }
+                }
             });
         }
         
@@ -480,7 +500,12 @@ var omniva_addrese_change = false;
             if (address == "" || address.length < 3) return false;
             $('#omniva-search form input').val(address);
             //$.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?singleLine="+address+"&sourceCountry="+omnivalt_current_country+"&category=&outFields=Postal,StAddr&maxLocations=5&forStorage=false&f=pjson", function( data ) {
-            $.getJSON( "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omnivalt_current_country+"&f=pjson&maxSuggestions=4", function( data ) {
+            $.ajax({
+                url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/suggest?text="+address+"&sourceCountry="+omnivalt_current_country+"&f=pjson&maxSuggestions=4",
+                type: "GET",
+                dataType: "json",
+                data: '',
+                success: function( data ) {
               if (data.suggestions != undefined && data.suggestions.length > 0){
                   $.each(data.suggestions ,function(i,item){
                     //console.log(item);
@@ -498,6 +523,7 @@ var omniva_addrese_change = false;
                       $(".omniva-autocomplete ul").append('<li>'+not_found+'</li>');
                   }
               $('.omniva-autocomplete').show();
+                }
             });
         }
         
