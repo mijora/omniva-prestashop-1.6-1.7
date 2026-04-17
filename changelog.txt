@@ -1,6 +1,6 @@
 = Unreleased =
-# Improved
-- Improved so that the geolocation request is executed via a generic ajax function instead of the getJSON function
+# Fixed
+- In all ajax requests on the Checkout page, the ajax method has been changed from "getJSON" to "ajax" and a "data" parameter has been added to avoid incompatibility issues with reCAPTCHA
 
 = 2.3.4 =
 # Fixed
