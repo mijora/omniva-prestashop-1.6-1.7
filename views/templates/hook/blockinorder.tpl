@@ -116,7 +116,7 @@
                                     {$historyPage->service_code}
                                 </div>
                                 <div class="col-md-3 col-xs-12">
-                                    {$historyPage->date_add}
+                                    {$historyPage->date_upd}
                                 </div>
                                 <div class="col-md-3 col-xs-12">
                                     <a href="{$printLabelsUrl}&history={$historyPage->id}" target="_blank" id="omnivalt_print_btn" class="btn btn-default"  mod='omnivaltshipping'><i class="material-icons">print</i> {l s="Print labels" mod='omnivaltshipping'}</a>
