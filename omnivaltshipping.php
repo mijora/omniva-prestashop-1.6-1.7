@@ -27,7 +27,12 @@ class OmnivaltShipping extends CarrierModule
     const CONTROLLER_OMNIVA_ORDERS = 'AdminOmnivaOrders';
 
     const UPDATE_URL = 'https://api.github.com/repos/mijora/omniva-prestashop-1.6-1.7/releases/latest';
-    const DOWNLOAD_URL = "https://github.com/mijora/omniva-prestashop-1.6-1.7/releases/latest/download//omnivaltshipping.zip";
+    const DOWNLOAD_URL = "https://github.com/mijora/omniva-prestashop-1.6-1.7/releases/latest/download/omnivaltshipping.zip";
+
+    const V3_VERSION = '3.0.0';
+    const V3_CHECK_URL = 'https://api.github.com/repos/mijora/omniva-prestashop-v3/releases/tags/v3.0.0';
+    const V3_RELEASE_URL = 'https://github.com/mijora/omniva-prestashop-v3/releases/tag/v3.0.0';
+    const V3_DOWNLOAD_URL = "https://github.com/mijora/omniva-prestashop-v3/releases/download/v3.0.0/omnivaltshipping.zip";
 
     const SHIPPING_SETS = array(
         'baltic' => array(
@@ -514,11 +519,15 @@ class OmnivaltShipping extends CarrierModule
         }
     }
 
-    public function checkForUpdate()
+    public function checkForUpdate($url = null)
     {
+        if ($url === null) {
+            $url = self::UPDATE_URL;
+        }
+
         $ch = curl_init(); 
-        curl_setopt($ch, CURLOPT_URL, self::UPDATE_URL);
-        curl_setopt($ch, CURLOPT_USERAGENT,'Awesome-Octocat-App');
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Awesome-Octocat-App');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
         $response_data = json_decode(curl_exec($ch)); 
         curl_close($ch);
@@ -550,6 +559,18 @@ class OmnivaltShipping extends CarrierModule
                 'version' => $updateData['version'],
             ]);
             $output .= $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name .'/views/templates/admin/update.tpl');
+        }
+
+        if (version_compare(_PS_VERSION_, '8.0.0', '>=')) {
+            $v3UpdateData = $this->checkForUpdate(self::V3_CHECK_URL);
+            if ($v3UpdateData) {
+                $this->context->smarty->assign([
+                    'v3_release_url' => self::V3_RELEASE_URL,
+                    'v3_download_url' => self::V3_DOWNLOAD_URL,
+                    'v3_version' => self::V3_VERSION,
+                ]);
+                $output .= $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . '/views/templates/admin/update_v3.tpl');
+            }
         }
 
         if (Tools::getValue('forceUpdateTerminals')) {
