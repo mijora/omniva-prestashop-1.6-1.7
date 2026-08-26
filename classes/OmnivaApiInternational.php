@@ -302,7 +302,7 @@ class OmnivaApiInternational extends OmnivaApi
         foreach ( $products_data as $prod_data ) {
             $qty = (isset($prod_data['quantity'])) ? $prod_data['quantity'] : 1;
             $name = (! empty($prod_data['name'])) ? $prod_data['name'] : 'Unknown product';
-            $name = substr($name, 0, 31);
+            $name = mb_substr($name, 0, 31, 'UTF-8');
             $products_names[] = $qty . '×' . trim($name);
         }
 

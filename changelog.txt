@@ -1,3 +1,7 @@
+= Unreleased =
+# Fixed
+- Fixed an error in registering international shipments when the product names of the order contain UTF-8 characters
+
 = 2.3.5 =
 # Fixed
 - In all ajax requests on the Checkout page, the ajax method has been changed from "getJSON" to "ajax" and a "data" parameter has been added to avoid incompatibility issues with reCAPTCHA
